@@ -2,6 +2,7 @@ import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
+import { ThemeToggle } from '@/Components/theme-toggle';
 import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode, useState } from 'react';
 
@@ -15,8 +16,8 @@ export default function Authenticated({
         useState(false);
 
     return (
-        <div className="min-h-screen bg-gray-100">
-            <nav className="border-b border-gray-100 bg-white">
+        <div className="min-h-screen bg-background">
+            <nav className="border-b border-border bg-card">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-16 justify-between">
                         <div className="flex">
@@ -33,10 +34,23 @@ export default function Authenticated({
                                 >
                                     Dashboard
                                 </NavLink>
+                                <NavLink
+                                    href={route('screens.index')}
+                                    active={route().current('screens.*')}
+                                >
+                                    Screens
+                                </NavLink>
+                                <NavLink
+                                    href={route('settings.index')}
+                                    active={route().current('settings.*')}
+                                >
+                                    Settings
+                                </NavLink>
                             </div>
                         </div>
 
-                        <div className="hidden sm:ms-6 sm:flex sm:items-center">
+                        <div className="hidden sm:ms-6 sm:flex sm:items-center gap-2">
+                            <ThemeToggle />
                             <div className="relative ms-3">
                                 <Dropdown>
                                     <Dropdown.Trigger>
@@ -137,6 +151,18 @@ export default function Authenticated({
                         >
                             Dashboard
                         </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('screens.index')}
+                            active={route().current('screens.*')}
+                        >
+                            Screens
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('settings.index')}
+                            active={route().current('settings.*')}
+                        >
+                            Settings
+                        </ResponsiveNavLink>
                     </div>
 
                     <div className="border-t border-gray-200 pb-1 pt-4">
@@ -166,7 +192,7 @@ export default function Authenticated({
             </nav>
 
             {header && (
-                <header className="bg-white shadow">
+                <header className="bg-card shadow">
                     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                         {header}
                     </div>
