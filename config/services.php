@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'toggl' => [
+        'api_token' => env('TOGGL_API_TOKEN'),
+        'workspace' => env('TOGGL_WORKSPACE'),
+    ],
+
 ];

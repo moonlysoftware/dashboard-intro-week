@@ -12,7 +12,7 @@ class WidgetController extends Controller
     public function store(Request $request, Screen $screen): JsonResponse
     {
         $validated = $request->validate([
-            'widget_type' => 'required|string|in:birthday,room_availability,clock_weather,announcements',
+            'widget_type' => 'required|string|in:birthday,room_availability,clock_weather,announcements,toggl_time_tracking',
             'config' => 'nullable|array',
             'grid_col_span' => 'required|integer|min:1|max:12',
             'grid_row_span' => 'required|integer|min:1|max:6',
@@ -27,7 +27,7 @@ class WidgetController extends Controller
     public function update(Request $request, Widget $widget): JsonResponse
     {
         $validated = $request->validate([
-            'widget_type' => 'sometimes|string|in:birthday,room_availability,clock_weather,announcements',
+            'widget_type' => 'sometimes|string|in:birthday,room_availability,clock_weather,announcements,toggl_time_tracking',
             'config' => 'nullable|array',
             'grid_col_span' => 'sometimes|integer|min:1|max:12',
             'grid_row_span' => 'sometimes|integer|min:1|max:6',

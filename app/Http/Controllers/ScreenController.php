@@ -49,6 +49,7 @@ class ScreenController extends Controller
                 'room_availability' => 'Ruimte Beschikbaarheid',
                 'clock_weather' => 'Klok/Datum/Weer',
                 'announcements' => 'Mededelingen',
+                'toggl_time_tracking' => 'Toggl Uren Tracking',
             ],
         ]);
     }

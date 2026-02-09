@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,5 +22,13 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
+
+        // Toggl API HTTP Macro
+        Http::macro('toggl', function () {
+            return Http::withHeaders([
+                'Content-Type' => 'application/json',
+            ])->withBasicAuth(config('services.toggl.api_token'), 'api_token')
+              ->baseUrl('https://api.track.toggl.com');
+        });
     }
 }

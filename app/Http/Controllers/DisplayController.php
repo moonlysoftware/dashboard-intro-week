@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Screen;
+use App\Services\TogglTimeTrackingService;
 use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -57,6 +58,7 @@ class DisplayController extends Controller
             'room_availability' => $this->getRoomAvailabilityData(),
             'clock_weather' => $this->getClockWeatherData(),
             'announcements' => $this->getAnnouncementsData(),
+            'toggl_time_tracking' => $this->getTogglTimeTrackingData(),
             default => [],
         };
     }
@@ -106,5 +108,11 @@ class DisplayController extends Controller
                 ['title' => 'New Coffee Machine', 'message' => 'Check out the new coffee machine in the break room!', 'priority' => 'low'],
             ],
         ];
+    }
+
+    private function getTogglTimeTrackingData(): array
+    {
+        $service = new TogglTimeTrackingService();
+        return $service->getCurrentWeekReport();
     }
 }

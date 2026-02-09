@@ -5,6 +5,7 @@ import BirthdayWidget from '@/Components/Widgets/BirthdayWidget';
 import RoomAvailabilityWidget from '@/Components/Widgets/RoomAvailabilityWidget';
 import ClockWeatherWidget from '@/Components/Widgets/ClockWeatherWidget';
 import AnnouncementsWidget from '@/Components/Widgets/AnnouncementsWidget';
+import TogglTimeTrackingWidget from '@/Components/Widgets/TogglTimeTrackingWidget';
 
 interface Widget {
     id: number;
@@ -75,6 +76,9 @@ export default function Show({ screen: initialScreen }: DisplayShowProps) {
                 break;
             case 'announcements':
                 WidgetComponent = AnnouncementsWidget;
+                break;
+            case 'toggl_time_tracking':
+                WidgetComponent = TogglTimeTrackingWidget;
                 break;
             default:
                 return null;
