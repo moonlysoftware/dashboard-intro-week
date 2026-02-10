@@ -1,4 +1,4 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import AppLayout from '@/Layouts/AppLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler, useState } from 'react';
 import { PageProps } from '@/types';
@@ -88,24 +88,21 @@ export default function Edit({ auth, screen, widgetTypes }: EditProps) {
     };
 
     return (
-        <AuthenticatedLayout
-            header={
-                <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-semibold leading-tight">
-                        Edit Screen: {screen.name}
-                    </h2>
-                    <Button variant="ghost" asChild>
-                        <Link href={route('screens.index')}>
-                            Back to Screens
-                        </Link>
-                    </Button>
-                </div>
-            }
-        >
+        <AppLayout>
             <Head title={`Edit Screen: ${screen.name}`} />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold leading-tight">
+                    Edit Screen: {screen.name}
+                </h2>
+                <Button variant="ghost" asChild>
+                    <Link href={route('screens.index')}>
+                        Back to Screens
+                    </Link>
+                </Button>
+            </div>
+
+            <div className="space-y-6">
                     {/* Screen Settings */}
                     <Card>
                         <CardHeader>
@@ -314,7 +311,6 @@ export default function Edit({ auth, screen, widgetTypes }: EditProps) {
                         </CardContent>
                     </Card>
                 </div>
-            </div>
-        </AuthenticatedLayout>
+        </AppLayout>
     );
 }

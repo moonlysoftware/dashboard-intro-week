@@ -1,4 +1,4 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import AppLayout from '@/Layouts/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { Button } from '@/Components/ui/button';
@@ -27,24 +27,20 @@ export default function Index({ auth, screens }: ScreensIndexProps) {
     };
 
     return (
-        <AuthenticatedLayout
-            header={
-                <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-semibold leading-tight">
-                        Screens
-                    </h2>
-                    <Button asChild>
-                        <Link href={route('screens.create')}>
-                            Create Screen
-                        </Link>
-                    </Button>
-                </div>
-            }
-        >
+        <AppLayout>
             <Head title="Screens" />
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold leading-tight">
+                    Screens
+                </h2>
+                <Button asChild>
+                    <Link href={route('screens.create')}>
+                        Create Screen
+                    </Link>
+                </Button>
+            </div>
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+            <div>
                     {screens.length === 0 ? (
                         <Card>
                             <CardContent className="pt-6">
@@ -108,8 +104,7 @@ export default function Index({ auth, screens }: ScreensIndexProps) {
                             ))}
                         </div>
                     )}
-                </div>
             </div>
-        </AuthenticatedLayout>
+        </AppLayout>
     );
 }

@@ -1,4 +1,4 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import AppLayout from '@/Layouts/AppLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import { PageProps } from '@/types';
@@ -22,24 +22,21 @@ export default function Create({ auth }: PageProps) {
     };
 
     return (
-        <AuthenticatedLayout
-            header={
-                <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-semibold leading-tight">
-                        Create Screen
-                    </h2>
-                    <Button variant="ghost" asChild>
-                        <Link href={route('screens.index')}>
-                            Back to Screens
-                        </Link>
-                    </Button>
-                </div>
-            }
-        >
+        <AppLayout>
             <Head title="Create Screen" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-2xl sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold leading-tight">
+                    Create Screen
+                </h2>
+                <Button variant="ghost" asChild>
+                    <Link href={route('screens.index')}>
+                        Back to Screens
+                    </Link>
+                </Button>
+            </div>
+
+            <div className="max-w-2xl">
                     <Card>
                         <CardHeader>
                             <CardTitle>Screen Details</CardTitle>
@@ -119,7 +116,6 @@ export default function Create({ auth }: PageProps) {
                         </CardContent>
                     </Card>
                 </div>
-            </div>
-        </AuthenticatedLayout>
+        </AppLayout>
     );
 }
