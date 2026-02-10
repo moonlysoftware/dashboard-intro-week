@@ -12,10 +12,19 @@ class ScreenController extends Controller
 {
     public function index(): Response
     {
-        $screens = Screen::withCount('widgets')->latest()->get();
+        $screens = Screen::with(['widgets' => function ($query) {
+            $query->orderBy('grid_order');
+        }])->withCount('widgets')->latest()->get();
 
         return Inertia::render('Dashboard/Screens/Index', [
             'screens' => $screens,
+            'widgetTypes' => [
+                'birthday' => 'Verjaardagen',
+                'room_availability' => 'Ruimte Beschikbaarheid',
+                'clock_weather' => 'Klok/Datum/Weer',
+                'announcements' => 'Mededelingen',
+                'toggl_time_tracking' => 'Toggl Uren Tracking',
+            ],
         ]);
     }
 
