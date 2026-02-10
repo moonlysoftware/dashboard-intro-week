@@ -40,4 +40,8 @@ return [
         'workspace' => env('TOGGL_WORKSPACE'),
     ],
 
+    'google_calendar' => [
+        'credentials' => base_path(env('GOOGLE_APPLICATION_CREDENTIALS', 'googlecloud-account.json')),
+    ],
+
 ];

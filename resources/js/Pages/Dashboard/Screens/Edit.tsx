@@ -9,6 +9,11 @@ import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
 import { Switch } from '@/Components/ui/switch';
 
+interface RoomConfig {
+    name: string;
+    calendar_id: string;
+}
+
 interface Widget {
     id: number;
     widget_type: string;
@@ -40,8 +45,42 @@ export default function Edit({ auth, screen, widgetTypes }: EditProps) {
         grid_col_span: 6,
         grid_row_span: 1,
         grid_order: widgets.length,
-        config: {},
+        config: {} as Record<string, any>,
     });
+    const [roomConfigs, setRoomConfigs] = useState<RoomConfig[]>([
+        { name: '', calendar_id: '' },
+    ]);
+
+    const handleWidgetTypeChange = (type: string) => {
+        setNewWidget({ ...newWidget, widget_type: type, config: {} });
+        if (type === 'room_availability') {
+            setRoomConfigs([{ name: '', calendar_id: '' }]);
+        }
+    };
+
+    const handleRoomChange = (index: number, field: keyof RoomConfig, value: string) => {
+        const updated = roomConfigs.map((r, i) =>
+            i === index ? { ...r, [field]: value } : r
+        );
+        setRoomConfigs(updated);
+        setNewWidget({
+            ...newWidget,
+            config: { rooms: updated.filter(r => r.name || r.calendar_id) },
+        });
+    };
+
+    const handleAddRoom = () => {
+        setRoomConfigs([...roomConfigs, { name: '', calendar_id: '' }]);
+    };
+
+    const handleRemoveRoom = (index: number) => {
+        const updated = roomConfigs.filter((_, i) => i !== index);
+        setRoomConfigs(updated);
+        setNewWidget({
+            ...newWidget,
+            config: { rooms: updated.filter(r => r.name || r.calendar_id) },
+        });
+    };
 
     const { data, setData, patch, processing, errors } = useForm({
         name: screen.name,
@@ -67,6 +106,7 @@ export default function Edit({ auth, screen, widgetTypes }: EditProps) {
                 grid_order: widgets.length + 1,
                 config: {},
             });
+            setRoomConfigs([{ name: '', calendar_id: '' }]);
         } catch (error) {
             console.error('Error adding widget:', error);
         }
@@ -201,7 +241,7 @@ export default function Edit({ auth, screen, widgetTypes }: EditProps) {
                                                     id="widget_type"
                                                     className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-base shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                                                     value={newWidget.widget_type}
-                                                    onChange={(e) => setNewWidget({ ...newWidget, widget_type: e.target.value })}
+                                                    onChange={(e) => handleWidgetTypeChange(e.target.value)}
                                                 >
                                                     {Object.entries(widgetTypes).map(([key, label]) => (
                                                         <option key={key} value={key}>{label}</option>
@@ -244,6 +284,56 @@ export default function Edit({ auth, screen, widgetTypes }: EditProps) {
                                                 />
                                             </div>
                                         </div>
+
+                                        {/* Ruimte Beschikbaarheid configuratie */}
+                                        {newWidget.widget_type === 'room_availability' && (
+                                            <div className="mt-4 space-y-3">
+                                                <div className="flex items-center justify-between">
+                                                    <Label className="text-base font-semibold">Ruimtes configureren</Label>
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={handleAddRoom}
+                                                    >
+                                                        + Ruimte toevoegen
+                                                    </Button>
+                                                </div>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Voeg de Google Calendar ID toe van elke ruimte. Deel de agenda met{' '}
+                                                    <code className="bg-muted px-1 rounded text-xs">calendar@internship-2026.iam.gserviceaccount.com</code>
+                                                </p>
+                                                {roomConfigs.map((room, index) => (
+                                                    <div key={index} className="grid grid-cols-[1fr_2fr_auto] gap-2 items-end">
+                                                        <div className="space-y-1">
+                                                            <Label className="text-xs">Naam ruimte</Label>
+                                                            <Input
+                                                                placeholder="bijv. Vergaderzaal A"
+                                                                value={room.name}
+                                                                onChange={(e) => handleRoomChange(index, 'name', e.target.value)}
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <Label className="text-xs">Google Calendar ID</Label>
+                                                            <Input
+                                                                placeholder="bijv. abc123@group.calendar.google.com"
+                                                                value={room.calendar_id}
+                                                                onChange={(e) => handleRoomChange(index, 'calendar_id', e.target.value)}
+                                                            />
+                                                        </div>
+                                                        <Button
+                                                            type="button"
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            onClick={() => handleRemoveRoom(index)}
+                                                            disabled={roomConfigs.length === 1}
+                                                        >
+                                                            &times;
+                                                        </Button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
 
                                         <div className="flex gap-2 mt-4">
                                             <Button onClick={handleAddWidget}>

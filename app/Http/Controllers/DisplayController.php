@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Screen;
+use App\Services\GoogleCalendarService;
 use App\Services\TogglTimeTrackingService;
 use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
@@ -31,7 +32,6 @@ class DisplayController extends Controller
 
         $widgets = $screen->widgets()->get();
 
-        // Generate mock data for each widget
         $widgetsWithData = $widgets->map(function ($widget) {
             return [
                 'id' => $widget->id,
@@ -52,10 +52,9 @@ class DisplayController extends Controller
 
     private function getWidgetData($widget): array
     {
-        // Generate mock data based on widget type
         return match ($widget->widget_type) {
             'birthday' => $this->getBirthdayData(),
-            'room_availability' => $this->getRoomAvailabilityData(),
+            'room_availability' => $this->getRoomAvailabilityData($widget),
             'clock_weather' => $this->getClockWeatherData(),
             'announcements' => $this->getAnnouncementsData(),
             'toggl_time_tracking' => $this->getTogglTimeTrackingData(),
@@ -74,16 +73,42 @@ class DisplayController extends Controller
         ];
     }
 
-    private function getRoomAvailabilityData(): array
+    private function getRoomAvailabilityData($widget): array
     {
-        return [
-            'rooms' => [
-                ['name' => 'Vergaderzaal A', 'status' => 'available', 'next_booking' => '14:00'],
-                ['name' => 'Vergaderzaal B', 'status' => 'occupied', 'available_at' => '11:30'],
-                ['name' => 'Vergaderzaal C', 'status' => 'available', 'next_booking' => '16:00'],
-                ['name' => 'Boardroom', 'status' => 'occupied', 'available_at' => '15:00'],
-            ],
-        ];
+        $config = $widget->config ?? [];
+        $rooms  = $config['rooms'] ?? [];
+
+        // Fallback: gebruik mock data als er geen ruimtes geconfigureerd zijn
+        if (empty($rooms)) {
+            return [
+                'rooms' => [
+                    ['name' => 'Vergaderzaal A', 'status' => 'available', 'next_booking' => '14:00', 'available_at' => null],
+                    ['name' => 'Vergaderzaal B', 'status' => 'occupied', 'next_booking' => null, 'available_at' => '11:30'],
+                    ['name' => 'Vergaderzaal C', 'status' => 'available', 'next_booking' => '16:00', 'available_at' => null],
+                    ['name' => 'Boardroom', 'status' => 'occupied', 'next_booking' => null, 'available_at' => '15:00'],
+                ],
+            ];
+        }
+
+        $service = new GoogleCalendarService();
+
+        $roomData = collect($rooms)->map(function ($room) use ($service) {
+            $calendarId = $room['calendar_id'] ?? null;
+            $roomName   = $room['name'] ?? 'Onbekende ruimte';
+
+            if (!$calendarId) {
+                return [
+                    'name'         => $roomName,
+                    'status'       => 'available',
+                    'next_booking' => null,
+                    'available_at' => null,
+                ];
+            }
+
+            return $service->getRoomAvailability($calendarId, $roomName);
+        })->values()->toArray();
+
+        return ['rooms' => $roomData];
     }
 
     private function getClockWeatherData(): array
