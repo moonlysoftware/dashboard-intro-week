@@ -1,92 +1,97 @@
 import WidgetNotConfigured from '@/Components/Widgets/WidgetNotConfigured';
 
 interface Room {
-    name: string;
-    status: 'available' | 'occupied';
-    next_booking?: string | null;
-    available_at?: string | null;
+  name: string;
+  status: 'available' | 'occupied';
+  next_booking?: string | null;
+  available_at?: string | null;
 }
 
 interface RoomAvailabilityWidgetProps {
-    config: Record<string, any>;
-    data: {
-        rooms?: Room[];
-    };
+  config: Record<string, any>;
+  data: {
+    rooms?: Room[];
+  };
 }
 
-export default function RoomAvailabilityWidget({ config, data }: RoomAvailabilityWidgetProps) {
-    const configuredRooms: { name: string; calendar_id: string }[] = config?.rooms ?? [];
-    const isConfigured = configuredRooms.some((r) => r.calendar_id?.trim());
+// Light positions as % of the reference frame
+const lightPositions = [
+  { top: 5.3, left: 22.85 },
+  { top: 5.3, left: 49.7 },
+  { top: 5.3, left: 76.2 },
+];
 
-    if (!isConfigured) {
-        return <WidgetNotConfigured message="Nog geen ruimtes geconfigureerd" />;
-    }
+// Room container positions as % of the reference frame
+const roomPositions = [
+  { top: 27.6, left: 23 },
+  { top: 27.6, left: 49.7 },
+  { top: 27.6, left: 76.1 },
+];
 
-    const rooms = data.rooms || [];
+export default function RoomAvailabilityWidget({ data }: RoomAvailabilityWidgetProps) {
+  const rooms = data.rooms || [];
 
-    return (
-        <div className="bg-white rounded-lg shadow-lg p-6 h-full flex flex-col">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">Ruimte Beschikbaarheid</h3>
+  return (
+    <div className="relative w-full h-full rounded-lg overflow-hidden">
+      {/* Reference frame maintaining Base.png aspect ratio */}
+      <div className="relative w-full" style={{ paddingTop: '33.33%' }}>
+        {/* Base image */}
+        <div
+          className="absolute top-0 left-0 w-full h-full"
+          style={{
+            backgroundImage: "url('/storage/meetingRooms/Base.png')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center 83%',
+          }}
+        >
+          {/* Lights */}
+          {rooms.slice(0, 3).map((room, index) => {
+            const pos = lightPositions[index];
+            return (
+              <div
+                key={index}
+                className={`absolute rounded-[7px] shadow-sm ${
+                  room.status === 'available' ? 'bg-green-500' : 'bg-red-500'
+                }`}
+                style={{
+                  width: '14.3%',
+                  height: '4.6%',
+                  top: `${pos.top}%`,
+                  left: `${pos.left}%`,
+                  transform: 'translate(-50%, -50%)',
+                }}
+              />
+            );
+          })}
 
-            {rooms.length === 0 ? (
-                <p className="text-gray-500">Geen ruimtes geconfigureerd</p>
-            ) : (
-                <div className="flex flex-col gap-3 flex-1">
-                    {rooms.map((room, index) => (
-                        <div
-                            key={index}
-                            className="flex items-center gap-4 p-3 rounded-lg bg-gray-50 border border-gray-100"
-                        >
-                            {/* Status cirkel */}
-                            <div className="flex-shrink-0">
-                                <span
-                                    className={`block w-5 h-5 rounded-full shadow-sm ${
-                                        room.status === 'available'
-                                            ? 'bg-green-500 shadow-green-200'
-                                            : 'bg-red-500 shadow-red-200'
-                                    }`}
-                                    title={room.status === 'available' ? 'Beschikbaar' : 'Bezet'}
-                                />
-                            </div>
-
-                            {/* Ruimtenaam en tijdsinformatie */}
-                            <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-gray-900 truncate">{room.name}</p>
-                                {room.status === 'available' ? (
-                                    room.next_booking ? (
-                                        <p className="text-sm text-gray-500">
-                                            Bezet om {room.next_booking}
-                                        </p>
-                                    ) : (
-                                        <p className="text-sm text-gray-400">Vrij de rest van de dag</p>
-                                    )
-                                ) : (
-                                    room.available_at ? (
-                                        <p className="text-sm text-gray-500">
-                                            Vrij om {room.available_at}
-                                        </p>
-                                    ) : (
-                                        <p className="text-sm text-gray-400">Bezet</p>
-                                    )
-                                )}
-                            </div>
-
-                            {/* Status label */}
-                            <div className="flex-shrink-0">
-                                <span
-                                    className={`text-sm font-semibold ${
-                                        room.status === 'available'
-                                            ? 'text-green-600'
-                                            : 'text-red-600'
-                                    }`}
-                                >
-                                    {room.status === 'available' ? 'Vrij' : 'Bezet'}
-                                </span>
-                            </div>
-                        </div>
-                    ))}
+          {/* Room containers positioned independently */}
+          {rooms.slice(0, 3).map((room, index) => {
+            const pos = roomPositions[index];
+            return (
+              <div
+                key={`container-${index}`}
+                className="absolute bg-black bg-opacity-80 text-white p-1 rounded-md text-xs text-center shadow"
+                style={{
+                  width: '7.0%', // match light width for consistency
+                  height: '19%',    // enough height for text
+                  top: `${pos.top}%`,
+                  left: `${pos.left}%`,
+                  transform: 'translate(-50%, 0)',
+                }}
+              >
+                <div className="font-semibold truncate">{room.name}</div>
+                <div className="truncate text-[0.7rem]">
+                  {room.status === 'available'
+                    ? 'Available now'
+                    : room.available_at
+                    ? `Available at ${room.available_at}`
+                    : 'Occupied'}
                 </div>
-            )}
+              </div>
+            );
+          })}
         </div>
-    );
+      </div>
+    </div>
+  );
 }
