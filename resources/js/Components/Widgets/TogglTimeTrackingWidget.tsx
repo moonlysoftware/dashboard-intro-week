@@ -1,3 +1,5 @@
+import WidgetNotConfigured from '@/Components/Widgets/WidgetNotConfigured';
+
 interface MissingHoursUser {
     name: string;
     hours_missing: string;
@@ -19,6 +21,12 @@ interface TogglTimeTrackingWidgetProps {
 }
 
 export default function TogglTimeTrackingWidget({ config: _config, data }: TogglTimeTrackingWidgetProps) {
+    const isConfigured = data && Object.keys(data).length > 0;
+
+    if (!isConfigured) {
+        return <WidgetNotConfigured message="Toggl API nog niet geconfigureerd" />;
+    }
+
     const {
         week_number = 0,
         year = new Date().getFullYear(),
@@ -124,14 +132,6 @@ export default function TogglTimeTrackingWidget({ config: _config, data }: Toggl
                 </div>
             )}
 
-            {/* Footer Info */}
-            {total_users === 0 && (
-                <div className="mt-6 p-4 bg-muted/50 rounded-lg border border-border">
-                    <p className="text-sm text-muted-foreground text-center">
-                        Configureer Toggl API credentials in .env om data te zien
-                    </p>
-                </div>
-            )}
         </div>
     );
 }

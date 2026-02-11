@@ -47,6 +47,7 @@ class DisplayController extends Controller
         return response()->json([
             'widgets' => $widgetsWithData,
             'refresh_interval' => $screen->refresh_interval,
+            'layout' => $screen->layout,
         ]);
     }
 

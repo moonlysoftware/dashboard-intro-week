@@ -19,6 +19,16 @@ class WidgetController extends Controller
             'grid_order' => 'required|integer|min:0',
         ]);
 
+        if (empty($validated['config'])) {
+            $existingConfig = Widget::where('widget_type', $validated['widget_type'])
+                ->whereNotNull('config')
+                ->value('config');
+
+            if ($existingConfig) {
+                $validated['config'] = $existingConfig;
+            }
+        }
+
         $widget = $screen->widgets()->create($validated);
 
         return response()->json($widget, 201);
@@ -34,7 +44,14 @@ class WidgetController extends Controller
             'grid_order' => 'sometimes|integer|min:0',
         ]);
 
-        $widget->update($validated);
+        if (array_key_exists('config', $validated)) {
+            Widget::where('widget_type', $widget->widget_type)
+                ->update(['config' => json_encode($validated['config'])]);
+
+            $widget->refresh();
+        } else {
+            $widget->update($validated);
+        }
 
         return response()->json($widget);
     }

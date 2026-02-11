@@ -1,3 +1,5 @@
+import WidgetNotConfigured from '@/Components/Widgets/WidgetNotConfigured';
+
 interface Room {
     name: string;
     status: 'available' | 'occupied';
@@ -13,6 +15,13 @@ interface RoomAvailabilityWidgetProps {
 }
 
 export default function RoomAvailabilityWidget({ config, data }: RoomAvailabilityWidgetProps) {
+    const configuredRooms: { name: string; calendar_id: string }[] = config?.rooms ?? [];
+    const isConfigured = configuredRooms.some((r) => r.calendar_id?.trim());
+
+    if (!isConfigured) {
+        return <WidgetNotConfigured message="Nog geen ruimtes geconfigureerd" />;
+    }
+
     const rooms = data.rooms || [];
 
     return (

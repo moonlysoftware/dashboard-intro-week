@@ -17,10 +17,24 @@ interface Widget {
     data: any;
 }
 
+type BentoLayout = 'bento_start_small' | 'bento_start_large';
+
+function getColSpan(gridOrder: number, layout: BentoLayout): number {
+    // Row 1 and row 2 are always opposite to each other
+    // bento_start_small: [3, 9, 9, 3]
+    // bento_start_large: [9, 3, 3, 9]
+    const spans: Record<BentoLayout, [number, number, number, number]> = {
+        bento_start_small: [3, 9, 9, 3],
+        bento_start_large: [9, 3, 3, 9],
+    };
+    return spans[layout][gridOrder] ?? 6;
+}
+
 interface Screen {
     id: number;
     name: string;
     refresh_interval: number;
+    layout: BentoLayout;
     widgets: Widget[];
 }
 
@@ -31,6 +45,7 @@ interface DisplayShowProps {
 export default function Show({ screen: initialScreen }: DisplayShowProps) {
     const [widgets, setWidgets] = useState<Widget[]>(initialScreen.widgets || []);
     const [refreshInterval, setRefreshInterval] = useState(initialScreen.refresh_interval);
+    const [layout, setLayout] = useState<BentoLayout>(initialScreen.layout ?? 'bento_start_small');
 
     useEffect(() => {
         // Fetch widget data immediately
@@ -49,14 +64,14 @@ export default function Show({ screen: initialScreen }: DisplayShowProps) {
             const response = await axios.get(route('display.data', initialScreen.id));
             setWidgets(response.data.widgets);
             setRefreshInterval(response.data.refresh_interval);
+            if (response.data.layout) setLayout(response.data.layout);
         } catch (error) {
             console.error('Error fetching widget data:', error);
         }
     };
 
     const renderWidget = (widget: Widget) => {
-        const gridColSpanClass = `col-span-${widget.grid_col_span}`;
-        const gridRowSpanClass = `row-span-${widget.grid_row_span}`;
+        const colSpan = getColSpan(widget.grid_order, layout);
 
         const widgetProps = {
             config: widget.config || {},
@@ -87,8 +102,7 @@ export default function Show({ screen: initialScreen }: DisplayShowProps) {
         return (
             <div
                 key={widget.id}
-                className={`${gridColSpanClass} ${gridRowSpanClass}`}
-                style={{ gridColumn: `span ${widget.grid_col_span}` }}
+                style={{ gridColumn: `span ${colSpan}` }}
             >
                 <WidgetComponent {...widgetProps} />
             </div>

@@ -161,11 +161,14 @@ function CanvasSlot({
 
 // ── Canvas ────────────────────────────────────────────────────────────────────
 
+type BentoLayout = 'bento_start_small' | 'bento_start_large';
+
 export interface ScreenCanvasProps {
     screenId: number;
     widgets: Widget[];
     widgetTypes: Record<string, string>;
     isScreenActive: boolean;
+    layout?: BentoLayout;
     selectedWidgetId?: number | null;
     onWidgetClick: (widget: Widget) => void;
     onWidgetRemove: (widgetId: number) => void;
@@ -176,26 +179,37 @@ export function ScreenCanvas({
     widgets,
     widgetTypes,
     isScreenActive,
+    layout = 'bento_start_small',
     selectedWidgetId,
     onWidgetClick,
     onWidgetRemove,
 }: ScreenCanvasProps) {
+    // Row 1 and row 2 are always opposite:
+    // bento_start_small: [3, 9, 9, 3] (out of 12)
+    // bento_start_large: [9, 3, 3, 9] (out of 12)
+    const colSpans: Record<BentoLayout, [number, number, number, number]> = {
+        bento_start_small: [3, 9, 9, 3],
+        bento_start_large: [9, 3, 3, 9],
+    };
+
     return (
-        <div className="grid grid-cols-2 gap-2 mt-1">
+        <div className="grid grid-cols-12 gap-2 mt-1">
             {Array.from({ length: SLOT_COUNT }, (_, i) => {
                 const widget = widgets.find((w) => w.grid_order === i);
+                const span = colSpans[layout][i];
                 return (
-                    <CanvasSlot
-                        key={i}
-                        slotId={`slot-${screenId}-${i}`}
-                        screenId={screenId}
-                        widget={widget}
-                        widgetTypes={widgetTypes}
-                        isScreenActive={isScreenActive}
-                        isSelected={widget?.id === selectedWidgetId}
-                        onWidgetClick={onWidgetClick}
-                        onWidgetRemove={onWidgetRemove}
-                    />
+                    <div key={i} style={{ gridColumn: `span ${span}` }}>
+                        <CanvasSlot
+                            slotId={`slot-${screenId}-${i}`}
+                            screenId={screenId}
+                            widget={widget}
+                            widgetTypes={widgetTypes}
+                            isScreenActive={isScreenActive}
+                            isSelected={widget?.id === selectedWidgetId}
+                            onWidgetClick={onWidgetClick}
+                            onWidgetRemove={onWidgetRemove}
+                        />
+                    </div>
                 );
             })}
         </div>

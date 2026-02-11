@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AppLayout from '@/Layouts/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { PageProps } from '@/types';
@@ -28,11 +28,13 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
-import { MoreVertical, Pencil, Trash2, GripVertical } from 'lucide-react';
+import { MoreVertical, Pencil, Trash2, GripVertical, PanelLeft, PanelRight } from 'lucide-react';
 import { ScreenCanvas } from '@/Components/Screens/ScreenCanvas';
 import { WidgetLibraryPanel } from '@/Components/Screens/WidgetLibraryPanel';
 import { WidgetSettingsPanel } from '@/Components/Screens/WidgetSettingsPanel';
 import type { Widget } from '@/Components/Screens/ScreenCanvas';
+
+type BentoLayout = 'bento_start_small' | 'bento_start_large';
 
 interface Screen {
     id: number;
@@ -40,6 +42,7 @@ interface Screen {
     description: string | null;
     refresh_interval: number;
     is_active: boolean;
+    layout: BentoLayout;
     widgets_count: number;
     widgets: Widget[];
     created_at: string;
@@ -61,6 +64,14 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
     const [activeScreenId, setActiveScreenId] = useState<number | null>(null);
     const [selectedWidget, setSelectedWidget] = useState<SelectedWidget | null>(null);
     const [activeDragLabel, setActiveDragLabel] = useState<string | null>(null);
+
+    useEffect(() => {
+        router.reload({ only: ['screens'] });
+    }, []);
+
+    useEffect(() => {
+        setScreens(initialScreens);
+    }, [initialScreens]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -199,13 +210,47 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
         setSelectedWidget({ widget, screenId });
     };
 
-    const handleWidgetSaved = (screenId: number, updatedWidget: Widget) => {
+    const handleWidgetTypeClick = (widgetType: string) => {
+        for (const screen of screens) {
+            const widget = screen.widgets.find((w) => w.widget_type === widgetType);
+            if (widget) {
+                setSelectedWidget({ widget, screenId: screen.id });
+                return;
+            }
+        }
+    };
+
+    const handleLayoutChange = async (screenId: number, layout: BentoLayout) => {
         setScreens((prev) =>
-            prev.map((s) =>
-                s.id === screenId
-                    ? { ...s, widgets: s.widgets.map((w) => (w.id === updatedWidget.id ? updatedWidget : w)) }
-                    : s
-            )
+            prev.map((s) => (s.id === screenId ? { ...s, layout } : s))
+        );
+        try {
+            await axios.patch(route('screens.updateLayout', screenId), { layout });
+        } catch (error) {
+            console.error('Error updating layout:', error);
+            setScreens((prev) =>
+                prev.map((s) =>
+                    s.id === screenId
+                        ? { ...s, layout: layout === 'bento_start_small' ? 'bento_start_large' : 'bento_start_small' }
+                        : s
+                )
+            );
+        }
+    };
+
+    const handleWidgetSaved = (screenId: number, updatedWidget: Widget) => {
+        // Config is shared across all widgets of the same type — sync it everywhere
+        setScreens((prev) =>
+            prev.map((s) => ({
+                ...s,
+                widgets: s.widgets.map((w) =>
+                    w.id === updatedWidget.id
+                        ? updatedWidget
+                        : w.widget_type === updatedWidget.widget_type
+                          ? { ...w, config: updatedWidget.config }
+                          : w
+                ),
+            }))
         );
         if (selectedWidget) {
             setSelectedWidget({ widget: updatedWidget, screenId });
@@ -308,7 +353,33 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
                                                         </span>
                                                     </div>
 
-                                                    <DropdownMenu>
+                                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className={`h-7 w-7 p-0 ${screen.layout === 'bento_start_small' ? 'text-primary bg-primary/10' : 'text-muted-foreground'}`}
+                                                            title="Smal links, breed rechts"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleLayoutChange(screen.id, 'bento_start_small');
+                                                            }}
+                                                        >
+                                                            <PanelLeft className="h-4 w-4" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className={`h-7 w-7 p-0 ${screen.layout === 'bento_start_large' ? 'text-primary bg-primary/10' : 'text-muted-foreground'}`}
+                                                            title="Breed links, smal rechts"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleLayoutChange(screen.id, 'bento_start_large');
+                                                            }}
+                                                        >
+                                                            <PanelRight className="h-4 w-4" />
+                                                        </Button>
+
+                                                        <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
                                                             <Button
                                                                 variant="ghost"
@@ -340,6 +411,7 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
                                                             </DropdownMenuItem>
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
+                                                    </div>
                                                 </div>
 
                                                 {screen.description && (
@@ -360,6 +432,7 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
                                                     widgets={screen.widgets}
                                                     widgetTypes={widgetTypes}
                                                     isScreenActive={isActive}
+                                                    layout={screen.layout ?? 'bento_start_small'}
                                                     onWidgetClick={(widget) => handleWidgetClick(widget, screen.id)}
                                                     onWidgetRemove={(widgetId) => handleWidgetRemove(screen.id, widgetId)}
                                                     selectedWidgetId={
@@ -401,7 +474,10 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
                                 )}
                             </CardHeader>
                             <CardContent>
-                                <WidgetLibraryPanel widgetTypes={widgetTypes} />
+                                <WidgetLibraryPanel
+                                    widgetTypes={widgetTypes}
+                                    onWidgetTypeClick={handleWidgetTypeClick}
+                                />
                             </CardContent>
                         </Card>
 

@@ -30,6 +30,9 @@ Route::middleware('auth')->group(function () {
     // Screen Management Routes
     Route::resource('screens', ScreenController::class);
 
+    // Screen Layout Route
+    Route::patch('screens/{screen}/layout', [ScreenController::class, 'updateLayout'])->name('screens.updateLayout');
+
     // Widget Management Routes
     Route::post('screens/{screen}/widgets', [WidgetController::class, 'store'])->name('widgets.store');
     Route::patch('widgets/{widget}', [WidgetController::class, 'update'])->name('widgets.update');
