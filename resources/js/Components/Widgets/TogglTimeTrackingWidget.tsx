@@ -1,4 +1,4 @@
-import WidgetNotConfigured from '@/Components/Widgets/WidgetNotConfigured';
+import WidgetNotConfigured from "@/Components/Widgets/WidgetNotConfigured";
 
 interface MissingHoursUser {
     name: string;
@@ -20,11 +20,16 @@ interface TogglTimeTrackingWidgetProps {
     };
 }
 
-export default function TogglTimeTrackingWidget({ config: _config, data }: TogglTimeTrackingWidgetProps) {
+export default function TogglTimeTrackingWidget({
+    config: _config,
+    data,
+}: TogglTimeTrackingWidgetProps) {
     const isConfigured = data && Object.keys(data).length > 0;
 
     if (!isConfigured) {
-        return <WidgetNotConfigured message="Toggl API nog niet geconfigureerd" />;
+        return (
+            <WidgetNotConfigured message="Toggl API nog niet geconfigureerd" />
+        );
     }
 
     const {
@@ -38,35 +43,41 @@ export default function TogglTimeTrackingWidget({ config: _config, data }: Toggl
     } = data;
 
     const getProgressColor = (percentage: number) => {
-        if (percentage >= 90) return 'bg-green-500';
-        if (percentage >= 70) return 'bg-yellow-500';
-        return 'bg-red-500';
+        if (percentage >= 90) return "bg-green-500";
+        if (percentage >= 70) return "bg-yellow-500";
+        return "bg-red-500";
     };
 
     const getUserStatusColor = (percentage: number) => {
-        if (percentage >= 95) return 'border-green-500 bg-green-50 dark:bg-green-900/20';
-        if (percentage >= 85) return 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20';
-        return 'border-red-500 bg-red-50 dark:bg-red-900/20';
+        if (percentage >= 95)
+            return "border-green-500 bg-green-50 dark:bg-green-900/20";
+        if (percentage >= 85)
+            return "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20";
+        return "border-red-500 bg-red-50 dark:bg-red-900/20";
     };
 
     const getUserStatusBadge = (percentage: number) => {
-        if (percentage >= 95) return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
-        if (percentage >= 85) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+        if (percentage >= 95)
+            return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+        if (percentage >= 85)
+            return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
+        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
     };
 
     return (
-        <div className="bg-card rounded-lg shadow-lg p-6 h-full border border-border">
+        <div className="bg-black rounded-lg shadow-lg p-6 h-full border border-border">
             <div className="flex items-center gap-3 mb-4">
-                <div>
-                    <h3 className="text-xl font-bold text-foreground">Toggl Uren Tracking</h3>
-                    <p className="text-sm text-muted-foreground">
+                <div className="flex items-center justify-between w-full">
+                    <h3 className="text-white text-[36px] font-bold text-foreground">
+                        Toggl Wall of Shame
+                    </h3>
+                    <p className="text-white/50 text-[36px]">
                         Week {week_number} - {year}
                     </p>
                 </div>
             </div>
 
-            {/* Overall Progress */}
+            {/* Overall Progress 
             <div className="mb-6">
                 <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-semibold text-foreground">Totaal Voortgang</span>
@@ -84,44 +95,49 @@ export default function TogglTimeTrackingWidget({ config: _config, data }: Toggl
                     <span>Σ {total_users} totaal</span>
                 </div>
             </div>
+            */}
 
             {/* Missing Hours Users */}
             {missing_hours_users.length === 0 ? (
                 <div className="text-center py-8 border-2 border-dashed border-border rounded-lg">
-                    <p className="text-foreground font-semibold">Iedereen heeft alle uren ingevuld!</p>
-                    <p className="text-sm text-muted-foreground mt-1">Geweldig werk team!</p>
+                    <p className="text-foreground font-semibold">
+                        Iedereen heeft alle uren ingevuld!
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        Geweldig werk team!
+                    </p>
                 </div>
             ) : (
                 <div className="space-y-2">
-                    <h4 className="text-sm font-semibold text-foreground mb-3">
+                    {/* <h4 className="text-white/50 text-sm font-semibold mb-3">
                         Nog in te vullen ({missing_hours_users.length})
-                    </h4>
+                    </h4> */}
+
                     <div className="space-y-2 max-h-96 overflow-y-auto">
-                        {missing_hours_users.map((user, index) => (
+                        {missing_hours_users.slice(0, 3).map((user, index) => (
                             <div
                                 key={index}
-                                className={`border-l-4 rounded-lg p-3 transition-all ${getUserStatusColor(user.percentage)}`}
+                                className={`flex flex-col justify-center w-[50%] border-2 border-white/10 bg-white/15 border-l-4 rounded-lg p-3 transition-all ${getUserStatusColor(user.percentage)}`}
                             >
-                                <div className="flex justify-between items-start mb-2">
-                                    <div>
-                                        <p className="font-semibold text-foreground">{user.name}</p>
-                                        <p className="text-xs text-muted-foreground">
-                                            Ingevuld: {user.hours_clocked}
+                                <div className="flex justify-between items-center mb-2 ">
+                                    <div className="flex items-center gap-2">
+                                        <p className="font-semibold text-white text-[30px]">
+                                            {user.name}
+                                        </p>
+                                        <p className="text-[30px] text-white/50">
+                                            | {user.hours_clocked.slice(0, 5)}{" "}
+                                            geklokt!
                                         </p>
                                     </div>
-                                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getUserStatusBadge(user.percentage)}`}>
-                                        {user.percentage}%
-                                    </span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <div className="flex-1">
-                                        <p className="text-sm font-bold text-destructive">
-                                            Nog {user.hours_missing} te gaan
-                                        </p>
                                         <div className="w-full bg-muted/50 rounded-full h-1.5 mt-1">
                                             <div
                                                 className="bg-primary h-full rounded-full transition-all"
-                                                style={{ width: `${user.percentage}%` }}
+                                                style={{
+                                                    width: `${user.percentage}%`,
+                                                }}
                                             />
                                         </div>
                                     </div>
@@ -131,7 +147,6 @@ export default function TogglTimeTrackingWidget({ config: _config, data }: Toggl
                     </div>
                 </div>
             )}
-
         </div>
     );
 }
