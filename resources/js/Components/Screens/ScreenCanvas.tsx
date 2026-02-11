@@ -1,6 +1,7 @@
 import { useDroppable, useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { X, GripVertical } from 'lucide-react';
+import { isWideOnlyWidget, isSmallSlot } from '@/constants/widgets';
 
 export interface Widget {
     id: number;
@@ -84,6 +85,7 @@ interface CanvasSlotProps {
     widgetTypes: Record<string, string>;
     isScreenActive: boolean;
     isSelected: boolean;
+    isBlocked: boolean;
     onWidgetClick: (widget: Widget) => void;
     onWidgetRemove: (widgetId: number) => void;
 }
@@ -95,6 +97,7 @@ function CanvasSlot({
     widgetTypes,
     isScreenActive,
     isSelected,
+    isBlocked,
     onWidgetClick,
     onWidgetRemove,
 }: CanvasSlotProps) {
@@ -107,18 +110,27 @@ function CanvasSlot({
         if (isSelected) {
             borderClass = 'border-solid border-primary';
             bgClass = 'bg-primary/10';
-        } else if (isOver) {
+        } else if (isOver && !isBlocked) {
             borderClass = 'border-solid border-primary/60';
             bgClass = 'bg-primary/5';
+        } else if (isOver && isBlocked) {
+            borderClass = 'border-solid border-destructive/60';
+            bgClass = 'bg-destructive/5';
         } else {
             borderClass = 'border-solid border-border';
             bgClass = 'bg-muted/40';
         }
     } else {
         // Empty slot
-        if (isOver && isScreenActive) {
+        if (isOver && isScreenActive && isBlocked) {
+            borderClass = 'border-dashed border-destructive';
+            bgClass = 'bg-destructive/5';
+        } else if (isOver && isScreenActive) {
             borderClass = 'border-dashed border-primary';
             bgClass = 'bg-primary/5 scale-[1.02]';
+        } else if (isBlocked && isScreenActive) {
+            borderClass = 'border-dashed border-destructive/30';
+            bgClass = '';
         } else if (isScreenActive) {
             borderClass = 'border-dashed border-muted-foreground/30 hover:border-muted-foreground/50';
             bgClass = '';
@@ -145,14 +157,24 @@ function CanvasSlot({
             ) : (
                 <span
                     className={`text-[10px] select-none transition-colors ${
-                        isOver && isScreenActive
+                        isOver && isScreenActive && isBlocked
+                            ? 'text-destructive font-medium'
+                            : isOver && isScreenActive
                             ? 'text-primary font-medium'
+                            : isBlocked && isScreenActive
+                            ? 'text-destructive/50'
                             : isScreenActive
                             ? 'text-muted-foreground/40'
                             : 'text-transparent'
                     }`}
                 >
-                    {isOver && isScreenActive ? 'Loslaten' : 'Sleep hier'}
+                    {isOver && isScreenActive && isBlocked
+                        ? 'Niet beschikbaar'
+                        : isOver && isScreenActive
+                        ? 'Loslaten'
+                        : isBlocked && isScreenActive
+                        ? 'Alleen breed'
+                        : 'Sleep hier'}
                 </span>
             )}
         </div>
@@ -169,6 +191,7 @@ export interface ScreenCanvasProps {
     widgetTypes: Record<string, string>;
     isScreenActive: boolean;
     layout?: BentoLayout;
+    activeDragWidgetType?: string | null;
     selectedWidgetId?: number | null;
     onWidgetClick: (widget: Widget) => void;
     onWidgetRemove: (widgetId: number) => void;
@@ -180,10 +203,12 @@ export function ScreenCanvas({
     widgetTypes,
     isScreenActive,
     layout = 'bento_start_small',
+    activeDragWidgetType,
     selectedWidgetId,
     onWidgetClick,
     onWidgetRemove,
 }: ScreenCanvasProps) {
+    const isDragWide = activeDragWidgetType ? isWideOnlyWidget(activeDragWidgetType) : false;
     // Row 1 and row 2 are always opposite:
     // bento_start_small: [3, 9, 9, 3] (out of 12)
     // bento_start_large: [9, 3, 3, 9] (out of 12)
@@ -206,6 +231,7 @@ export function ScreenCanvas({
                             widgetTypes={widgetTypes}
                             isScreenActive={isScreenActive}
                             isSelected={widget?.id === selectedWidgetId}
+                            isBlocked={isDragWide && isSmallSlot(i, layout)}
                             onWidgetClick={onWidgetClick}
                             onWidgetRemove={onWidgetRemove}
                         />
