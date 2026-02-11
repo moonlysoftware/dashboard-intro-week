@@ -114,31 +114,24 @@ export default function TogglTimeTrackingWidget({
                     </h4> */}
 
                     <div className="space-y-2 max-h-96 overflow-y-auto">
-                        {missing_hours_users.map((user, index) => (
+                        {missing_hours_users.slice(0, 3).map((user, index) => (
                             <div
                                 key={index}
-                                className={`border-l-4 rounded-lg p-3 transition-all ${getUserStatusColor(user.percentage)}`}
+                                className={`flex flex-col justify-center w-[50%] border-2 border-white/10 bg-white/15 border-l-4 rounded-lg p-3 transition-all ${getUserStatusColor(user.percentage)}`}
                             >
-                                <div className="flex justify-between items-start mb-2">
-                                    <div>
-                                        <p className="font-semibold text-foreground">
+                                <div className="flex justify-between items-center mb-2 ">
+                                    <div className="flex items-center gap-2">
+                                        <p className="font-semibold text-white text-[30px]">
                                             {user.name}
                                         </p>
-                                        <p className="text-xs text-muted-foreground">
-                                            Ingevuld: {user.hours_clocked}
+                                        <p className="text-[30px] text-white/50">
+                                            | {user.hours_clocked.slice(0, 5)}{" "}
+                                            geklokt!
                                         </p>
                                     </div>
-                                    <span
-                                        className={`text-xs font-semibold px-2 py-1 rounded-full ${getUserStatusBadge(user.percentage)}`}
-                                    >
-                                        {user.percentage}%
-                                    </span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <div className="flex-1">
-                                        <p className="text-sm font-bold text-destructive">
-                                            Nog {user.hours_missing} te gaan
-                                        </p>
                                         <div className="w-full bg-muted/50 rounded-full h-1.5 mt-1">
                                             <div
                                                 className="bg-primary h-full rounded-full transition-all"
