@@ -106,34 +106,35 @@ export default function BirthdayWidget({ config: _config, data: _data }: Birthda
                 {backgroundLayers(primary.image)}
 
                 <div
+                    className="absolute top-0 left-0 right-0 flex flex-col items-center text-white text-center"
+                    style={{
+                        zIndex: 30,
+                        background: 'linear-gradient(to bottom, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 70%, transparent 100%)',
+                        padding: 'clamp(1rem, 2vw, 2rem)',
+                        paddingBottom: 'clamp(3rem, 6vw, 6rem)',
+                    }}
+                >
+                    <p className="font-black uppercase tracking-widest drop-shadow"
+                        style={{ fontSize: 'clamp(2rem, 5vw, 4.5rem)' }}>
+                        Gefeliciteerd!
+                    </p>
+                </div>
+
+                <div
                     className="absolute bottom-0 left-0 right-0 flex flex-col items-center text-white text-center"
                     style={{
                         zIndex: 30,
-                        background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)',
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)',
                         padding: 'clamp(1rem, 2vw, 2rem)',
-                        paddingTop: 'clamp(2rem, 4vw, 4rem)',
+                        paddingTop: 'clamp(4rem, 8vw, 8rem)',
                     }}
                 >
-                    <p className="font-semibold uppercase tracking-widest drop-shadow"
-                        style={{ fontSize: 'clamp(0.7rem, 1.1vw, 1rem)' }}>
-                        Gefeliciteerd!
-                    </p>
-                    <p className="font-bold drop-shadow" style={{ fontSize: 'clamp(1rem, 2vw, 2rem)' }}>
+                    <p className="font-bold drop-shadow" style={{ fontSize: 'clamp(1.8rem, 4vw, 3.5rem)' }}>
                         {primary.name}
                     </p>
-                    <p className="text-white/80" style={{ fontSize: 'clamp(0.65rem, 1vw, 0.9rem)' }}>
+                    <p className="font-semibold uppercase tracking-widest drop-shadow" style={{ fontSize: 'clamp(1rem, 2vw, 1.6rem)' }}>
                         wordt vandaag {getAgeThisBirthday(primary.birthdate)} jaar!
                     </p>
-
-                    {others.length > 0 && (
-                        <div className="flex flex-wrap justify-center" style={{ gap: 'clamp(0.5rem, 1vw, 1rem)', marginTop: 'clamp(0.5rem, 1vw, 1rem)' }}>
-                            {others.map((p) => (
-                                <p key={p.id} className="text-white/70" style={{ fontSize: 'clamp(0.6rem, 0.9vw, 0.85rem)' }}>
-                                    🎂 {p.name} ({getAgeThisBirthday(p.birthdate)} jaar)
-                                </p>
-                            ))}
-                        </div>
-                    )}
                 </div>
             </div>
         );
@@ -161,7 +162,37 @@ export default function BirthdayWidget({ config: _config, data: _data }: Birthda
         >
             {backgroundLayers(primary.image)}
 
-            
+            <div
+                className="absolute top-0 left-0 right-0 flex flex-col items-center text-white text-center"
+                style={{
+                    zIndex: 30,
+                    background: 'linear-gradient(to bottom, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 70%, transparent 100%)',
+                    padding: 'clamp(1rem, 2vw, 2rem)',
+                    paddingBottom: 'clamp(3rem, 6vw, 6rem)',
+                }}
+            >
+                <p className="font-black uppercase tracking-widest drop-shadow"
+                    style={{ fontSize: 'clamp(2rem, 5vw, 4.5rem)' }}>
+                    Bijna jarig!
+                </p>
+            </div>
+
+            <div
+                className="absolute bottom-0 left-0 right-0 flex flex-col items-center text-white text-center"
+                style={{
+                    zIndex: 30,
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)',
+                    padding: 'clamp(1rem, 2vw, 2rem)',
+                    paddingTop: 'clamp(4rem, 8vw, 8rem)',
+                }}
+            >
+                <p className="font-bold drop-shadow" style={{ fontSize: 'clamp(1.8rem, 4vw, 3.5rem)' }}>
+                    {primary.name}
+                </p>
+                <p className="font-semibold uppercase tracking-widest drop-shadow" style={{ fontSize: 'clamp(1rem, 2vw, 1.6rem)' }}>
+                    wordt over {days} {days === 1 ? 'dag' : 'dagen'} {getAgeThisBirthday(primary.birthdate)} jaar
+                </p>
+            </div>
         </div>
     );
 }
