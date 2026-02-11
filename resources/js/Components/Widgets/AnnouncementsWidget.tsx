@@ -1,3 +1,5 @@
+import WidgetNotConfigured from '@/Components/Widgets/WidgetNotConfigured';
+
 interface Announcement {
     title: string;
     message: string;
@@ -11,8 +13,12 @@ interface AnnouncementsWidgetProps {
     };
 }
 
-export default function AnnouncementsWidget({ config, data }: AnnouncementsWidgetProps) {
-    const announcements = data.announcements || [];
+export default function AnnouncementsWidget({ config: _config, data }: AnnouncementsWidgetProps) {
+    const announcements = data.announcements ?? [];
+
+    if (announcements.length === 0) {
+        return <WidgetNotConfigured message="Nog geen mededelingen toegevoegd" />;
+    }
 
     const getPriorityColor = (priority: string) => {
         switch (priority) {
@@ -46,30 +52,26 @@ export default function AnnouncementsWidget({ config, data }: AnnouncementsWidge
                 <h3 className="text-xl font-bold text-gray-800">Mededelingen</h3>
             </div>
 
-            {announcements.length === 0 ? (
-                <p className="text-gray-500">Geen mededelingen</p>
-            ) : (
-                <div className="space-y-3">
-                    {announcements.map((announcement, index) => (
-                        <div
-                            key={index}
-                            className={`p-4 rounded-lg border-l-4 ${getPriorityColor(announcement.priority)}`}
-                        >
-                            <div className="flex justify-between items-start mb-2">
-                                <h4 className="font-semibold text-gray-900">{announcement.title}</h4>
-                                <span
-                                    className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${getPriorityBadge(
-                                        announcement.priority
-                                    )}`}
-                                >
-                                    {announcement.priority.toUpperCase()}
-                                </span>
-                            </div>
-                            <p className="text-sm text-gray-700">{announcement.message}</p>
+            <div className="space-y-3">
+                {announcements.map((announcement, index) => (
+                    <div
+                        key={index}
+                        className={`p-4 rounded-lg border-l-4 ${getPriorityColor(announcement.priority)}`}
+                    >
+                        <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-semibold text-gray-900">{announcement.title}</h4>
+                            <span
+                                className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${getPriorityBadge(
+                                    announcement.priority
+                                )}`}
+                            >
+                                {announcement.priority.toUpperCase()}
+                            </span>
                         </div>
-                    ))}
-                </div>
-            )}
+                        <p className="text-sm text-gray-700">{announcement.message}</p>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }

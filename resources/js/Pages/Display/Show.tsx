@@ -17,10 +17,50 @@ interface Widget {
     data: any;
 }
 
+type BentoLayout = 'bento_start_small' | 'bento_start_large';
+
+interface GridPosition {
+    column: string; // e.g. "1 / 4"
+    row: number;    // 1 or 2
+}
+
+function getGridPosition(gridOrder: number, layout: BentoLayout): GridPosition {
+    // Explicit column start/end + row so widgets land on the right spot
+    // regardless of how many widgets are actually present.
+    //
+    // bento_start_small: row1=[3,9], row2=[9,3]
+    //   order 0 → col 1–4,  row 1
+    //   order 1 → col 4–13, row 1
+    //   order 2 → col 1–10, row 2
+    //   order 3 → col 10–13, row 2
+    //
+    // bento_start_large: row1=[9,3], row2=[3,9]
+    //   order 0 → col 1–10, row 1
+    //   order 1 → col 10–13, row 1
+    //   order 2 → col 1–4,  row 2
+    //   order 3 → col 4–13, row 2
+    const positions: Record<BentoLayout, GridPosition[]> = {
+        bento_start_small: [
+            { column: '1 / 4',   row: 1 },
+            { column: '4 / 13',  row: 1 },
+            { column: '1 / 10',  row: 2 },
+            { column: '10 / 13', row: 2 },
+        ],
+        bento_start_large: [
+            { column: '1 / 10',  row: 1 },
+            { column: '10 / 13', row: 1 },
+            { column: '1 / 4',   row: 2 },
+            { column: '4 / 13',  row: 2 },
+        ],
+    };
+    return positions[layout][gridOrder] ?? { column: '1 / 7', row: 1 };
+}
+
 interface Screen {
     id: number;
     name: string;
     refresh_interval: number;
+    layout: BentoLayout;
     widgets: Widget[];
 }
 
@@ -31,6 +71,7 @@ interface DisplayShowProps {
 export default function Show({ screen: initialScreen }: DisplayShowProps) {
     const [widgets, setWidgets] = useState<Widget[]>(initialScreen.widgets || []);
     const [refreshInterval, setRefreshInterval] = useState(initialScreen.refresh_interval);
+    const [layout, setLayout] = useState<BentoLayout>(initialScreen.layout ?? 'bento_start_small');
 
     useEffect(() => {
         // Fetch widget data immediately
@@ -49,14 +90,14 @@ export default function Show({ screen: initialScreen }: DisplayShowProps) {
             const response = await axios.get(route('display.data', initialScreen.id));
             setWidgets(response.data.widgets);
             setRefreshInterval(response.data.refresh_interval);
+            if (response.data.layout) setLayout(response.data.layout);
         } catch (error) {
             console.error('Error fetching widget data:', error);
         }
     };
 
     const renderWidget = (widget: Widget) => {
-        const gridColSpanClass = `col-span-${widget.grid_col_span}`;
-        const gridRowSpanClass = `row-span-${widget.grid_row_span}`;
+        const { column, row } = getGridPosition(widget.grid_order, layout);
 
         const widgetProps = {
             config: widget.config || {},
@@ -87,8 +128,8 @@ export default function Show({ screen: initialScreen }: DisplayShowProps) {
         return (
             <div
                 key={widget.id}
-                className={`${gridColSpanClass} ${gridRowSpanClass}`}
-                style={{ gridColumn: `span ${widget.grid_col_span}` }}
+                style={{ gridColumn: column, gridRow: row }}
+                className="min-h-0 h-full"
             >
                 <WidgetComponent {...widgetProps} />
             </div>
@@ -99,18 +140,11 @@ export default function Show({ screen: initialScreen }: DisplayShowProps) {
         <>
             <Head title={`Display: ${initialScreen.name}`} />
 
-            <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background p-6">
-                {/* Screen Title */}
-                <div className="mb-6">
-                    <h1 className="text-4xl font-bold text-foreground">
-                        {initialScreen.name}
-                    </h1>
-                </div>
-
-                {/* Widgets Grid */}
-                <div className="grid grid-cols-12 gap-4 auto-rows-fr">
+            <div className="h-screen flex flex-col bg-gradient-to-br from-background via-secondary/20 to-background p-6">
+                {/* Widgets Grid — always 2 rows, fills remaining height */}
+                <div className="grid grid-cols-12 grid-rows-2 gap-4 flex-1 min-h-0">
                     {widgets.length === 0 ? (
-                        <div className="col-span-12 flex items-center justify-center h-96">
+                        <div className="col-span-12 row-span-2 flex items-center justify-center">
                             <p className="text-muted-foreground text-2xl">
                                 No widgets configured for this screen
                             </p>

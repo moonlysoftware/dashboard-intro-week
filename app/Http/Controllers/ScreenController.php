@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Screen;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -75,6 +76,17 @@ class ScreenController extends Controller
         $screen->update($validated);
 
         return redirect()->route('screens.index')->with('success', 'Screen updated successfully.');
+    }
+
+    public function updateLayout(Request $request, Screen $screen): JsonResponse
+    {
+        $validated = $request->validate([
+            'layout' => 'required|in:bento_start_small,bento_start_large',
+        ]);
+
+        $screen->update($validated);
+
+        return response()->json(['layout' => $screen->layout]);
     }
 
     public function destroy(Screen $screen): RedirectResponse

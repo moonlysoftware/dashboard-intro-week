@@ -18,9 +18,10 @@ const WIDGET_PREVIEWS: Record<string, ComponentType<{ config: Record<string, any
 interface DraggableWidgetTileProps {
     widgetType: string;
     label: string;
+    onWidgetTypeClick?: (widgetType: string) => void;
 }
 
-function DraggableWidgetTile({ widgetType, label }: DraggableWidgetTileProps) {
+function DraggableWidgetTile({ widgetType, label, onWidgetTypeClick }: DraggableWidgetTileProps) {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: `widget-type-${widgetType}`,
         data: { widgetType },
@@ -38,6 +39,7 @@ function DraggableWidgetTile({ widgetType, label }: DraggableWidgetTileProps) {
             style={style}
             {...listeners}
             {...attributes}
+            onClick={() => onWidgetTypeClick?.(widgetType)}
             className={`
                 flex flex-col rounded-lg border cursor-grab active:cursor-grabbing
                 bg-card hover:bg-accent transition-colors select-none overflow-hidden
@@ -74,9 +76,10 @@ function DraggableWidgetTile({ widgetType, label }: DraggableWidgetTileProps) {
 
 interface WidgetLibraryPanelProps {
     widgetTypes: Record<string, string>;
+    onWidgetTypeClick?: (widgetType: string) => void;
 }
 
-export function WidgetLibraryPanel({ widgetTypes }: WidgetLibraryPanelProps) {
+export function WidgetLibraryPanel({ widgetTypes, onWidgetTypeClick }: WidgetLibraryPanelProps) {
     return (
         <div>
             <p className="text-xs text-muted-foreground mb-3">
@@ -84,7 +87,12 @@ export function WidgetLibraryPanel({ widgetTypes }: WidgetLibraryPanelProps) {
             </p>
             <div className="grid grid-cols-2 gap-2">
                 {Object.entries(widgetTypes).map(([key, label]) => (
-                    <DraggableWidgetTile key={key} widgetType={key} label={label} />
+                    <DraggableWidgetTile
+                        key={key}
+                        widgetType={key}
+                        label={label}
+                        onWidgetTypeClick={onWidgetTypeClick}
+                    />
                 ))}
             </div>
         </div>

@@ -15,6 +15,7 @@ class Screen extends Model
         'description',
         'refresh_interval',
         'is_active',
+        'layout',
     ];
 
     protected $casts = [
