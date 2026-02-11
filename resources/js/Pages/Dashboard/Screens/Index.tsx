@@ -51,14 +51,15 @@ interface ScreensIndexProps extends PageProps {
     widgetTypes: Record<string, string>;
 }
 
-type RightPanel =
-    | { mode: 'library' }
-    | { mode: 'settings'; widget: Widget; screenId: number };
+interface SelectedWidget {
+    widget: Widget;
+    screenId: number;
+}
 
 export default function Index({ auth, screens: initialScreens, widgetTypes }: ScreensIndexProps) {
     const [screens, setScreens] = useState<Screen[]>(initialScreens);
     const [activeScreenId, setActiveScreenId] = useState<number | null>(null);
-    const [rightPanel, setRightPanel] = useState<RightPanel>({ mode: 'library' });
+    const [selectedWidget, setSelectedWidget] = useState<SelectedWidget | null>(null);
     const [activeDragLabel, setActiveDragLabel] = useState<string | null>(null);
 
     const sensors = useSensors(
@@ -138,11 +139,11 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
             })
         );
 
-        if (rightPanel.mode === 'settings' && rightPanel.screenId === screenId) {
-            if (rightPanel.widget.id === widgetId) {
-                setRightPanel({ ...rightPanel, widget: { ...rightPanel.widget, grid_order: newOrder } });
-            } else if (targetWidget && rightPanel.widget.id === targetWidget.id) {
-                setRightPanel({ ...rightPanel, widget: { ...rightPanel.widget, grid_order: currentOrder } });
+        if (selectedWidget && selectedWidget.screenId === screenId) {
+            if (selectedWidget.widget.id === widgetId) {
+                setSelectedWidget({ ...selectedWidget, widget: { ...selectedWidget.widget, grid_order: newOrder } });
+            } else if (targetWidget && selectedWidget.widget.id === targetWidget.id) {
+                setSelectedWidget({ ...selectedWidget, widget: { ...selectedWidget.widget, grid_order: currentOrder } });
             }
         }
 
@@ -186,8 +187,8 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
                 )
             );
 
-            if (rightPanel.mode === 'settings' && rightPanel.widget.id === widgetId) {
-                setRightPanel({ mode: 'library' });
+            if (selectedWidget && selectedWidget.widget.id === widgetId) {
+                setSelectedWidget(null);
             }
         } catch (error) {
             console.error('Error deleting widget:', error);
@@ -195,7 +196,7 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
     };
 
     const handleWidgetClick = (widget: Widget, screenId: number) => {
-        setRightPanel({ mode: 'settings', widget, screenId });
+        setSelectedWidget({ widget, screenId });
     };
 
     const handleWidgetSaved = (screenId: number, updatedWidget: Widget) => {
@@ -206,8 +207,8 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
                     : s
             )
         );
-        if (rightPanel.mode === 'settings') {
-            setRightPanel({ mode: 'settings', widget: updatedWidget, screenId });
+        if (selectedWidget) {
+            setSelectedWidget({ widget: updatedWidget, screenId });
         }
     };
 
@@ -362,8 +363,8 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
                                                     onWidgetClick={(widget) => handleWidgetClick(widget, screen.id)}
                                                     onWidgetRemove={(widgetId) => handleWidgetRemove(screen.id, widgetId)}
                                                     selectedWidgetId={
-                                                        rightPanel.mode === 'settings' && rightPanel.screenId === screen.id
-                                                            ? rightPanel.widget.id
+                                                        selectedWidget && selectedWidget.screenId === screen.id
+                                                            ? selectedWidget.widget.id
                                                             : null
                                                     }
                                                 />
@@ -389,33 +390,38 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
                         )}
                     </div>
 
-                    <div className="w-72 flex-shrink-0 sticky top-4">
+                    <div className="w-96 flex-shrink-0 sticky top-4 space-y-4">
                         <Card>
                             <CardHeader className="pb-3">
-                                <CardTitle className="text-sm">
-                                    {rightPanel.mode === 'library' ? 'Widgets' : 'Widget Instellingen'}
-                                </CardTitle>
-                                {rightPanel.mode === 'library' && activeScreenId === null && (
+                                <CardTitle className="text-sm">Widgets</CardTitle>
+                                {activeScreenId === null && (
                                     <p className="text-xs text-muted-foreground">
                                         Selecteer een scherm om widgets te slepen
                                     </p>
                                 )}
                             </CardHeader>
                             <CardContent>
-                                {rightPanel.mode === 'library' ? (
-                                    <WidgetLibraryPanel widgetTypes={widgetTypes} />
-                                ) : (
-                                    <WidgetSettingsPanel
-                                        widget={rightPanel.widget}
-                                        widgetTypes={widgetTypes}
-                                        onClose={() => setRightPanel({ mode: 'library' })}
-                                        onSaved={(updatedWidget) =>
-                                            handleWidgetSaved(rightPanel.screenId, updatedWidget)
-                                        }
-                                    />
-                                )}
+                                <WidgetLibraryPanel widgetTypes={widgetTypes} />
                             </CardContent>
                         </Card>
+
+                        {selectedWidget && (
+                            <Card>
+                                <CardHeader className="pb-3">
+                                    <CardTitle className="text-sm">Widget Instellingen</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <WidgetSettingsPanel
+                                        widget={selectedWidget.widget}
+                                        widgetTypes={widgetTypes}
+                                        onClose={() => setSelectedWidget(null)}
+                                        onSaved={(updatedWidget) =>
+                                            handleWidgetSaved(selectedWidget.screenId, updatedWidget)
+                                        }
+                                    />
+                                </CardContent>
+                            </Card>
+                        )}
                     </div>
                 </div>
 
