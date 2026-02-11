@@ -33,6 +33,7 @@ import { ScreenCanvas } from '@/Components/Screens/ScreenCanvas';
 import { WidgetLibraryPanel } from '@/Components/Screens/WidgetLibraryPanel';
 import { WidgetSettingsPanel } from '@/Components/Screens/WidgetSettingsPanel';
 import type { Widget } from '@/Components/Screens/ScreenCanvas';
+import { isWideOnlyWidget, isSmallSlot } from '@/constants/widgets';
 
 type BentoLayout = 'bento_start_small' | 'bento_start_large';
 
@@ -64,6 +65,7 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
     const [activeScreenId, setActiveScreenId] = useState<number | null>(null);
     const [selectedWidget, setSelectedWidget] = useState<SelectedWidget | null>(null);
     const [activeDragLabel, setActiveDragLabel] = useState<string | null>(null);
+    const [activeDragWidgetType, setActiveDragWidgetType] = useState<string | null>(null);
 
     useEffect(() => {
         router.reload({ only: ['screens'] });
@@ -101,6 +103,9 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
         // Slot already occupied
         if (screen.widgets.some((w) => w.grid_order === slotIndex)) return;
 
+        // Wide-only widget cannot go into a small slot
+        if (isWideOnlyWidget(widgetType) && isSmallSlot(slotIndex, screen.layout)) return;
+
         try {
             const response = await axios.post(route('widgets.store', screenId), {
                 widget_type: widgetType,
@@ -133,6 +138,10 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
     ) => {
         const screen = screens.find((s) => s.id === screenId);
         if (!screen) return;
+
+        // Wide-only widget cannot be moved to a small slot
+        const movingWidget = screen.widgets.find((w) => w.id === widgetId);
+        if (movingWidget && isWideOnlyWidget(movingWidget.widget_type) && isSmallSlot(newOrder, screen.layout)) return;
 
         const targetWidget = screen.widgets.find((w) => w.grid_order === newOrder);
 
@@ -261,15 +270,18 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
         const data = event.active.data.current;
         if (data?.widgetType) {
             setActiveDragLabel(widgetTypes[data.widgetType] ?? data.widgetType);
+            setActiveDragWidgetType(data.widgetType);
         } else if (data?.existingWidgetId) {
             const screen = screens.find((s) => s.id === data.screenId);
             const widget = screen?.widgets.find((w) => w.id === data.existingWidgetId);
             setActiveDragLabel(widget ? (widgetTypes[widget.widget_type] ?? widget.widget_type) : null);
+            setActiveDragWidgetType(widget?.widget_type ?? null);
         }
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
         setActiveDragLabel(null);
+        setActiveDragWidgetType(null);
         const { active, over } = event;
         if (!over) return;
 
@@ -433,6 +445,7 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
                                                     widgetTypes={widgetTypes}
                                                     isScreenActive={isActive}
                                                     layout={screen.layout ?? 'bento_start_small'}
+                                                    activeDragWidgetType={activeDragWidgetType}
                                                     onWidgetClick={(widget) => handleWidgetClick(widget, screen.id)}
                                                     onWidgetRemove={(widgetId) => handleWidgetRemove(screen.id, widgetId)}
                                                     selectedWidgetId={
