@@ -33,7 +33,7 @@ import { ScreenCanvas } from '@/Components/Screens/ScreenCanvas';
 import { WidgetLibraryPanel } from '@/Components/Screens/WidgetLibraryPanel';
 import { WidgetSettingsPanel } from '@/Components/Screens/WidgetSettingsPanel';
 import type { Widget } from '@/Components/Screens/ScreenCanvas';
-import { isWideOnlyWidget, isSmallSlot } from '@/constants/widgets';
+import { isWideOnlyWidget, isSmallOnlyWidget, isSmallSlot } from '@/constants/widgets';
 
 type BentoLayout = 'bento_start_small' | 'bento_start_large';
 
@@ -106,6 +106,9 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
         // Wide-only widget cannot go into a small slot
         if (isWideOnlyWidget(widgetType) && isSmallSlot(slotIndex, screen.layout)) return;
 
+        // Small-only widget cannot go into a large slot
+        if (isSmallOnlyWidget(widgetType) && !isSmallSlot(slotIndex, screen.layout)) return;
+
         try {
             const response = await axios.post(route('widgets.store', screenId), {
                 widget_type: widgetType,
@@ -142,6 +145,9 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
         // Wide-only widget cannot be moved to a small slot
         const movingWidget = screen.widgets.find((w) => w.id === widgetId);
         if (movingWidget && isWideOnlyWidget(movingWidget.widget_type) && isSmallSlot(newOrder, screen.layout)) return;
+
+        // Small-only widget cannot be moved to a large slot
+        if (movingWidget && isSmallOnlyWidget(movingWidget.widget_type) && !isSmallSlot(newOrder, screen.layout)) return;
 
         const targetWidget = screen.widgets.find((w) => w.grid_order === newOrder);
 
@@ -230,19 +236,65 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
     };
 
     const handleLayoutChange = async (screenId: number, layout: BentoLayout) => {
+        const screen = screens.find((s) => s.id === screenId);
+        if (!screen) return;
+
+        // For each slot pair, check if any widget violates the new layout.
+        // If so, swap the two widgets in that pair.
+        const pairs: [number, number][] = [[0, 1], [2, 3]];
+        const swaps: { id: number; newOrder: number; oldOrder: number }[] = [];
+
+        for (const [slotA, slotB] of pairs) {
+            const widgetA = screen.widgets.find((w) => w.grid_order === slotA);
+            const widgetB = screen.widgets.find((w) => w.grid_order === slotB);
+
+            const aViolates = widgetA && (
+                (isWideOnlyWidget(widgetA.widget_type) && isSmallSlot(slotA, layout)) ||
+                (isSmallOnlyWidget(widgetA.widget_type) && !isSmallSlot(slotA, layout))
+            );
+            const bViolates = widgetB && (
+                (isWideOnlyWidget(widgetB.widget_type) && isSmallSlot(slotB, layout)) ||
+                (isSmallOnlyWidget(widgetB.widget_type) && !isSmallSlot(slotB, layout))
+            );
+
+            if (aViolates || bViolates) {
+                if (widgetA) swaps.push({ id: widgetA.id, newOrder: slotB, oldOrder: slotA });
+                if (widgetB) swaps.push({ id: widgetB.id, newOrder: slotA, oldOrder: slotB });
+            }
+        }
+
+        // Optimistic update: apply layout + swaps at once
         setScreens((prev) =>
-            prev.map((s) => (s.id === screenId ? { ...s, layout } : s))
+            prev.map((s) => {
+                if (s.id !== screenId) return s;
+                const updatedWidgets = s.widgets.map((w) => {
+                    const swap = swaps.find((sw) => sw.id === w.id);
+                    return swap ? { ...w, grid_order: swap.newOrder } : w;
+                });
+                return { ...s, layout, widgets: updatedWidgets };
+            })
         );
+
         try {
-            await axios.patch(route('screens.updateLayout', screenId), { layout });
+            await Promise.all([
+                axios.patch(route('screens.updateLayout', screenId), { layout }),
+                ...swaps.map((sw) =>
+                    axios.patch(route('widgets.update', sw.id), { grid_order: sw.newOrder })
+                ),
+            ]);
         } catch (error) {
             console.error('Error updating layout:', error);
+            // Rollback layout and any swapped widgets
+            const oldLayout: BentoLayout = layout === 'bento_start_small' ? 'bento_start_large' : 'bento_start_small';
             setScreens((prev) =>
-                prev.map((s) =>
-                    s.id === screenId
-                        ? { ...s, layout: layout === 'bento_start_small' ? 'bento_start_large' : 'bento_start_small' }
-                        : s
-                )
+                prev.map((s) => {
+                    if (s.id !== screenId) return s;
+                    const restoredWidgets = s.widgets.map((w) => {
+                        const swap = swaps.find((sw) => sw.id === w.id);
+                        return swap ? { ...w, grid_order: swap.oldOrder } : w;
+                    });
+                    return { ...s, layout: oldLayout, widgets: restoredWidgets };
+                })
             );
         }
     };
