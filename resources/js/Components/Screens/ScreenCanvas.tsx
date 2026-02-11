@@ -1,7 +1,7 @@
 import { useDroppable, useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { X, GripVertical } from 'lucide-react';
-import { isWideOnlyWidget, isSmallSlot } from '@/constants/widgets';
+import { isWideOnlyWidget, isSmallOnlyWidget, isSmallSlot } from '@/constants/widgets';
 
 export interface Widget {
     id: number;
@@ -86,6 +86,7 @@ interface CanvasSlotProps {
     isScreenActive: boolean;
     isSelected: boolean;
     isBlocked: boolean;
+    blockedLabel?: string;
     onWidgetClick: (widget: Widget) => void;
     onWidgetRemove: (widgetId: number) => void;
 }
@@ -98,6 +99,7 @@ function CanvasSlot({
     isScreenActive,
     isSelected,
     isBlocked,
+    blockedLabel = 'Alleen breed',
     onWidgetClick,
     onWidgetRemove,
 }: CanvasSlotProps) {
@@ -173,7 +175,7 @@ function CanvasSlot({
                         : isOver && isScreenActive
                         ? 'Loslaten'
                         : isBlocked && isScreenActive
-                        ? 'Alleen breed'
+                        ? blockedLabel
                         : 'Sleep hier'}
                 </span>
             )}
@@ -209,6 +211,7 @@ export function ScreenCanvas({
     onWidgetRemove,
 }: ScreenCanvasProps) {
     const isDragWide = activeDragWidgetType ? isWideOnlyWidget(activeDragWidgetType) : false;
+    const isDragSmallOnly = activeDragWidgetType ? isSmallOnlyWidget(activeDragWidgetType) : false;
     // Row 1 and row 2 are always opposite:
     // bento_start_small: [3, 9, 9, 3] (out of 12)
     // bento_start_large: [9, 3, 3, 9] (out of 12)
@@ -231,7 +234,11 @@ export function ScreenCanvas({
                             widgetTypes={widgetTypes}
                             isScreenActive={isScreenActive}
                             isSelected={widget?.id === selectedWidgetId}
-                            isBlocked={isDragWide && isSmallSlot(i, layout)}
+                            isBlocked={
+                                (isDragWide && isSmallSlot(i, layout)) ||
+                                (isDragSmallOnly && !isSmallSlot(i, layout))
+                            }
+                            blockedLabel={isDragSmallOnly ? 'Alleen klein' : 'Alleen breed'}
                             onWidgetClick={onWidgetClick}
                             onWidgetRemove={onWidgetRemove}
                         />

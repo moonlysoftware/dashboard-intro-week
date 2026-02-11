@@ -14,6 +14,18 @@ export function isWideOnlyWidget(widgetType: string): boolean {
 }
 
 /**
+ * Widget types that require a 1/4-wide (small) slot.
+ * They cannot be placed in a 3/4-wide (large) slot.
+ */
+export const SMALL_ONLY_WIDGETS = new Set<string>([
+    'birthday',
+]);
+
+export function isSmallOnlyWidget(widgetType: string): boolean {
+    return SMALL_ONLY_WIDGETS.has(widgetType);
+}
+
+/**
  * Returns true if the given slot index is a small (1/4 width) slot
  * for the provided bento layout.
  *

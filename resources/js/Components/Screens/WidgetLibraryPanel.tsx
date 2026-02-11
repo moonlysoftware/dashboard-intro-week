@@ -5,7 +5,7 @@ import RoomAvailabilityWidget from '@/Components/Widgets/RoomAvailabilityWidget'
 import ClockWeatherWidget from '@/Components/Widgets/ClockWeatherWidget';
 import AnnouncementsWidget from '@/Components/Widgets/AnnouncementsWidget';
 import TogglTimeTrackingWidget from '@/Components/Widgets/TogglTimeTrackingWidget';
-import { isWideOnlyWidget } from '@/constants/widgets';
+import { isWideOnlyWidget, isSmallOnlyWidget } from '@/constants/widgets';
 import type { ComponentType } from 'react';
 
 const WIDGET_PREVIEWS: Record<string, ComponentType<{ config: Record<string, any>; data: Record<string, any> }>> = {
@@ -30,6 +30,7 @@ function DraggableWidgetTile({ widgetType, label, onWidgetTypeClick }: Draggable
 
     const PreviewComponent = WIDGET_PREVIEWS[widgetType];
     const isWide = isWideOnlyWidget(widgetType);
+    const isSmall = isSmallOnlyWidget(widgetType);
 
     const style = transform
         ? { transform: CSS.Translate.toString(transform) }
@@ -70,6 +71,11 @@ function DraggableWidgetTile({ widgetType, label, onWidgetTypeClick }: Draggable
                 {isWide && (
                     <span className="absolute bottom-1.5 right-1.5 text-[9px] font-semibold leading-none px-1.5 py-0.5 rounded bg-amber-500/90 text-white pointer-events-none select-none">
                         Breed
+                    </span>
+                )}
+                {isSmall && (
+                    <span className="absolute bottom-1.5 right-1.5 text-[9px] font-semibold leading-none px-1.5 py-0.5 rounded bg-blue-500/90 text-white pointer-events-none select-none">
+                        Klein
                     </span>
                 )}
             </div>
