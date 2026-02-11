@@ -12,14 +12,13 @@ interface Person {
     image: string;
 }
 
+
 function getNextBirthday(birthdate: string): Date {
     const [, month, day] = birthdate.split('-').map(Number);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
     const thisYear = new Date(today.getFullYear(), month - 1, day);
     if (thisYear >= today) return thisYear;
-
     return new Date(today.getFullYear() + 1, month - 1, day);
 }
 
@@ -58,39 +57,83 @@ export default function BirthdayWidget({ config: _config, data: _data }: Birthda
         .sort((a, b) => daysUntil(a.birthdate) - daysUntil(b.birthdate));
 
     const minDays = upcoming.length > 0 ? daysUntil(upcoming[0].birthdate) : null;
-    const nextGroup = upcoming.filter(
-        (p) => daysUntil(p.birthdate) === minDays
+    const nextGroup = upcoming.filter((p) => daysUntil(p.birthdate) === minDays);
+
+    const backgroundLayers = (personImage?: string) => (
+        <div style={{
+            position: 'absolute',
+            aspectRatio: '1144 / 930',
+            minWidth: '100%',
+            minHeight: '100%',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            overflow: 'hidden',
+            zIndex: 0,
+        }}>
+            <img
+                src="/storage/birthdays/astronaut-closeup.png"
+                alt=""
+                className="absolute inset-0 w-full h-full grayscale pointer-events-none"
+            />
+
+            {personImage && (
+                <img
+                    src={`/storage/birthdays/${personImage}`}
+                    alt=""
+                    className="absolute pointer-events-none"
+                    style={{ zIndex: 10, left: '2%', top: '15%', width: '90%', height: 'auto' }}
+                />
+            )}
+
+            <img
+                src="/storage/birthdays/astronaut-closup-cutout.png"
+                alt=""
+                className="absolute inset-0 w-full h-full grayscale pointer-events-none"
+                style={{ zIndex: 20 }}
+            />
+        </div>
     );
 
     if (birthdayToday.length > 0) {
+        const primary = birthdayToday[0];
+        const others  = birthdayToday.slice(1);
+
         return (
-            <div className="relative overflow-hidden bg-gradient-to-br from-yellow-400 via-pink-400 to-purple-500 rounded-lg shadow-lg h-full flex flex-col items-center justify-center p-6 text-white text-center">
-                <div className="absolute inset-0 opacity-10 pointer-events-none select-none text-[120px] leading-none flex flex-wrap gap-4 justify-center items-center">
-                    {Array.from({ length: 20 }).map((_, i) => (
-                        <span key={i}>🎂</span>
-                    ))}
-                </div>
+            <div
+                className="relative overflow-hidden rounded-lg shadow-lg h-full"
+            >
+                {backgroundLayers(primary.image)}
 
-                <p className="text-lg font-semibold uppercase tracking-widest mb-4 drop-shadow">
-                    Gefeliciteerd!
-                </p>
+                <div
+                    className="absolute bottom-0 left-0 right-0 flex flex-col items-center text-white text-center"
+                    style={{
+                        zIndex: 30,
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)',
+                        padding: 'clamp(1rem, 2vw, 2rem)',
+                        paddingTop: 'clamp(2rem, 4vw, 4rem)',
+                    }}
+                >
+                    <p className="font-semibold uppercase tracking-widest drop-shadow"
+                        style={{ fontSize: 'clamp(0.7rem, 1.1vw, 1rem)' }}>
+                        Gefeliciteerd!
+                    </p>
+                    <p className="font-bold drop-shadow" style={{ fontSize: 'clamp(1rem, 2vw, 2rem)' }}>
+                        {primary.name}
+                    </p>
+                    <p className="text-white/80" style={{ fontSize: 'clamp(0.65rem, 1vw, 0.9rem)' }}>
+                        wordt vandaag {getAgeThisBirthday(primary.birthdate)} jaar!
+                    </p>
 
-                <div className="flex flex-wrap justify-center gap-6 z-10">
-                    {birthdayToday.map((person) => (
-                        <div key={person.id} className="flex flex-col items-center gap-2">
-                            <div className="w-24 h-24 rounded-full border-4 border-white shadow-lg overflow-hidden">
-                                <img
-                                    src={`/storage/birthdays/${person.image}`}
-                                    alt={person.name}
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>
-                            <p className="font-bold text-xl drop-shadow">{person.name}</p>
-                            <p className="text-white/90 text-sm font-medium">
-                                wordt vandaag {getAgeThisBirthday(person.birthdate)} jaar!
-                            </p>
+                    {others.length > 0 && (
+                        <div className="flex flex-wrap justify-center" style={{ gap: 'clamp(0.5rem, 1vw, 1rem)', marginTop: 'clamp(0.5rem, 1vw, 1rem)' }}>
+                            {others.map((p) => (
+                                <p key={p.id} className="text-white/70" style={{ fontSize: 'clamp(0.6rem, 0.9vw, 0.85rem)' }}>
+                                    🎂 {p.name} ({getAgeThisBirthday(p.birthdate)} jaar)
+                                </p>
+                            ))}
                         </div>
-                    ))}
+                    )}
                 </div>
             </div>
         );
@@ -98,51 +141,27 @@ export default function BirthdayWidget({ config: _config, data: _data }: Birthda
 
     if (nextGroup.length === 0) {
         return (
-            <div className="bg-white rounded-lg shadow-lg p-6 h-full flex items-center justify-center">
-                <p className="text-gray-500">Geen verjaardagen gevonden</p>
+            <div
+                className="relative overflow-hidden rounded-lg shadow-lg h-full flex items-center justify-center"
+            >
+                {backgroundLayers()}
+                <p className="text-white/80 drop-shadow" style={{ zIndex: 30, position: 'relative' }}>
+                    Geen verjaardagen gevonden
+                </p>
             </div>
         );
     }
 
-    return (
-        <div className="bg-white rounded-lg shadow-lg p-6 h-full flex flex-col">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">
-                Volgende verjaardag
-            </p>
+    const primary = nextGroup[0];
+    const days    = daysUntil(primary.birthdate);
 
-            <div className="flex flex-wrap gap-4 flex-1 items-center justify-center">
-                {nextGroup.map((person) => {
-                    const days = daysUntil(person.birthdate);
-                    return (
-                        <div
-                            key={person.id}
-                            className="flex items-center gap-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 flex-1 min-w-[200px]"
-                        >
-                            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-purple-200 flex-shrink-0 shadow">
-                                <img
-                                    src={`/storage/birthdays/${person.image}`}
-                                    alt={person.name}
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="font-bold text-gray-900 truncate">{person.name}</p>
-                                <p className="text-sm text-gray-500">
-                                    {formatDate(person.birthdate)} &middot; wordt {getAgeThisBirthday(person.birthdate)} jaar
-                                </p>
-                            </div>
-                            <div className="text-right flex-shrink-0">
-                                <p className="text-3xl font-extrabold text-purple-600 leading-none">
-                                    {days}
-                                </p>
-                                <p className="text-xs text-gray-400 mt-1">
-                                    {days === 1 ? 'dag' : 'dagen'}
-                                </p>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
+    return (
+        <div
+            className="relative overflow-hidden rounded-lg shadow-lg h-full"
+        >
+            {backgroundLayers(primary.image)}
+
+            
         </div>
     );
 }
