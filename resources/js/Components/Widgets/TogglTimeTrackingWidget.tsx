@@ -100,7 +100,7 @@ export default function TogglTimeTrackingWidget({
         >
             <div className="flex items-center  gap-3 mb-4 ">
                 <div className="flex items-center justify-between w-full">
-                    <h3 className="text-white text-[36px] font-bold text-foreground">
+                    <h3 className=" text-white text-[36px] font-bold text-foreground">
                         Toggl Wall of Shame
                     </h3>
                     <p className="text-white/50 text-[36px]">

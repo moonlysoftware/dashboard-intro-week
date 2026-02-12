@@ -7,6 +7,7 @@ export type BentoLayout = 'bento_start_small' | 'bento_start_large';
 export const WIDE_ONLY_WIDGETS = new Set<string>([
     'toggl_time_tracking',
     'room_availability',
+    'announcements',
 ]);
 
 export function isWideOnlyWidget(widgetType: string): boolean {
