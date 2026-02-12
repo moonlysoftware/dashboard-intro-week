@@ -146,36 +146,57 @@ export default function TogglTimeTrackingWidget({
                     </h4> */}
 
                     <div className="space-y-2 max-h-96 overflow-y-auto w-full">
-                        {missing_hours_users.slice(0, 3).map((user, index) => (
-                            <div
-                                key={index}
-                                className={`flex flex-col justify-center border-2 border-white/10 bg-white/15 backdrop-blur-md border-l-4 rounded-lg p-3 transition-all`}
-                            >
-                                <div className="flex justify-between items-center mb-2 ">
-                                    <div className="flex items-center gap-2">
-                                        <p className="font-semibold text-white text-[30px]">
-                                            {user.name}
-                                        </p>
-                                        <p className="text-[30px] text-white/50">
-                                            | {user.hours_clocked.slice(0, 5)}{" "}
-                                            geklokt!
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="flex-1">
-                                        <div className="w-full bg-white/20 rounded-full h-1.5 mt-1">
-                                            <div
-                                                className="bg-primary h-full rounded-full transition-all"
-                                                style={{
-                                                    width: `${user.percentage}%`,
-                                                }}
-                                            />
+                        {missing_hours_users.slice(0, 3).map((user, index) => {
+                            const medalSrc = [
+                                "/storage/toggl/medal-1st.png",
+                                "/storage/toggl/medal-2nd.png",
+                                "/storage/toggl/medal-3rd.png",
+                            ][index];
+
+                            return (
+                                <div
+                                    key={index}
+                                    className={`flex items-center gap-3 border-2 border-white/10 bg-white/15 backdrop-blur-md border-l-4 rounded-lg p-3 transition-all`}
+                                >
+                                    {medalSrc && (
+                                        <img
+                                            src={medalSrc}
+                                            alt={`Medal ${index + 1}`}
+                                            className="w-16 h-16 object-contain shrink-0"
+                                        />
+                                    )}
+                                    <div className="flex flex-col justify-center flex-1">
+                                        <div className="flex justify-between items-center mb-2 ">
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-semibold text-white text-[30px]">
+                                                    {user.name}
+                                                </p>
+                                                <p className="text-[30px] text-white/50">
+                                                    |{" "}
+                                                    {user.hours_clocked.slice(
+                                                        0,
+                                                        5,
+                                                    )}{" "}
+                                                    geklokt!
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex-1">
+                                                <div className="w-full bg-white/20 rounded-full h-1.5 mt-1">
+                                                    <div
+                                                        className="bg-primary h-full rounded-full transition-all"
+                                                        style={{
+                                                            width: `${user.percentage}%`,
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                     <div className="flex flex-col text-red-500 w-full justify-end">
                         <div
