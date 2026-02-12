@@ -5,6 +5,7 @@ interface ImageWidgetProps {
     config: {
         selected_images?: string[];
         transition_time?: number;
+        image_positions?: Record<string, number>;
     };
     data: Record<string, any>;
 }
@@ -12,6 +13,7 @@ interface ImageWidgetProps {
 export default function ImageWidget({ config }: ImageWidgetProps) {
     const images = config.selected_images ?? [];
     const transitionTime = config.transition_time ?? 5;
+    const imagePositions = config.image_positions ?? {};
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [visible, setVisible] = useState(true);
@@ -43,8 +45,9 @@ export default function ImageWidget({ config }: ImageWidgetProps) {
                 key={currentIndex}
                 src={images[currentIndex]}
                 alt=""
-                className="absolute inset-0 w-full h-full object-cover object-top"
+                className="absolute inset-0 w-full h-full object-cover"
                 style={{
+                    objectPosition: `center ${imagePositions[images[currentIndex]] ?? 0}%`,
                     opacity: visible ? 1 : 0,
                     transition: 'opacity 0.7s ease-in-out',
                 }}

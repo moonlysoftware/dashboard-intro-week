@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Trash2, Upload } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, Upload } from 'lucide-react';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover';
 import axios from 'axios';
 import type { Widget } from './ScreenCanvas';
 
@@ -45,9 +46,13 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
     const [transitionTime, setTransitionTime] = useState<number>(
         widget.config?.transition_time ?? 5
     );
+    const [imagePositions, setImagePositions] = useState<Record<string, number>>(
+        widget.config?.image_positions ?? {}
+    );
     const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const popoverOpenRef = useRef(false);
 
     useEffect(() => {
         if (widget.widget_type !== 'image_widget') return;
@@ -76,10 +81,20 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
         }
     };
 
+    const handlePositionChange = (url: string, value: number) => {
+        const clamped = Math.max(0, Math.min(100, value));
+        setImagePositions((prev) => ({ ...prev, [url]: clamped }));
+    };
+
     const handleDeleteImage = async (filename: string, url: string) => {
         await axios.delete(route('image-widget.destroy', { filename }));
         setAllImages((prev) => prev.filter((img) => img.filename !== filename));
         setSelectedImages((prev) => prev.filter((u) => u !== url));
+        setImagePositions((prev) => {
+            const next = { ...prev };
+            delete next[url];
+            return next;
+        });
     };
 
     const toggleImageSelection = (url: string) => {
@@ -97,7 +112,7 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
             if (widget.widget_type === 'room_availability') {
                 finalConfig = { rooms: roomConfigs.filter((r) => r.name || r.calendar_id) };
             } else if (widget.widget_type === 'image_widget') {
-                finalConfig = { selected_images: selectedImages, transition_time: transitionTime };
+                finalConfig = { selected_images: selectedImages, transition_time: transitionTime, image_positions: imagePositions };
             } else if (widget.widget_type === 'announcements') {
                 finalConfig = { announcements: announcementConfigs.filter((a) => a.title || a.message) };
             } else {
@@ -254,7 +269,10 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
                                                 ? 'border-primary'
                                                 : 'border-transparent'
                                         }`}
-                                        onClick={() => toggleImageSelection(img.url)}
+                                        onClick={() => {
+                                            if (popoverOpenRef.current) return;
+                                            toggleImageSelection(img.url);
+                                        }}
                                     >
                                         <img
                                             src={img.url}
@@ -265,6 +283,65 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
                                             <div className="absolute top-1 left-1 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
                                                 <span className="text-[9px] text-primary-foreground font-bold">✓</span>
                                             </div>
+                                        )}
+                                        {isSelected && (
+                                            <Popover onOpenChange={(open) => {
+                                                if (open) {
+                                                    popoverOpenRef.current = true;
+                                                } else {
+                                                    setTimeout(() => { popoverOpenRef.current = false; }, 200);
+                                                }
+                                            }}>
+                                                <PopoverTrigger asChild>
+                                                    <button
+                                                        className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center opacity-80 hover:opacity-100"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        onPointerDown={(e) => e.stopPropagation()}
+                                                    >
+                                                        <Pencil className="h-3 w-3 text-primary-foreground" />
+                                                    </button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-52 p-3 space-y-2" side="top">
+                                                    <p className="text-xs font-medium">Verticale positie</p>
+                                                    <p className="text-[10px] text-muted-foreground">
+                                                        0% = boven, 50% = midden, 100% = onder
+                                                    </p>
+                                                    <Input
+                                                        type="number"
+                                                        min={0}
+                                                        max={100}
+                                                        value={imagePositions[img.url] ?? 0}
+                                                        onChange={(e) => handlePositionChange(img.url, Number(e.target.value))}
+                                                        className="h-7 text-xs"
+                                                    />
+                                                    <div className="flex gap-1">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="flex-1 h-6 text-[10px]"
+                                                            onClick={() => handlePositionChange(img.url, 0)}
+                                                        >
+                                                            Boven
+                                                        </Button>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="flex-1 h-6 text-[10px]"
+                                                            onClick={() => handlePositionChange(img.url, 50)}
+                                                        >
+                                                            Midden
+                                                        </Button>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="flex-1 h-6 text-[10px]"
+                                                            onClick={() => handlePositionChange(img.url, 100)}
+                                                        >
+                                                            Onder
+                                                        </Button>
+                                                    </div>
+                                                </PopoverContent>
+                                            </Popover>
                                         )}
                                         <button
                                             className="absolute top-1 right-1 w-5 h-5 rounded-full bg-destructive flex items-center justify-center opacity-80 hover:opacity-100"
