@@ -5,7 +5,8 @@ interface Room {
   status: 'available' | 'occupied';
   next_booking?: string | null;
   available_at?: string | null;
-  duration_minutes?: number | null;
+  current_duration_minutes?: number | null;
+  next_duration_minutes?: number | null;
 }
 
 interface RoomAvailabilityWidgetProps {
@@ -87,6 +88,21 @@ export default function RoomAvailabilityWidget({ data }: RoomAvailabilityWidgetP
           {/* Room containers positioned independently */}
           {rooms.slice(0, 3).map((room, index) => {
             const pos = roomPositions[index];
+            
+            // Determine what to display based on room status
+            let timeDisplay = '';
+            let durationDisplay = '';
+            
+            if (room.status === 'occupied') {
+              // Show when it becomes available and how long it will be free
+              timeDisplay = room.available_at || 'Occupied';
+              durationDisplay = formatDuration(room.next_duration_minutes);
+            } else {
+              // Show when next booking starts and how long it will be occupied
+              timeDisplay = room.next_booking || '';
+              durationDisplay = formatDuration(room.next_duration_minutes);
+            }
+            
             return (
               <div
                 key={`container-${index}`}
@@ -100,20 +116,14 @@ export default function RoomAvailabilityWidget({ data }: RoomAvailabilityWidgetP
                 }}
               >
                 <div className="font-archia text-[clamp(0.05rem,1.85vw,20rem)] flex items-center justify-center h-full flex-col">
-                  {/* First span: Time when next booking starts OR when room becomes available */}
-                  <span >
-                    {room.status === 'available'
-                      ? room.next_booking
-                        ? `${room.next_booking}`
-                        : ''
-                      : room.available_at
-                      ? `${room.available_at}`
-                      : 'Occupied'}
+                  {/* First span: Time (when available/when next booking) */}
+                  <span>
+                    {timeDisplay}
                   </span>
                   
-                  {/* Second span: Duration of the booking block */}
+                  {/* Second span: Duration (free duration if occupied, booking duration if available) */}
                   <span className="font-bold text-[clamp(0.1rem,1.4vw,24rem)] whitespace-nowrap">
-                    {formatDuration(room.duration_minutes)}
+                    {durationDisplay}
                   </span>
                 </div>
               </div>

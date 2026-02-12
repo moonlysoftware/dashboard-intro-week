@@ -44,11 +44,12 @@ class GoogleCalendarService
      * Get the availability for a single room based on its Google Calendar ID.
      *
      * Returns an array with:
-     *  - name:            string  (pass-through from caller)
-     *  - status:          'available' | 'occupied'
-     *  - next_booking:    string|null  (HH:MM when next event starts, if currently free)
-     *  - available_at:    string|null  (HH:MM when current event ends, if currently occupied)
-     *  - duration_minutes: int|null    (duration of current/next booking block in minutes)
+     *  - name:                    string       (pass-through from caller)
+     *  - status:                  'available' | 'occupied'
+     *  - next_booking:            string|null  (HH:MM when next event starts, if currently free)
+     *  - available_at:            string|null  (HH:MM when current event ends, if currently occupied)
+     *  - current_duration_minutes: int|null    (if occupied: duration of current booking block)
+     *  - next_duration_minutes:    int|null    (if occupied: duration free until next booking; if available: duration of next booking)
      */
     public function getRoomAvailability(string $calendarId, string $roomName): array
     {
@@ -97,30 +98,47 @@ class GoogleCalendarService
                 }
             }
 
-            // If room is currently occupied, find when it becomes free (accounting for consecutive bookings)
+            // If room is currently occupied
             if ($currentEvent !== null) {
                 $freeAt = $currentEvent['end'];
                 $blockStart = $currentEvent['start'];
                 
-                // Look for consecutive bookings (events starting within 5 minutes of previous end)
+                // Look for consecutive bookings in current block
                 foreach ($parsedEvents as $event) {
-                    // Check if this event starts at or very close to when the current occupied period ends
                     $timeDiff = $event['start']->diffInMinutes($freeAt, false);
                     
                     if ($timeDiff >= -5 && $timeDiff <= 5 && $event['start']->gte($freeAt)) {
-                        $freeAt = $event['end']; // Extend the occupied period
+                        $freeAt = $event['end'];
                     }
                 }
                 
-                $durationMinutes = $blockStart->diffInMinutes($freeAt);
-                Log::info("Room '{$roomName}' occupied for {$durationMinutes} minutes until " . $freeAt->format('H:i'));
+                $currentDuration = $blockStart->diffInMinutes($freeAt);
+                
+                // Find the next booking after current block ends
+                $nextBookingAfterFree = null;
+                foreach ($parsedEvents as $event) {
+                    if ($event['start']->gt($freeAt)) {
+                        $nextBookingAfterFree = $event;
+                        break;
+                    }
+                }
+                
+                // Calculate how long the room will be free after current booking
+                $freeDuration = null;
+                if ($nextBookingAfterFree !== null) {
+                    $freeDuration = $freeAt->diffInMinutes($nextBookingAfterFree['start']);
+                }
+                
+                Log::info("Room '{$roomName}' occupied for {$currentDuration} minutes until " . $freeAt->format('H:i') . 
+                         ($freeDuration ? ", then free for {$freeDuration} minutes" : ", then free rest of day"));
                 
                 return [
-                    'name'             => $roomName,
-                    'status'           => 'occupied',
-                    'next_booking'     => null,
-                    'available_at'     => $freeAt->format('H:i'),
-                    'duration_minutes' => $durationMinutes,
+                    'name'                      => $roomName,
+                    'status'                    => 'occupied',
+                    'next_booking'              => null,
+                    'available_at'              => $freeAt->format('H:i'),
+                    'current_duration_minutes'  => $currentDuration,
+                    'next_duration_minutes'     => $freeDuration,
                 ];
             }
 
@@ -142,20 +160,22 @@ class GoogleCalendarService
                 Log::info("Room '{$roomName}' next booking at " . $nextEvent['start']->format('H:i') . " for {$nextBookingDuration} minutes");
                 
                 return [
-                    'name'             => $roomName,
-                    'status'           => 'available',
-                    'next_booking'     => $nextEvent['start']->format('H:i'),
-                    'available_at'     => null,
-                    'duration_minutes' => $nextBookingDuration,
+                    'name'                      => $roomName,
+                    'status'                    => 'available',
+                    'next_booking'              => $nextEvent['start']->format('H:i'),
+                    'available_at'              => null,
+                    'current_duration_minutes'  => null,
+                    'next_duration_minutes'     => $nextBookingDuration,
                 ];
             }
 
             return [
-                'name'             => $roomName,
-                'status'           => 'available',
-                'next_booking'     => null,
-                'available_at'     => null,
-                'duration_minutes' => null,
+                'name'                      => $roomName,
+                'status'                    => 'available',
+                'next_booking'              => null,
+                'available_at'              => null,
+                'current_duration_minutes'  => null,
+                'next_duration_minutes'     => null,
             ];
         } catch (\Exception $e) {
             Log::error("Google Calendar: failed to fetch events for calendar '{$calendarId}': " . $e->getMessage());
@@ -169,11 +189,12 @@ class GoogleCalendarService
     private function unavailableRoom(string $roomName): array
     {
         return [
-            'name'             => $roomName,
-            'status'           => 'available',
-            'next_booking'     => null,
-            'available_at'     => null,
-            'duration_minutes' => null,
+            'name'                      => $roomName,
+            'status'                    => 'available',
+            'next_booking'              => null,
+            'available_at'              => null,
+            'current_duration_minutes'  => null,
+            'next_duration_minutes'     => null,
         ];
     }
 }
