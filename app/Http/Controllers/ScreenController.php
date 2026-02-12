@@ -25,6 +25,7 @@ class ScreenController extends Controller
                 'clock_weather' => 'Klok/Datum/Weer',
                 'announcements' => 'Mededelingen',
                 'toggl_time_tracking' => 'Toggl Uren Tracking',
+                'image_widget' => 'Afbeelding Slideshow',
             ],
         ]);
     }
@@ -60,6 +61,7 @@ class ScreenController extends Controller
                 'clock_weather' => 'Klok/Datum/Weer',
                 'announcements' => 'Mededelingen',
                 'toggl_time_tracking' => 'Toggl Uren Tracking',
+                'image_widget' => 'Afbeelding Slideshow',
             ],
         ]);
     }

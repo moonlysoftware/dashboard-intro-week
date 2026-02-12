@@ -5,6 +5,7 @@ import RoomAvailabilityWidget from '@/Components/Widgets/RoomAvailabilityWidget'
 import ClockWeatherWidget from '@/Components/Widgets/ClockWeatherWidget';
 import AnnouncementsWidget from '@/Components/Widgets/AnnouncementsWidget';
 import TogglTimeTrackingWidget from '@/Components/Widgets/TogglTimeTrackingWidget';
+import ImageWidget from '@/Components/Widgets/ImageWidget';
 import { isWideOnlyWidget, isSmallOnlyWidget } from '@/constants/widgets';
 import type { ComponentType } from 'react';
 
@@ -14,6 +15,7 @@ const WIDGET_PREVIEWS: Record<string, ComponentType<{ config: Record<string, any
     clock_weather: ClockWeatherWidget,
     announcements: AnnouncementsWidget,
     toggl_time_tracking: TogglTimeTrackingWidget,
+    image_widget: ImageWidget,
 };
 
 interface DraggableWidgetTileProps {
