@@ -117,7 +117,7 @@ class DisplayController extends Controller
     private function getClockWeatherData(): array
     {
         $weather = Cache::remember('weather_best_nl', 600, function () {
-            $response = Http::get('https://api.open-meteo.com/v1/forecast', [
+            $response = Http::get('https://api.open-meteo.com/v1/forecast?latitude=51.5075&longitude=5.3903&hourly=temperature_2m', [
                 'latitude' => 51.51,
                 'longitude' => 5.39,
                 'current' => 'temperature_2m,weather_code',
