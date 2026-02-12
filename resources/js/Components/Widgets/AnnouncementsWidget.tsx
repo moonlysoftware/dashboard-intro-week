@@ -47,7 +47,7 @@ export default function AnnouncementsWidget({
             }}
         >
             <div className="flex items-center gap-3 mb-4">
-                <h3 className="text-white text-[36px] font-bold">
+                <h3 className="text-white text-[36px] font-bold font-archia">
                     Mededelingen
                 </h3>
             </div>
@@ -56,21 +56,21 @@ export default function AnnouncementsWidget({
                 {announcements.map((announcement, index) => (
                     <div
                         key={index}
-                        className={`flex items-center justify-between border-2 backdrop-blur-md border-white/10 bg-white/15 border-l-4 rounded-lg p-3 transition-all `}
+                        className={` flex items-center justify-between border-2 backdrop-blur-md border-white/10 bg-white/15 border-l-4 rounded-lg p-3 transition-all `}
                     >
                         <div className="flex items-center mb-2 gap-2">
                             <h4 className="font-archia font-semibold text-white text-[30px]">
                                 {announcement.title}
                             </h4>
                             <span
-                                className={`inline-flex items-center rounded-full px-2 py-1 text-xl font-semibold ${getPriorityBadge(
+                                className={`font-archia inline-flex items-center rounded-full px-2 py-1 text-xl font-semibold ${getPriorityBadge(
                                     announcement.priority,
                                 )}`}
                             >
                                 {announcement.priority.toUpperCase()}
                             </span>
                         </div>
-                        <p className="text-white text-[30px]">
+                        <p className="text-white text-[30px] font-archia">
                             {announcement.message}
                         </p>
                     </div>

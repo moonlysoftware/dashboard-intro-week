@@ -93,7 +93,7 @@ export default function TogglTimeTrackingWidget({
 
     return (
         <div
-            className="flex flex-col justify-between rounded-lg shadow-lg p-6 h-full border border-border bg-cover bg-center bg-no-repeat"
+            className="font-archia flex flex-col justify-between rounded-lg shadow-lg p-6 h-full border border-border bg-cover bg-center bg-no-repeat"
             style={{
                 backgroundImage: "url('/storage/toggl/toggl.jpg')",
             }}
