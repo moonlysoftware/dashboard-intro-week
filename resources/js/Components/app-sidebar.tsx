@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import {
-  LayoutDashboardIcon,
   ListIcon,
   MoonIcon,
   SettingsIcon,
@@ -31,11 +30,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { auth } = usePage<PageProps>().props
 
   const navMain = [
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: LayoutDashboardIcon,
-    },
     {
       title: "Screens",
       url: "/screens",
@@ -70,7 +64,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href={route('dashboard')}>
+              <a href={route('screens.index')}>
                 <img src={isDark ? "/storage/moonly-logo-white.svg" : "/storage/moonly-logo-black.svg"} alt="Logo Moonly" className="h-6 w-auto" />
               </a>
             </SidebarMenuButton>
