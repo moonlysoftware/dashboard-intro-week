@@ -7,27 +7,23 @@ import { Link, useForm } from "@inertiajs/react"
 import { FormEventHandler } from "react"
 import InputError from "@/Components/InputError"
 
-interface LoginFormProps extends React.ComponentProps<"div"> {
-  status?: string
-  canResetPassword: boolean
-}
+interface RegisterFormProps extends React.ComponentProps<"div"> {}
 
-export function LoginForm({
+export function RegisterForm({
   className,
-  status,
-  canResetPassword,
   ...props
-}: LoginFormProps) {
+}: RegisterFormProps) {
   const { data, setData, post, processing, errors, reset } = useForm({
+    name: "",
     email: "",
     password: "",
-    remember: false as boolean,
+    password_confirmation: "",
   })
 
   const submit: FormEventHandler = (e) => {
     e.preventDefault()
-    post(route("login"), {
-      onFinish: () => reset("password"),
+    post(route("register"), {
+      onFinish: () => reset("password", "password_confirmation"),
     })
   }
 
@@ -38,17 +34,26 @@ export function LoginForm({
           <form className="p-6 md:p-8" onSubmit={submit}>
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center text-center">
-                <h1 className="text-2xl font-bold">Welcome back</h1>
+                <h1 className="text-2xl font-bold">Create an account</h1>
                 <p className="text-balance text-muted-foreground">
-                  Login to your Moonly account
+                  Sign up for your Moonly account
                 </p>
               </div>
 
-              {status && (
-                <div className="text-sm font-medium text-green-600">
-                  {status}
-                </div>
-              )}
+              <div className="grid gap-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="John Doe"
+                  value={data.name}
+                  autoComplete="name"
+                  autoFocus
+                  onChange={(e) => setData("name", e.target.value)}
+                  required
+                />
+                <InputError message={errors.name} />
+              </div>
 
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
@@ -58,44 +63,46 @@ export function LoginForm({
                   placeholder="@moonlysoftware.com"
                   value={data.email}
                   autoComplete="username"
-                  autoFocus
                   onChange={(e) => setData("email", e.target.value)}
                   required
                 />
                 <InputError message={errors.email} />
               </div>
 
-              <div className="grid gap-2 pb-8">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                  {canResetPassword && (
-                    <Link
-                      href={route("password.request")}
-                      className="ml-auto text-sm underline-offset-2 hover:underline"
-                    >
-                      Forgot your password?
-                    </Link>
-                  )}
-                </div>
+              <div className="grid gap-2">
+                <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   type="password"
                   value={data.password}
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                   onChange={(e) => setData("password", e.target.value)}
                   required
                 />
                 <InputError message={errors.password} />
               </div>
 
+              <div className="grid gap-2 pb-4">
+                <Label htmlFor="password_confirmation">Confirm Password</Label>
+                <Input
+                  id="password_confirmation"
+                  type="password"
+                  value={data.password_confirmation}
+                  autoComplete="new-password"
+                  onChange={(e) => setData("password_confirmation", e.target.value)}
+                  required
+                />
+                <InputError message={errors.password_confirmation} />
+              </div>
+
               <Button type="submit" className="w-full" disabled={processing}>
-                Login
+                Register
               </Button>
 
               <div className="text-center text-sm">
-                Don&apos;t have an account?{" "}
-                <Link href={route("register")} className="underline underline-offset-4">
-                  Sign up
+                Already have an account?{" "}
+                <Link href={route("login")} className="underline underline-offset-4">
+                  Login
                 </Link>
               </div>
             </div>
