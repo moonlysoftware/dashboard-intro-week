@@ -1,4 +1,5 @@
 import WidgetNotConfigured from "@/Components/Widgets/WidgetNotConfigured";
+import { useEffect, useState } from "react";
 
 interface MissingHoursUser {
     name: string;
@@ -20,11 +21,59 @@ interface TogglTimeTrackingWidgetProps {
     };
 }
 
+function getFridayCountdown(): string {
+    const now = new Date();
+
+    const dayNameRaw = now.toLocaleDateString("nl-NL", {
+        weekday: "long",
+    });
+    const dayName = dayNameRaw.charAt(0).toUpperCase() + dayNameRaw.slice(1);
+
+    const currentTime = now.toLocaleTimeString().slice(0, 5);
+
+    const target = new Date(now);
+    const currentDay = now.getDay(); // 0 = Sunday, 5 = Friday
+    const friday = 5;
+
+    let daysUntilFriday = friday - currentDay;
+
+    if (
+        daysUntilFriday < 0 ||
+        (daysUntilFriday === 0 && now.getHours() >= 17)
+    ) {
+        daysUntilFriday += 7;
+    }
+
+    target.setDate(now.getDate() + daysUntilFriday);
+    target.setHours(17, 0, 0, 0);
+
+    const diff = target.getTime() - now.getTime();
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+
+    return `${dayName}\n${currentTime}\n${days}d ${hours}u ${minutes}m te gaan!`;
+}
+
 export default function TogglTimeTrackingWidget({
     config: _config,
     data,
 }: TogglTimeTrackingWidgetProps) {
     const isConfigured = data && Object.keys(data).length > 0;
+
+    const [fridayCountdown, setFridayCountdown] = useState("");
+
+    useEffect(() => {
+        const update = () => {
+            setFridayCountdown(getFridayCountdown());
+        };
+
+        update();
+        const interval = setInterval(update, 1000);
+
+        return () => clearInterval(interval);
+    }, []);
 
     if (!isConfigured) {
         return (
@@ -42,31 +91,14 @@ export default function TogglTimeTrackingWidget({
         missing_hours_users = [],
     } = data;
 
-    const getProgressColor = (percentage: number) => {
-        if (percentage >= 90) return "bg-green-500";
-        if (percentage >= 70) return "bg-yellow-500";
-        return "bg-red-500";
-    };
-
-    const getUserStatusColor = (percentage: number) => {
-        if (percentage >= 95)
-            return "border-green-500 bg-green-50 dark:bg-green-900/20";
-        if (percentage >= 85)
-            return "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20";
-        return "border-red-500 bg-red-50 dark:bg-red-900/20";
-    };
-
-    const getUserStatusBadge = (percentage: number) => {
-        if (percentage >= 95)
-            return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
-        if (percentage >= 85)
-            return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
-        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
-    };
-
     return (
-        <div className="bg-black rounded-lg shadow-lg p-6 h-full border border-border">
-            <div className="flex items-center gap-3 mb-4">
+        <div
+            className="flex flex-col justify-between rounded-lg shadow-lg p-6 h-full border border-border bg-cover bg-center bg-no-repeat"
+            style={{
+                backgroundImage: "url('/storage/toggl/toggl.jpg')",
+            }}
+        >
+            <div className="flex items-center  gap-3 mb-4 ">
                 <div className="flex items-center justify-between w-full">
                     <h3 className="text-white text-[36px] font-bold text-foreground">
                         Toggl Wall of Shame
@@ -90,7 +122,7 @@ export default function TogglTimeTrackingWidget({
                     />
                 </div>
                 <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                    <span>✓ {users_complete} compleet</span>
+                <span>✓ {users_complete} compleet</span>
                     <span>✗ {users_incomplete} incompleet</span>
                     <span>Σ {total_users} totaal</span>
                 </div>
@@ -108,16 +140,16 @@ export default function TogglTimeTrackingWidget({
                     </p>
                 </div>
             ) : (
-                <div className="space-y-2">
+                <div className="flex w-full space-y-2 ">
                     {/* <h4 className="text-white/50 text-sm font-semibold mb-3">
                         Nog in te vullen ({missing_hours_users.length})
                     </h4> */}
 
-                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                    <div className="space-y-2 max-h-96 overflow-y-auto w-full">
                         {missing_hours_users.slice(0, 3).map((user, index) => (
                             <div
                                 key={index}
-                                className={`flex flex-col justify-center w-[50%] border-2 border-white/10 bg-white/15 border-l-4 rounded-lg p-3 transition-all ${getUserStatusColor(user.percentage)}`}
+                                className={`flex flex-col justify-center border-2 border-white/10 bg-white/15 border-l-4 rounded-lg p-3 transition-all`}
                             >
                                 <div className="flex justify-between items-center mb-2 ">
                                     <div className="flex items-center gap-2">
@@ -132,7 +164,7 @@ export default function TogglTimeTrackingWidget({
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <div className="flex-1">
-                                        <div className="w-full bg-muted/50 rounded-full h-1.5 mt-1">
+                                        <div className="w-full bg-white/20 rounded-full h-1.5 mt-1">
                                             <div
                                                 className="bg-primary h-full rounded-full transition-all"
                                                 style={{
@@ -144,6 +176,14 @@ export default function TogglTimeTrackingWidget({
                                 </div>
                             </div>
                         ))}
+                    </div>
+                    <div className="flex flex-col text-red-500 w-full justify-end">
+                        <div
+                            className=" text-white text-[36px] text-right"
+                            style={{ whiteSpace: "pre-line" }}
+                        >
+                            {fridayCountdown}
+                        </div>
                     </div>
                 </div>
             )}

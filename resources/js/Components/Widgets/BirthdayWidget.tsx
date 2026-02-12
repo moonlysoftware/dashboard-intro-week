@@ -115,7 +115,7 @@ export default function BirthdayWidget({ config: _config, data: _data }: Birthda
                     }}
                 >
                     <p className="font-black uppercase tracking-widest drop-shadow"
-                        style={{ fontSize: 'clamp(2rem, 5vw, 4.5rem)' }}>
+                        style={{ fontSize: 'clamp(1.5rem, 3vw, 2.8rem)' }}>
                         Gefeliciteerd!
                     </p>
                 </div>
@@ -172,13 +172,13 @@ export default function BirthdayWidget({ config: _config, data: _data }: Birthda
                 }}
             >
                 <p className="font-black uppercase tracking-widest drop-shadow"
-                    style={{ fontSize: 'clamp(2rem, 5vw, 4.5rem)' }}>
+                    style={{ fontSize: 'clamp(1.5rem, 5vw, 3rem)' }}>
                     Bijna jarig!
                 </p>
             </div>
 
             <div
-                className="absolute bottom-0 left-0 right-0 flex flex-col items-center text-white text-center"
+                className="absolute bottom-0 left-0 right-0 flex flex-row items-baseline justify-center gap-3 text-white text-center flex-wrap"
                 style={{
                     zIndex: 30,
                     background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, transparent 100%)',
@@ -186,10 +186,10 @@ export default function BirthdayWidget({ config: _config, data: _data }: Birthda
                     paddingTop: 'clamp(4rem, 8vw, 8rem)',
                 }}
             >
-                <p className="font-bold drop-shadow" style={{ fontSize: 'clamp(1.8rem, 4vw, 3.5rem)' }}>
+                <p className="font-bold drop-shadow whitespace-nowrap" style={{ fontSize: 'clamp(1.8rem, 4vw, 3.5rem)' }}>
                     {primary.name}
                 </p>
-                <p className="font-semibold uppercase tracking-widest drop-shadow" style={{ fontSize: 'clamp(1rem, 2vw, 1.6rem)' }}>
+                <p className="font-semibold uppercase tracking-widest drop-shadow whitespace-nowrap" style={{ fontSize: 'clamp(1rem, 2vw, 1.6rem)' }}>
                     wordt over {days} {days === 1 ? 'dag' : 'dagen'} {getAgeThisBirthday(primary.birthdate)} jaar
                 </p>
             </div>

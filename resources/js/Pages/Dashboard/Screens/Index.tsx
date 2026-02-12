@@ -300,17 +300,19 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
     };
 
     const handleWidgetSaved = (screenId: number, updatedWidget: Widget) => {
-        // Config is shared across all widgets of the same type — sync it everywhere
         setScreens((prev) =>
             prev.map((s) => ({
                 ...s,
-                widgets: s.widgets.map((w) =>
-                    w.id === updatedWidget.id
-                        ? updatedWidget
-                        : w.widget_type === updatedWidget.widget_type
-                          ? { ...w, config: updatedWidget.config }
-                          : w
-                ),
+                widgets: s.widgets.map((w) => {
+                    if (w.id === updatedWidget.id) return updatedWidget;
+                    // image_widget has per-instance config — don't sync to other instances
+                    if (updatedWidget.widget_type === 'image_widget') return w;
+                    // All other widget types share config globally
+                    if (w.widget_type === updatedWidget.widget_type) {
+                        return { ...w, config: updatedWidget.config };
+                    }
+                    return w;
+                }),
             }))
         );
         if (selectedWidget) {
@@ -553,6 +555,7 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
                                 </CardHeader>
                                 <CardContent>
                                     <WidgetSettingsPanel
+                                        key={selectedWidget.widget.id}
                                         widget={selectedWidget.widget}
                                         widgetTypes={widgetTypes}
                                         onClose={() => setSelectedWidget(null)}
