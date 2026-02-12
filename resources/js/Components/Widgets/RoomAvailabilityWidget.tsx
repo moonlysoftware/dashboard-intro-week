@@ -79,7 +79,7 @@ export default function RoomAvailabilityWidget({ data }: RoomAvailabilityWidgetP
                   transform: 'translate(-50%, 0)',
                 }}
               >
-                <div className="font-semibold truncate">{room.name}</div>
+                <div className="font-archia font-semibold truncate">{room.name}</div>
                 <div className="truncate text-[0.7rem]">
                   {room.status === 'available'
                     ? 'Available now'

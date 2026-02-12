@@ -13,12 +13,14 @@ export default {
 
     theme: {
     	extend: {
-    		fontFamily: {
-    			sans: [
-    				'Roboto',
-                    ...defaultTheme.fontFamily.sans
-                ]
-    		},
+			fontFamily: {
+				sans: [
+					'CeraPro',      // main app font
+					'Roboto',
+					...defaultTheme.fontFamily.sans
+				],
+				archia: ['Archia', 'sans-serif'],  // for headings
+			},
     		colors: {
     			border: 'var(--border)',
     			input: 'var(--input)',
