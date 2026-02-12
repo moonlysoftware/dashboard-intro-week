@@ -56,10 +56,10 @@ export default function AnnouncementsWidget({
                 {announcements.map((announcement, index) => (
                     <div
                         key={index}
-                        className={`flex items-center justify-between border-2 border-white/10 bg-white/15 border-l-4 rounded-lg p-3 transition-all `}
+                        className={`flex items-center justify-between border-2 backdrop-blur-md border-white/10 bg-white/15 border-l-4 rounded-lg p-3 transition-all `}
                     >
                         <div className="flex items-center mb-2 gap-2">
-                            <h4 className="font-semibold text-white text-[30px]">
+                            <h4 className="font-archia font-semibold text-white text-[30px]">
                                 {announcement.title}
                             </h4>
                             <span

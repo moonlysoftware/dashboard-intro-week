@@ -149,7 +149,7 @@ export default function TogglTimeTrackingWidget({
                         {missing_hours_users.slice(0, 3).map((user, index) => (
                             <div
                                 key={index}
-                                className={`flex flex-col justify-center border-2 border-white/10 bg-white/15 border-l-4 rounded-lg p-3 transition-all`}
+                                className={`flex flex-col justify-center border-2 border-white/10 bg-white/15 backdrop-blur-md border-l-4 rounded-lg p-3 transition-all`}
                             >
                                 <div className="flex justify-between items-center mb-2 ">
                                     <div className="flex items-center gap-2">
