@@ -14,12 +14,10 @@ class Screen extends Model
         'name',
         'description',
         'refresh_interval',
-        'is_active',
         'layout',
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
         'refresh_interval' => 'integer',
     ];
 

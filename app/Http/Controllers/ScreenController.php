@@ -41,7 +41,6 @@ class ScreenController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'refresh_interval' => 'required|integer|min:5|max:300',
-            'is_active' => 'boolean',
         ]);
 
         Screen::create($validated);
@@ -72,7 +71,6 @@ class ScreenController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'refresh_interval' => 'required|integer|min:5|max:300',
-            'is_active' => 'boolean',
         ]);
 
         $screen->update($validated);

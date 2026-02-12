@@ -7,7 +7,7 @@ import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
-import { Switch } from '@/Components/ui/switch';
+
 
 interface RoomConfig {
     name: string;
@@ -28,7 +28,6 @@ interface Screen {
     name: string;
     description: string | null;
     refresh_interval: number;
-    is_active: boolean;
     widgets: Widget[];
 }
 
@@ -86,7 +85,6 @@ export default function Edit({ auth, screen, widgetTypes }: EditProps) {
         name: screen.name,
         description: screen.description || '',
         refresh_interval: screen.refresh_interval,
-        is_active: screen.is_active,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -194,15 +192,6 @@ export default function Edit({ auth, screen, widgetTypes }: EditProps) {
                                     {errors.refresh_interval && (
                                         <p className="text-sm text-destructive">{errors.refresh_interval}</p>
                                     )}
-                                </div>
-
-                                <div className="flex items-center space-x-2">
-                                    <Switch
-                                        id="is_active"
-                                        checked={data.is_active}
-                                        onCheckedChange={(checked) => setData('is_active', checked)}
-                                    />
-                                    <Label htmlFor="is_active">Active</Label>
                                 </div>
 
                                 <Button type="submit" disabled={processing}>

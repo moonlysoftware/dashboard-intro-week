@@ -6,14 +6,11 @@ import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
-import { Switch } from '@/Components/ui/switch';
-
 export default function Create({ auth }: PageProps) {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         description: '',
         refresh_interval: 30,
-        is_active: true,
     });
 
     const submit: FormEventHandler = (e) => {
@@ -91,15 +88,6 @@ export default function Create({ auth }: PageProps) {
                                     {errors.refresh_interval && (
                                         <p className="text-sm text-destructive">{errors.refresh_interval}</p>
                                     )}
-                                </div>
-
-                                <div className="flex items-center space-x-2">
-                                    <Switch
-                                        id="is_active"
-                                        checked={data.is_active}
-                                        onCheckedChange={(checked) => setData('is_active', checked)}
-                                    />
-                                    <Label htmlFor="is_active">Active</Label>
                                 </div>
 
                                 <div className="flex items-center gap-4">

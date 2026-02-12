@@ -15,10 +15,6 @@ class DisplayController extends Controller
 {
     public function show(Screen $screen): Response
     {
-        if (!$screen->is_active) {
-            abort(404, 'Screen is not active');
-        }
-
         $screen->load('widgets');
 
         return Inertia::render('Display/Show', [
@@ -28,10 +24,6 @@ class DisplayController extends Controller
 
     public function data(Screen $screen): JsonResponse
     {
-        if (!$screen->is_active) {
-            abort(404, 'Screen is not active');
-        }
-
         $widgets = $screen->widgets()->get();
 
         $widgetsWithData = $widgets->map(function ($widget) {

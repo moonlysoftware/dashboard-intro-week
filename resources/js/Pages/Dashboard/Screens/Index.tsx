@@ -42,7 +42,6 @@ interface Screen {
     name: string;
     description: string | null;
     refresh_interval: number;
-    is_active: boolean;
     layout: BentoLayout;
     widgets_count: number;
     widgets: Widget[];
@@ -408,15 +407,6 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
                                                         <CardTitle className="text-base truncate">
                                                             {screen.name}
                                                         </CardTitle>
-                                                        <span
-                                                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium flex-shrink-0 ${
-                                                                screen.is_active
-                                                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                                    : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-                                                            }`}
-                                                        >
-                                                            {screen.is_active ? 'Active' : 'Inactive'}
-                                                        </span>
                                                     </div>
 
                                                     <div className="flex items-center gap-1 flex-shrink-0">
