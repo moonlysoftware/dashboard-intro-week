@@ -59,7 +59,7 @@ class DisplayController extends Controller
             'birthday' => $this->getBirthdayData(),
             'room_availability' => $this->getRoomAvailabilityData($widget),
             'clock_weather' => $this->getClockWeatherData(),
-            'announcements' => $this->getAnnouncementsData(),
+            'announcements' => $this->getAnnouncementsData($widget),
             'toggl_time_tracking' => $this->getTogglTimeTrackingData(),
             default => [],
         };
@@ -180,14 +180,13 @@ class DisplayController extends Controller
         };
     }
 
-    private function getAnnouncementsData(): array
+    private function getAnnouncementsData($widget): array
     {
+        $config = $widget->config ?? [];
+        $announcements = array_slice($config['announcements'] ?? [], 0, 5);
+
         return [
-            'announcements' => [
-                ['title' => 'Team Lunch', 'message' => 'Don\'t forget the team lunch at 12:30 today!', 'priority' => 'high'],
-                ['title' => 'System Maintenance', 'message' => 'Planned maintenance tonight from 22:00-23:00', 'priority' => 'medium'],
-                ['title' => 'New Coffee Machine', 'message' => 'Check out the new coffee machine in the break room!', 'priority' => 'low'],
-            ],
+            'announcements' => $announcements,
         ];
     }
 

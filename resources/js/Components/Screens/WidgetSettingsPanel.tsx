@@ -11,6 +11,11 @@ interface RoomConfig {
     calendar_id: string;
 }
 
+interface AnnouncementConfig {
+    title: string;
+    message: string;
+}
+
 interface WidgetSettingsPanelProps {
     widget: Widget;
     widgetTypes: Record<string, string>;
@@ -23,6 +28,11 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
         widget.config?.rooms?.length
             ? widget.config.rooms
             : [{ name: '', calendar_id: '' }]
+    );
+    const [announcementConfigs, setAnnouncementConfigs] = useState<AnnouncementConfig[]>(
+        widget.config?.announcements?.length
+            ? widget.config.announcements
+            : [{ title: '', message: '' }]
     );
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
@@ -88,6 +98,8 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
                 finalConfig = { rooms: roomConfigs.filter((r) => r.name || r.calendar_id) };
             } else if (widget.widget_type === 'image_widget') {
                 finalConfig = { selected_images: selectedImages, transition_time: transitionTime };
+            } else if (widget.widget_type === 'announcements') {
+                finalConfig = { announcements: announcementConfigs.filter((a) => a.title || a.message) };
             } else {
                 finalConfig = widget.config ?? {};
             }
@@ -116,6 +128,18 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
 
     const handleRemoveRoom = (index: number) => {
         setRoomConfigs(roomConfigs.filter((_, i) => i !== index));
+    };
+
+    const handleAnnouncementChange = (index: number, field: keyof AnnouncementConfig, value: string) => {
+        setAnnouncementConfigs(announcementConfigs.map((a, i) => (i === index ? { ...a, [field]: value } : a)));
+    };
+
+    const handleAddAnnouncement = () => {
+        setAnnouncementConfigs([...announcementConfigs, { title: '', message: '' }]);
+    };
+
+    const handleRemoveAnnouncement = (index: number) => {
+        setAnnouncementConfigs(announcementConfigs.filter((_, i) => i !== index));
     };
 
     return (
@@ -278,7 +302,54 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
                 </div>
             )}
 
-            {widget.widget_type !== 'room_availability' && widget.widget_type !== 'image_widget' && (
+            {widget.widget_type === 'announcements' && (
+                <div className="space-y-3">
+                    {announcementConfigs.map((announcement, index) => (
+                        <div key={index} className="space-y-2 p-3 rounded-lg border bg-muted/30">
+                            <div className="space-y-1">
+                                <Label className="text-xs">Titel</Label>
+                                <Input
+                                    placeholder="bijv. Team Lunch"
+                                    value={announcement.title}
+                                    onChange={(e) => handleAnnouncementChange(index, 'title', e.target.value)}
+                                    className="h-8 text-sm"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs">Bericht</Label>
+                                <Input
+                                    placeholder="bijv. Vergeet de team lunch niet om 12:30!"
+                                    value={announcement.message}
+                                    onChange={(e) => handleAnnouncementChange(index, 'message', e.target.value)}
+                                    className="h-8 text-sm"
+                                />
+                            </div>
+                            {announcementConfigs.length > 1 && (
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="w-full h-7 text-xs"
+                                    onClick={() => handleRemoveAnnouncement(index)}
+                                >
+                                    Verwijder mededeling
+                                </Button>
+                            )}
+                        </div>
+                    ))}
+                    {announcementConfigs.length < 5 && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full h-8 text-xs"
+                            onClick={handleAddAnnouncement}
+                        >
+                            + Mededeling toevoegen
+                        </Button>
+                    )}
+                </div>
+            )}
+
+            {widget.widget_type !== 'room_availability' && widget.widget_type !== 'image_widget' && widget.widget_type !== 'announcements' && (
                 <div className="py-6 text-center">
                     <p className="text-xs text-muted-foreground">
                         Geen instellingen beschikbaar voor dit widget type.
@@ -286,7 +357,7 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
                 </div>
             )}
 
-            {(widget.widget_type === 'room_availability' || widget.widget_type === 'image_widget') && (
+            {(widget.widget_type === 'room_availability' || widget.widget_type === 'image_widget' || widget.widget_type === 'announcements') && (
                 <Button
                     onClick={handleSave}
                     disabled={saving}

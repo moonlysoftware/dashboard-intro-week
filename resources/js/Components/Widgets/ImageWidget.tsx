@@ -43,7 +43,7 @@ export default function ImageWidget({ config }: ImageWidgetProps) {
                 key={currentIndex}
                 src={images[currentIndex]}
                 alt=""
-                className="absolute inset-0 w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover object-top"
                 style={{
                     opacity: visible ? 1 : 0,
                     transition: 'opacity 0.7s ease-in-out',
