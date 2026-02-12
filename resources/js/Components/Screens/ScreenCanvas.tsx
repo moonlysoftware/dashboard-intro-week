@@ -1,7 +1,11 @@
-import { useDroppable, useDraggable } from '@dnd-kit/core';
-import { CSS } from '@dnd-kit/utilities';
-import { X, GripVertical } from 'lucide-react';
-import { isWideOnlyWidget, isSmallOnlyWidget, isSmallSlot } from '@/constants/widgets';
+import { useDroppable, useDraggable } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
+import { X, GripVertical } from "lucide-react";
+import {
+    isWideOnlyWidget,
+    isSmallOnlyWidget,
+    isSmallSlot,
+} from "@/constants/widgets";
 
 export interface Widget {
     id: number;
@@ -31,22 +35,25 @@ function DraggableWidget({
     onWidgetClick,
     onWidgetRemove,
 }: DraggableWidgetProps) {
-    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-        id: `existing-widget-${widget.id}`,
-        data: {
-            existingWidgetId: widget.id,
-            currentOrder: widget.grid_order,
-            screenId,
-        },
-    });
+    const { attributes, listeners, setNodeRef, transform, isDragging } =
+        useDraggable({
+            id: `existing-widget-${widget.id}`,
+            data: {
+                existingWidgetId: widget.id,
+                currentOrder: widget.grid_order,
+                screenId,
+            },
+        });
 
-    const style = transform ? { transform: CSS.Translate.toString(transform) } : undefined;
+    const style = transform
+        ? { transform: CSS.Translate.toString(transform) }
+        : undefined;
 
     return (
         <div
             ref={setNodeRef}
             style={style}
-            className={`w-full h-full flex items-center justify-center relative px-2 ${isDragging ? 'opacity-0' : ''}`}
+            className={`w-full h-full flex items-center justify-center relative px-2 ${isDragging ? "opacity-0" : ""}`}
         >
             <div
                 className="absolute left-1 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing text-muted-foreground/30 hover:text-muted-foreground/70 transition-colors"
@@ -99,46 +106,47 @@ function CanvasSlot({
     isScreenActive,
     isSelected,
     isBlocked,
-    blockedLabel = 'Alleen breed',
+    blockedLabel = "Alleen breed",
     onWidgetClick,
     onWidgetRemove,
 }: CanvasSlotProps) {
     const { isOver, setNodeRef } = useDroppable({ id: slotId });
 
-    let borderClass = '';
-    let bgClass = '';
+    let borderClass = "";
+    let bgClass = "";
 
     if (widget) {
         if (isSelected) {
-            borderClass = 'border-solid border-primary';
-            bgClass = 'bg-primary/10';
+            borderClass = "border-solid border-primary";
+            bgClass = "bg-primary/10";
         } else if (isOver && !isBlocked) {
-            borderClass = 'border-solid border-primary/60';
-            bgClass = 'bg-primary/5';
+            borderClass = "border-solid border-primary/60";
+            bgClass = "bg-primary/5";
         } else if (isOver && isBlocked) {
-            borderClass = 'border-solid border-destructive/60';
-            bgClass = 'bg-destructive/5';
+            borderClass = "border-solid border-destructive/60";
+            bgClass = "bg-destructive/5";
         } else {
-            borderClass = 'border-solid border-border';
-            bgClass = 'bg-muted/40';
+            borderClass = "border-solid border-border";
+            bgClass = "bg-muted/40";
         }
     } else {
         // Empty slot
         if (isOver && isScreenActive && isBlocked) {
-            borderClass = 'border-dashed border-destructive';
-            bgClass = 'bg-destructive/5';
+            borderClass = "border-dashed border-destructive";
+            bgClass = "bg-destructive/5";
         } else if (isOver && isScreenActive) {
-            borderClass = 'border-dashed border-primary';
-            bgClass = 'bg-primary/5 scale-[1.02]';
+            borderClass = "border-dashed border-primary";
+            bgClass = "bg-primary/5 scale-[1.02]";
         } else if (isBlocked && isScreenActive) {
-            borderClass = 'border-dashed border-destructive/30';
-            bgClass = '';
+            borderClass = "border-dashed border-destructive/30";
+            bgClass = "";
         } else if (isScreenActive) {
-            borderClass = 'border-dashed border-muted-foreground/30 hover:border-muted-foreground/50';
-            bgClass = '';
+            borderClass =
+                "border-dashed border-muted-foreground/30 hover:border-muted-foreground/50";
+            bgClass = "";
         } else {
-            borderClass = 'border-dashed border-muted-foreground/12';
-            bgClass = '';
+            borderClass = "border-dashed border-muted-foreground/12";
+            bgClass = "";
         }
     }
 
@@ -160,23 +168,23 @@ function CanvasSlot({
                 <span
                     className={`text-[10px] select-none transition-colors ${
                         isOver && isScreenActive && isBlocked
-                            ? 'text-destructive font-medium'
+                            ? "text-destructive font-medium"
                             : isOver && isScreenActive
-                            ? 'text-primary font-medium'
-                            : isBlocked && isScreenActive
-                            ? 'text-destructive/50'
-                            : isScreenActive
-                            ? 'text-muted-foreground/40'
-                            : 'text-transparent'
+                              ? "text-primary font-medium"
+                              : isBlocked && isScreenActive
+                                ? "text-destructive/50"
+                                : isScreenActive
+                                  ? "text-muted-foreground/40"
+                                  : "text-transparent"
                     }`}
                 >
                     {isOver && isScreenActive && isBlocked
-                        ? 'Niet beschikbaar'
+                        ? "Niet beschikbaar"
                         : isOver && isScreenActive
-                        ? 'Loslaten'
-                        : isBlocked && isScreenActive
-                        ? blockedLabel
-                        : 'Sleep hier'}
+                          ? "Loslaten"
+                          : isBlocked && isScreenActive
+                            ? blockedLabel
+                            : "Sleep hier"}
                 </span>
             )}
         </div>
@@ -185,7 +193,7 @@ function CanvasSlot({
 
 // ── Canvas ────────────────────────────────────────────────────────────────────
 
-type BentoLayout = 'bento_start_small' | 'bento_start_large';
+type BentoLayout = "bento_start_small" | "bento_start_large";
 
 export interface ScreenCanvasProps {
     screenId: number;
@@ -204,14 +212,18 @@ export function ScreenCanvas({
     widgets,
     widgetTypes,
     isScreenActive,
-    layout = 'bento_start_small',
+    layout = "bento_start_small",
     activeDragWidgetType,
     selectedWidgetId,
     onWidgetClick,
     onWidgetRemove,
 }: ScreenCanvasProps) {
-    const isDragWide = activeDragWidgetType ? isWideOnlyWidget(activeDragWidgetType) : false;
-    const isDragSmallOnly = activeDragWidgetType ? isSmallOnlyWidget(activeDragWidgetType) : false;
+    const isDragWide = activeDragWidgetType
+        ? isWideOnlyWidget(activeDragWidgetType)
+        : false;
+    const isDragSmallOnly = activeDragWidgetType
+        ? isSmallOnlyWidget(activeDragWidgetType)
+        : false;
     // Row 1 and row 2 are always opposite:
     // bento_start_small: [3, 9, 9, 3] (out of 12)
     // bento_start_large: [9, 3, 3, 9] (out of 12)
@@ -238,7 +250,11 @@ export function ScreenCanvas({
                                 (isDragWide && isSmallSlot(i, layout)) ||
                                 (isDragSmallOnly && !isSmallSlot(i, layout))
                             }
-                            blockedLabel={isDragSmallOnly ? 'Alleen klein' : 'Alleen breed'}
+                            blockedLabel={
+                                isDragSmallOnly
+                                    ? "Alleen klein"
+                                    : "Alleen breed"
+                            }
                             onWidgetClick={onWidgetClick}
                             onWidgetRemove={onWidgetRemove}
                         />
