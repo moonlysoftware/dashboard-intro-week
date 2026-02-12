@@ -70,7 +70,7 @@ export default function RoomAvailabilityWidget({ data }: RoomAvailabilityWidgetP
             return (
               <div
                 key={`container-${index}`}
-                className="absolute bg-black bg-opacity-80 text-white p-1 rounded-md text-xs text-center shadow"
+                className="absolute bg-black bg-opacity-80 text-white p-1 rounded-md text-center shadow"
                 style={{
                   width: '7.0%', // match light width for consistency
                   height: '19%',    // enough height for text
@@ -79,13 +79,15 @@ export default function RoomAvailabilityWidget({ data }: RoomAvailabilityWidgetP
                   transform: 'translate(-50%, 0)',
                 }}
               >
-                <div className="font-archia font-semibold truncate">{room.name}</div>
-                <div className="truncate text-[0.7rem]">
-                  {room.status === 'available'
-                    ? 'Available now'
-                    : room.available_at
-                    ? `Available at ${room.available_at}`
-                    : 'Occupied'}
+                <div className="font-archia font-semibold uppercase text-[clamp(0.1rem, 2vw, 20rem)]">{room.name}</div>
+                <div className="font-sans text-[0.7rem]">
+                  {room.status === 'available' ? (
+                    room.next_booking ? `Free now occupied at ${room.next_booking}` : 'Available for the whole day'
+                  ) : room.available_at ? (
+                    `Occupied available at ${room.available_at}`
+                  ) : (
+                    'Occupied'
+                  )}
                 </div>
               </div>
             );
