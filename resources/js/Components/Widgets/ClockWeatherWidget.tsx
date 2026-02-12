@@ -33,7 +33,6 @@ export default function ClockWeatherWidget({
         return date.toLocaleTimeString("nl-NL", {
             hour: "2-digit",
             minute: "2-digit",
-            second: "2-digit",
         });
     };
 
