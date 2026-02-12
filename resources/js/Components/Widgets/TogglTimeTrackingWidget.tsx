@@ -62,12 +62,6 @@ export default function TogglTimeTrackingWidget({
 }: TogglTimeTrackingWidgetProps) {
     const isConfigured = data && Object.keys(data).length > 0;
 
-    if (!isConfigured) {
-        return (
-            <WidgetNotConfigured message="Toggl API nog niet geconfigureerd" />
-        );
-    }
-
     const [fridayCountdown, setFridayCountdown] = useState("");
 
     useEffect(() => {
@@ -81,6 +75,12 @@ export default function TogglTimeTrackingWidget({
         return () => clearInterval(interval);
     }, []);
 
+    if (!isConfigured) {
+        return (
+            <WidgetNotConfigured message="Toggl API nog niet geconfigureerd" />
+        );
+    }
+
     const {
         week_number = 0,
         year = new Date().getFullYear(),
@@ -90,28 +90,6 @@ export default function TogglTimeTrackingWidget({
         percentage_complete = 0,
         missing_hours_users = [],
     } = data;
-
-    const getProgressColor = (percentage: number) => {
-        if (percentage >= 90) return "bg-green-500";
-        if (percentage >= 70) return "bg-yellow-500";
-        return "bg-red-500";
-    };
-
-    const getUserStatusColor = (percentage: number) => {
-        if (percentage >= 95)
-            return "border-green-500 bg-green-50 dark:bg-green-900/20";
-        if (percentage >= 85)
-            return "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20";
-        return "border-red-500 bg-red-50 dark:bg-red-900/20";
-    };
-
-    const getUserStatusBadge = (percentage: number) => {
-        if (percentage >= 95)
-            return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
-        if (percentage >= 85)
-            return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
-        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
-    };
 
     return (
         <div
@@ -171,7 +149,7 @@ export default function TogglTimeTrackingWidget({
                         {missing_hours_users.slice(0, 3).map((user, index) => (
                             <div
                                 key={index}
-                                className={`flex flex-col justify-center border-2 border-white/10 bg-white/15 border-l-4 rounded-lg p-3 transition-all ${getUserStatusColor(user.percentage)}`}
+                                className={`flex flex-col justify-center border-2 border-white/10 bg-white/15 border-l-4 rounded-lg p-3 transition-all`}
                             >
                                 <div className="flex justify-between items-center mb-2 ">
                                     <div className="flex items-center gap-2">
