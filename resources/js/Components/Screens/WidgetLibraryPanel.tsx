@@ -1,56 +1,14 @@
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import BirthdayWidget from '@/Components/Widgets/BirthdayWidget';
-import RoomAvailabilityWidget from '@/Components/Widgets/RoomAvailabilityWidget';
-import ClockWeatherWidget from '@/Components/Widgets/ClockWeatherWidget';
-import AnnouncementsWidget from '@/Components/Widgets/AnnouncementsWidget';
-import TogglTimeTrackingWidget from '@/Components/Widgets/TogglTimeTrackingWidget';
-import ImageWidget from '@/Components/Widgets/ImageWidget';
 import { isWideOnlyWidget, isSmallOnlyWidget } from '@/constants/widgets';
-import type { ComponentType } from 'react';
 
-const WIDGET_PREVIEWS: Record<string, ComponentType<{ config: Record<string, any>; data: Record<string, any> }>> = {
-    birthday: BirthdayWidget,
-    room_availability: RoomAvailabilityWidget,
-    clock_weather: ClockWeatherWidget,
-    announcements: AnnouncementsWidget,
-    toggl_time_tracking: TogglTimeTrackingWidget,
-    image_widget: ImageWidget,
-};
-
-const WIDGET_PREVIEW_DATA: Record<string, { config: Record<string, any>; data: Record<string, any> }> = {
-    announcements: {
-        config: {},
-        data: {
-            announcements: [
-                { title: 'Team Lunch', message: 'Vergeet de teamlunch niet om 12:30!', priority: 'high' },
-                { title: 'Onderhoud', message: 'Gepland onderhoud vanavond 22:00-23:00', priority: 'medium' },
-                { title: 'Koffiemachine', message: 'Nieuwe koffiemachine in de kantine!', priority: 'low' },
-            ],
-        },
-    },
-    toggl_time_tracking: {
-        config: {},
-        data: {
-            week_number: 7,
-            year: 2026,
-            total_users: 10,
-            users_complete: 7,
-            users_incomplete: 3,
-            percentage_complete: 70,
-            missing_hours_users: [
-                { name: 'Jan Jansen', hours_missing: '05:30:00', hours_clocked: '31:30:00', percentage: 85 },
-                { name: 'Piet Pietersen', hours_missing: '12:00:00', hours_clocked: '25:00:00', percentage: 68 },
-                { name: 'Klaas de Vries', hours_missing: '20:00:00', hours_clocked: '17:00:00', percentage: 46 },
-            ],
-        },
-    },
-    image_widget: {
-        config: {
-            selected_images: ['/storage/weather/weather.png'],
-        },
-        data: {},
-    },
+const WIDGET_COVER_IMAGES: Record<string, string> = {
+    birthday: '/storage/widgetsCoverImages/verjaardagen.png',
+    room_availability: '/storage/widgetsCoverImages/ruimte-beschikbaarheid.png',
+    clock_weather: '/storage/widgetsCoverImages/klok-datum-weer.png',
+    announcements: '/storage/widgetsCoverImages/mededelingen.png',
+    toggl_time_tracking: '/storage/widgetsCoverImages/toggl-uren-tracking.png',
+    image_widget: '/storage/widgetsCoverImages/afbeelding-slideshow.png',
 };
 
 interface DraggableWidgetTileProps {
@@ -65,7 +23,7 @@ function DraggableWidgetTile({ widgetType, label, onWidgetTypeClick }: Draggable
         data: { widgetType },
     });
 
-    const PreviewComponent = WIDGET_PREVIEWS[widgetType];
+    const coverImage = WIDGET_COVER_IMAGES[widgetType];
     const isWide = isWideOnlyWidget(widgetType);
     const isSmall = isSmallOnlyWidget(widgetType);
 
@@ -86,22 +44,14 @@ function DraggableWidgetTile({ widgetType, label, onWidgetTypeClick }: Draggable
                 ${isDragging ? 'opacity-40 shadow-lg' : ''}
             `}
         >
-            {/* Scaled widget preview — pointer-events disabled on container + all descendants */}
-            <div className="relative overflow-hidden h-32 bg-muted/30 [&_*]:pointer-events-none" style={{ pointerEvents: 'none' }}>
-                {PreviewComponent ? (
-                    <div
-                        style={{
-                            transform: 'scale(0.28)',
-                            transformOrigin: 'top left',
-                            width: '357%',
-                            height: '357%',
-                        }}
-                    >
-                        <PreviewComponent
-                            config={WIDGET_PREVIEW_DATA[widgetType]?.config ?? {}}
-                            data={WIDGET_PREVIEW_DATA[widgetType]?.data ?? {}}
-                        />
-                    </div>
+            {/* Cover image preview */}
+            <div className="relative overflow-hidden h-32 bg-muted/30" style={{ pointerEvents: 'none' }}>
+                {coverImage ? (
+                    <img
+                        src={coverImage}
+                        alt={label}
+                        className="w-full h-full object-cover"
+                    />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">
                         <span className="text-xs text-muted-foreground">Geen preview</span>
