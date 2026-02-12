@@ -6,6 +6,8 @@ use App\Models\Screen;
 use App\Services\GoogleCalendarService;
 use App\Services\TogglTimeTrackingService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -114,15 +116,68 @@ class DisplayController extends Controller
 
     private function getClockWeatherData(): array
     {
+        $weather = Cache::remember('weather_best_nl', 600, function () {
+            $response = Http::get('https://api.open-meteo.com/v1/forecast', [
+                'latitude' => 51.51,
+                'longitude' => 5.39,
+                'current' => 'temperature_2m,weather_code',
+                'timezone' => 'Europe/Amsterdam',
+            ]);
+
+            if ($response->failed()) {
+                return null;
+            }
+
+            $data = $response->json('current');
+            $code = $data['weather_code'] ?? 0;
+
+            return [
+                'temperature' => round($data['temperature_2m'] ?? 0),
+                'condition' => $this->weatherCondition($code),
+                'icon' => $this->weatherIcon($code),
+            ];
+        });
+
         return [
             'time' => now()->format('H:i:s'),
             'date' => now()->format('l, j F Y'),
-            'weather' => [
-                'temperature' => rand(15, 25),
-                'condition' => collect(['Sunny', 'Cloudy', 'Partly Cloudy', 'Rainy'])->random(),
-                'icon' => '☀️',
+            'weather' => $weather ?? [
+                'temperature' => 0,
+                'condition' => 'Unavailable',
+                'icon' => '❓',
             ],
         ];
+    }
+
+    private function weatherCondition(int $code): string
+    {
+        return match (true) {
+            $code === 0 => 'Clear sky',
+            $code <= 3 => 'Partly cloudy',
+            in_array($code, [45, 48]) => 'Foggy',
+            in_array($code, [51, 53, 55]) => 'Drizzle',
+            in_array($code, [61, 63, 65]) => 'Rainy',
+            in_array($code, [66, 67]) => 'Freezing rain',
+            in_array($code, [71, 73, 75, 77]) => 'Snowy',
+            in_array($code, [80, 81, 82]) => 'Rain showers',
+            in_array($code, [85, 86]) => 'Snow showers',
+            in_array($code, [95, 96, 99]) => 'Thunderstorm',
+            default => 'Cloudy',
+        };
+    }
+
+    private function weatherIcon(int $code): string
+    {
+        return match (true) {
+            $code === 0 => '☀️',
+            $code <= 3 => '⛅',
+            in_array($code, [45, 48]) => '🌫️',
+            in_array($code, [51, 53, 55, 61, 63, 65, 80, 81, 82]) => '🌧️',
+            in_array($code, [66, 67]) => '🌧️',
+            in_array($code, [71, 73, 75, 77, 85, 86]) => '❄️',
+            in_array($code, [95, 96, 99]) => '⛈️',
+            default => '☁️',
+        };
     }
 
     private function getAnnouncementsData(): array
