@@ -24,9 +24,10 @@ interface TogglTimeTrackingWidgetProps {
 function getFridayCountdown(): string {
     const now = new Date();
 
-    const dayName = now.toLocaleDateString(undefined, {
+    const dayNameRaw = now.toLocaleDateString("nl-NL", {
         weekday: "long",
     });
+    const dayName = dayNameRaw.charAt(0).toUpperCase() + dayNameRaw.slice(1);
 
     const currentTime = now.toLocaleTimeString().slice(0, 5);
 
@@ -52,7 +53,7 @@ function getFridayCountdown(): string {
     const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
     const minutes = Math.floor((diff / (1000 * 60)) % 60);
 
-    return `${dayName}\n${currentTime}\n${days}d ${hours}h ${minutes}m te gaan!`;
+    return `${dayName}\n${currentTime}\n${days}d ${hours}u ${minutes}m te gaan!`;
 }
 
 export default function TogglTimeTrackingWidget({
@@ -114,12 +115,12 @@ export default function TogglTimeTrackingWidget({
 
     return (
         <div
-            className="rounded-lg shadow-lg p-6 h-full border border-border bg-cover bg-center bg-no-repeat"
+            className="flex flex-col justify-between rounded-lg shadow-lg p-6 h-full border border-border bg-cover bg-center bg-no-repeat"
             style={{
                 backgroundImage: "url('/storage/toggl/toggl.jpg')",
             }}
         >
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center  gap-3 mb-4 ">
                 <div className="flex items-center justify-between w-full">
                     <h3 className="text-white text-[36px] font-bold text-foreground">
                         Toggl Wall of Shame
@@ -143,7 +144,7 @@ export default function TogglTimeTrackingWidget({
                     />
                 </div>
                 <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                    <span>✓ {users_complete} compleet</span>
+                <span>✓ {users_complete} compleet</span>
                     <span>✗ {users_incomplete} incompleet</span>
                     <span>Σ {total_users} totaal</span>
                 </div>
@@ -185,7 +186,7 @@ export default function TogglTimeTrackingWidget({
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <div className="flex-1">
-                                        <div className="w-full bg-muted/50 rounded-full h-1.5 mt-1">
+                                        <div className="w-full bg-white/20 rounded-full h-1.5 mt-1">
                                             <div
                                                 className="bg-primary h-full rounded-full transition-all"
                                                 style={{
