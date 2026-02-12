@@ -143,7 +143,7 @@ class DisplayController extends Controller
             'date' => now()->format('l, j F Y'),
             'weather' => $weather ?? [
                 'temperature' => 0,
-                'condition' => 'Unavailable',
+                'condition' => 'Niet beschikbaar',
                 'icon' => '❓',
             ],
         ];
@@ -152,17 +152,17 @@ class DisplayController extends Controller
     private function weatherCondition(int $code): string
     {
         return match (true) {
-            $code === 0 => 'Clear sky',
-            $code <= 3 => 'Partly cloudy',
-            in_array($code, [45, 48]) => 'Foggy',
-            in_array($code, [51, 53, 55]) => 'Drizzle',
-            in_array($code, [61, 63, 65]) => 'Rainy',
-            in_array($code, [66, 67]) => 'Freezing rain',
-            in_array($code, [71, 73, 75, 77]) => 'Snowy',
-            in_array($code, [80, 81, 82]) => 'Rain showers',
-            in_array($code, [85, 86]) => 'Snow showers',
-            in_array($code, [95, 96, 99]) => 'Thunderstorm',
-            default => 'Cloudy',
+            $code === 0 => 'Onbewolkt',
+            $code <= 3 => 'Gedeeltelijk bewolkt',
+            in_array($code, [45, 48]) => 'Mistig',
+            in_array($code, [51, 53, 55]) => 'Motregen',
+            in_array($code, [61, 63, 65]) => 'Regenachtig',
+            in_array($code, [66, 67]) => 'IJzel',
+            in_array($code, [71, 73, 75, 77]) => 'Sneeuw',
+            in_array($code, [80, 81, 82]) => 'Regenbuien',
+            in_array($code, [85, 86]) => 'Sneeuwbuien',
+            in_array($code, [95, 96, 99]) => 'Onweer',
+            default => 'Bewolkt',
         };
     }
 
