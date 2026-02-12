@@ -50,7 +50,7 @@ export default function RoomAvailabilityWidget({ data }: RoomAvailabilityWidgetP
             return (
               <div
                 key={index}
-                className={`absolute rounded-[7px] shadow-sm ${
+                className={`absolute rounded-[7px] ${
                   room.status === 'available' ? 'bg-green-500' : 'bg-red-500'
                 }`}
                 style={{
@@ -59,6 +59,9 @@ export default function RoomAvailabilityWidget({ data }: RoomAvailabilityWidgetP
                   top: `${pos.top}%`,
                   left: `${pos.left}%`,
                   transform: 'translate(-50%, -50%)',
+                  boxShadow: room.status === 'available'
+                    ? '0 0 12px 4px rgba(34, 197, 94, 0.6), 0 0 24px 8px rgba(34, 197, 94, 0.3)'
+                    : '0 0 12px 4px rgba(239, 68, 68, 0.6), 0 0 24px 8px rgba(239, 68, 68, 0.3)',
                 }}
               />
             );
