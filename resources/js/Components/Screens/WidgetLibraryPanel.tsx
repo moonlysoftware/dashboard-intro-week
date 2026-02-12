@@ -18,6 +18,41 @@ const WIDGET_PREVIEWS: Record<string, ComponentType<{ config: Record<string, any
     image_widget: ImageWidget,
 };
 
+const WIDGET_PREVIEW_DATA: Record<string, { config: Record<string, any>; data: Record<string, any> }> = {
+    announcements: {
+        config: {},
+        data: {
+            announcements: [
+                { title: 'Team Lunch', message: 'Vergeet de teamlunch niet om 12:30!', priority: 'high' },
+                { title: 'Onderhoud', message: 'Gepland onderhoud vanavond 22:00-23:00', priority: 'medium' },
+                { title: 'Koffiemachine', message: 'Nieuwe koffiemachine in de kantine!', priority: 'low' },
+            ],
+        },
+    },
+    toggl_time_tracking: {
+        config: {},
+        data: {
+            week_number: 7,
+            year: 2026,
+            total_users: 10,
+            users_complete: 7,
+            users_incomplete: 3,
+            percentage_complete: 70,
+            missing_hours_users: [
+                { name: 'Jan Jansen', hours_missing: '05:30:00', hours_clocked: '31:30:00', percentage: 85 },
+                { name: 'Piet Pietersen', hours_missing: '12:00:00', hours_clocked: '25:00:00', percentage: 68 },
+                { name: 'Klaas de Vries', hours_missing: '20:00:00', hours_clocked: '17:00:00', percentage: 46 },
+            ],
+        },
+    },
+    image_widget: {
+        config: {
+            selected_images: ['/storage/weather/weather.png'],
+        },
+        data: {},
+    },
+};
+
 interface DraggableWidgetTileProps {
     widgetType: string;
     label: string;
@@ -62,7 +97,10 @@ function DraggableWidgetTile({ widgetType, label, onWidgetTypeClick }: Draggable
                             height: '357%',
                         }}
                     >
-                        <PreviewComponent config={{}} data={{}} />
+                        <PreviewComponent
+                            config={WIDGET_PREVIEW_DATA[widgetType]?.config ?? {}}
+                            data={WIDGET_PREVIEW_DATA[widgetType]?.data ?? {}}
+                        />
                     </div>
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">
