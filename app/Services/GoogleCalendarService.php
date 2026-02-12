@@ -44,10 +44,11 @@ class GoogleCalendarService
      * Get the availability for a single room based on its Google Calendar ID.
      *
      * Returns an array with:
-     *  - name:          string  (pass-through from caller)
-     *  - status:        'available' | 'occupied'
-     *  - next_booking:  string|null  (HH:MM when next event starts, if currently free)
-     *  - available_at:  string|null  (HH:MM when current event ends, if currently occupied)
+     *  - name:            string  (pass-through from caller)
+     *  - status:          'available' | 'occupied'
+     *  - next_booking:    string|null  (HH:MM when next event starts, if currently free)
+     *  - available_at:    string|null  (HH:MM when current event ends, if currently occupied)
+     *  - duration_minutes: int|null    (duration of current/next booking block in minutes)
      */
     public function getRoomAvailability(string $calendarId, string $roomName): array
     {
@@ -71,37 +72,90 @@ class GoogleCalendarService
 
             $items = $events->getItems();
 
-            $currentEvent = null;
-            $nextEvent    = null;
-
+            // Parse all events into a usable array
+            $parsedEvents = [];
             foreach ($items as $event) {
                 $startRaw = $event->getStart()->getDateTime() ?? $event->getStart()->getDate();
                 $endRaw   = $event->getEnd()->getDateTime()   ?? $event->getEnd()->getDate();
 
-                $start = Carbon::parse($startRaw);
-                $end   = Carbon::parse($endRaw);
+                $parsedEvents[] = [
+                    'start'   => Carbon::parse($startRaw),
+                    'end'     => Carbon::parse($endRaw),
+                    'summary' => $event->getSummary(),
+                ];
+            }
 
-                if ($start->lte($now) && $end->gte($now)) {
-                    $currentEvent = ['start' => $start, 'end' => $end, 'summary' => $event->getSummary()];
-                } elseif ($start->gt($now) && $nextEvent === null) {
-                    $nextEvent = ['start' => $start, 'end' => $end, 'summary' => $event->getSummary()];
+            $currentEvent = null;
+            $nextEvent    = null;
+
+            // Find current and next events
+            foreach ($parsedEvents as $event) {
+                if ($event['start']->lte($now) && $event['end']->gte($now)) {
+                    $currentEvent = $event;
+                } elseif ($event['start']->gt($now) && $nextEvent === null) {
+                    $nextEvent = $event;
                 }
             }
 
+            // If room is currently occupied, find when it becomes free (accounting for consecutive bookings)
             if ($currentEvent !== null) {
+                $freeAt = $currentEvent['end'];
+                $blockStart = $currentEvent['start'];
+                
+                // Look for consecutive bookings (events starting within 5 minutes of previous end)
+                foreach ($parsedEvents as $event) {
+                    // Check if this event starts at or very close to when the current occupied period ends
+                    $timeDiff = $event['start']->diffInMinutes($freeAt, false);
+                    
+                    if ($timeDiff >= -5 && $timeDiff <= 5 && $event['start']->gte($freeAt)) {
+                        $freeAt = $event['end']; // Extend the occupied period
+                    }
+                }
+                
+                $durationMinutes = $blockStart->diffInMinutes($freeAt);
+                Log::info("Room '{$roomName}' occupied for {$durationMinutes} minutes until " . $freeAt->format('H:i'));
+                
                 return [
-                    'name'         => $roomName,
-                    'status'       => 'occupied',
-                    'next_booking' => null,
-                    'available_at' => $currentEvent['end']->format('H:i'),
+                    'name'             => $roomName,
+                    'status'           => 'occupied',
+                    'next_booking'     => null,
+                    'available_at'     => $freeAt->format('H:i'),
+                    'duration_minutes' => $durationMinutes,
+                ];
+            }
+
+            // Room is available - check for consecutive future bookings
+            if ($nextEvent !== null) {
+                $busyUntil = $nextEvent['end'];
+                $blockStart = $nextEvent['start'];
+                
+                // Look for consecutive bookings after the next event
+                foreach ($parsedEvents as $event) {
+                    $timeDiff = $event['start']->diffInMinutes($busyUntil, false);
+                    
+                    if ($timeDiff >= -5 && $timeDiff <= 5 && $event['start']->gte($busyUntil)) {
+                        $busyUntil = $event['end'];
+                    }
+                }
+                
+                $nextBookingDuration = $blockStart->diffInMinutes($busyUntil);
+                Log::info("Room '{$roomName}' next booking at " . $nextEvent['start']->format('H:i') . " for {$nextBookingDuration} minutes");
+                
+                return [
+                    'name'             => $roomName,
+                    'status'           => 'available',
+                    'next_booking'     => $nextEvent['start']->format('H:i'),
+                    'available_at'     => null,
+                    'duration_minutes' => $nextBookingDuration,
                 ];
             }
 
             return [
-                'name'         => $roomName,
-                'status'       => 'available',
-                'next_booking' => $nextEvent ? $nextEvent['start']->format('H:i') : null,
-                'available_at' => null,
+                'name'             => $roomName,
+                'status'           => 'available',
+                'next_booking'     => null,
+                'available_at'     => null,
+                'duration_minutes' => null,
             ];
         } catch (\Exception $e) {
             Log::error("Google Calendar: failed to fetch events for calendar '{$calendarId}': " . $e->getMessage());
@@ -115,10 +169,11 @@ class GoogleCalendarService
     private function unavailableRoom(string $roomName): array
     {
         return [
-            'name'         => $roomName,
-            'status'       => 'available',
-            'next_booking' => null,
-            'available_at' => null,
+            'name'             => $roomName,
+            'status'           => 'available',
+            'next_booking'     => null,
+            'available_at'     => null,
+            'duration_minutes' => null,
         ];
     }
 }

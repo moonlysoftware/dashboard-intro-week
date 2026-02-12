@@ -5,6 +5,7 @@ interface Room {
   status: 'available' | 'occupied';
   next_booking?: string | null;
   available_at?: string | null;
+  duration_minutes?: number | null;
 }
 
 interface RoomAvailabilityWidgetProps {
@@ -16,17 +17,33 @@ interface RoomAvailabilityWidgetProps {
 
 // Light positions as % of the reference frame
 const lightPositions = [
-  { top: 5.3, left: 22.85 },
-  { top: 5.3, left: 49.7 },
-  { top: 5.3, left: 76.2 },
+  { top: 16.7, left: 22.85 },
+  { top: 16.7, left: 49.7 },
+  { top: 16.7, left: 76.2 },
 ];
 
 // Room container positions as % of the reference frame
 const roomPositions = [
-  { top: 27.6, left: 23 },
-  { top: 27.6, left: 49.7 },
-  { top: 27.6, left: 76.1 },
+  { top: 35.6, left: 23 },
+  { top: 35.6, left: 49.7 },
+  { top: 35.6, left: 76.1 },
 ];
+
+// Helper function to format duration
+function formatDuration(minutes: number | null | undefined): string {
+  if (!minutes) return '';
+  
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  
+  if (hours > 0 && mins > 0) {
+    return `${hours}h ${mins}m`;
+  } else if (hours > 0) {
+    return `${hours}h`;
+  } else {
+    return `${mins}m`;
+  }
+}
 
 export default function RoomAvailabilityWidget({ data }: RoomAvailabilityWidgetProps) {
   const rooms = data.rooms || [];
@@ -34,7 +51,7 @@ export default function RoomAvailabilityWidget({ data }: RoomAvailabilityWidgetP
   return (
     <div className="relative w-full h-full rounded-lg overflow-hidden">
       {/* Reference frame maintaining Base.png aspect ratio */}
-      <div className="relative w-full" style={{ paddingTop: '33.33%' }}>
+      <div className="relative w-full" style={{ paddingTop: '39%' }}>
         {/* Base image */}
         <div
           className="absolute top-0 left-0 w-full h-full"
@@ -75,22 +92,29 @@ export default function RoomAvailabilityWidget({ data }: RoomAvailabilityWidgetP
                 key={`container-${index}`}
                 className="absolute bg-black bg-opacity-80 text-white p-1 rounded-md text-center shadow"
                 style={{
-                  width: '7.0%', // match light width for consistency
-                  height: '19%',    // enough height for text
+                  width: '7.0%',
+                  height: '16.9%',
                   top: `${pos.top}%`,
                   left: `${pos.left}%`,
                   transform: 'translate(-50%, 0)',
                 }}
               >
-                <div className="font-archia font-semibold uppercase text-[clamp(0.1rem, 2vw, 20rem)]">{room.name}</div>
-                <div className="font-sans text-[0.7rem]">
-                  {room.status === 'available' ? (
-                    room.next_booking ? `Free now occupied at ${room.next_booking}` : 'Available for the whole day'
-                  ) : room.available_at ? (
-                    `Occupied available at ${room.available_at}`
-                  ) : (
-                    'Occupied'
-                  )}
+                <div className="font-archia text-[clamp(0.05rem,1.85vw,20rem)] flex items-center justify-center h-full flex-col">
+                  {/* First span: Time when next booking starts OR when room becomes available */}
+                  <span >
+                    {room.status === 'available'
+                      ? room.next_booking
+                        ? `${room.next_booking}`
+                        : ''
+                      : room.available_at
+                      ? `${room.available_at}`
+                      : 'Occupied'}
+                  </span>
+                  
+                  {/* Second span: Duration of the booking block */}
+                  <span className="font-bold text-[clamp(0.1rem,1.4vw,24rem)] whitespace-nowrap">
+                    {formatDuration(room.duration_minutes)}
+                  </span>
                 </div>
               </div>
             );
