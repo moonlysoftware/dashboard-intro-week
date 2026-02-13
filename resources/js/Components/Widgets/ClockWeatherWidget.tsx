@@ -49,7 +49,7 @@ export default function ClockWeatherWidget({
 
     return (
         <div
-            className="font-archia bg-gradient-to-br bg-cover bg-center bg-no-repeat rounded-lg shadow-lg p-6 h-full text-white"
+            className=" border-2 border-white/20 font-archia bg-gradient-to-br bg-cover bg-center bg-no-repeat rounded-lg shadow-lg p-6 h-full text-white"
             style={{
                 backgroundImage: "url('/storage/weather/weather.png')",
             }}
@@ -67,7 +67,7 @@ export default function ClockWeatherWidget({
 
                 {/* Weather */}
                 {weather && (
-                    <div className="mt-6 flex items-center gap-4 backdrop-blur-md p-4 rounded-md bg-white/15 border-2 border-white/10 w-max ">
+                    <div className="border-2 border-white/2o mt-6 flex items-center gap-4 backdrop-blur-md p-4 rounded-md bg-white/15  w-max ">
                         <span className="text-6xl">{weather.icon}</span>
                         <div>
                             <p className="text-4xl font-bold">

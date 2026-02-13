@@ -26,7 +26,7 @@ export default function AnnouncementsWidget({
 
     return (
         <div
-            className="flex flex-col justify-between rounded-lg shadow-lg p-6 h-full border border-border bg-cover bg-center bg-no-repeat"
+            className="border-2 border-white/20 flex flex-col justify-between rounded-lg shadow-lg p-6 h-full bg-cover bg-center bg-no-repeat"
             style={{
                 backgroundImage:
                     "url('/storage/announcements/announcements.png')",

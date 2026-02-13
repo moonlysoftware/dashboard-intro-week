@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import WidgetNotConfigured from '@/Components/Widgets/WidgetNotConfigured';
+import { useEffect, useState } from "react";
+import WidgetNotConfigured from "@/Components/Widgets/WidgetNotConfigured";
 
 interface ImageWidgetProps {
     config: {
@@ -40,7 +40,7 @@ export default function ImageWidget({ config }: ImageWidgetProps) {
     }
 
     return (
-        <div className="relative w-full h-full rounded-lg overflow-hidden bg-black">
+        <div className="border-2 border-white/20 relative w-full h-full rounded-lg overflow-hidden bg-black">
             <img
                 key={currentIndex}
                 src={images[currentIndex]}
@@ -49,7 +49,7 @@ export default function ImageWidget({ config }: ImageWidgetProps) {
                 style={{
                     objectPosition: `center ${imagePositions[images[currentIndex]] ?? 0}%`,
                     opacity: visible ? 1 : 0,
-                    transition: 'opacity 0.7s ease-in-out',
+                    transition: "opacity 0.7s ease-in-out",
                 }}
             />
         </div>
