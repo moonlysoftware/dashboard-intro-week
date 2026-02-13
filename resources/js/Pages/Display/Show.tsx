@@ -204,7 +204,7 @@ export default function Show({ screen: initialScreen }: DisplayShowProps) {
                                 </p>
                             </div>
                         ) : (
-                            widgets.map(renderWidget)
+                             widgets.filter((w) => w.id !== featuredWidgetId).map(renderWidget)
                         )}
                     </div>
                 )}
