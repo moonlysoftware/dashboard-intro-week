@@ -18,6 +18,15 @@ export interface Widget {
 
 const SLOT_COUNT = 4;
 
+const WIDGET_COVER_IMAGES: Record<string, string> = {
+    birthday: '/storage/widgetsCoverImages/verjaardagen.png',
+    room_availability: '/storage/widgetsCoverImages/ruimte-beschikbaarheid.png',
+    clock_weather: '/storage/widgetsCoverImages/klok-datum-weer.png',
+    announcements: '/storage/widgetsCoverImages/mededelingen.png',
+    toggl_time_tracking: '/storage/widgetsCoverImages/toggl-uren-tracking.png',
+    image_widget: '/storage/widgetsCoverImages/afbeelding-slideshow.png',
+};
+
 interface DraggableWidgetProps {
     widget: Widget;
     screenId: number;
@@ -53,31 +62,31 @@ function DraggableWidget({
         <div
             ref={setNodeRef}
             style={style}
-            className={`w-full h-full flex items-center justify-center relative px-2 ${isDragging ? "opacity-0" : ""}`}
+            className={`w-full h-full flex items-center justify-center relative px-3 ${isDragging ? "opacity-0" : ""}`}
         >
             <div
-                className="absolute left-1 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing text-muted-foreground/30 hover:text-muted-foreground/70 transition-colors"
+                className="absolute left-2 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing text-muted-foreground/30 hover:text-muted-foreground/70 transition-colors"
                 {...listeners}
                 {...attributes}
             >
-                <GripVertical className="h-3 w-3" />
+                <GripVertical className="h-5 w-5" />
             </div>
 
             <span
-                className="text-xs font-medium text-center leading-tight px-4 cursor-pointer"
+                className="font-archia text-sm font-medium text-center leading-tight px-6 cursor-pointer"
                 onClick={() => onWidgetClick(widget)}
             >
                 {widgetTypes[widget.widget_type] ?? widget.widget_type}
             </span>
 
             <button
-                className="absolute top-1 right-1 h-4 w-4 rounded-full bg-muted-foreground/20 hover:bg-destructive hover:text-destructive-foreground flex items-center justify-center transition-colors"
+                className="absolute top-2 right-2 h-6 w-6 rounded-full bg-muted-foreground/20 hover:bg-destructive hover:text-destructive-foreground flex items-center justify-center transition-colors"
                 onClick={(e) => {
                     e.stopPropagation();
                     onWidgetRemove(widget.id);
                 }}
             >
-                <X className="h-2.5 w-2.5" />
+                <X className="h-3.5 w-3.5" />
             </button>
         </div>
     );
@@ -106,7 +115,7 @@ function CanvasSlot({
     isScreenActive,
     isSelected,
     isBlocked,
-    blockedLabel = "Alleen breed",
+    blockedLabel = "Wide only",
     onWidgetClick,
     onWidgetRemove,
 }: CanvasSlotProps) {
@@ -143,18 +152,29 @@ function CanvasSlot({
         } else if (isScreenActive) {
             borderClass =
                 "border-dashed border-muted-foreground/30 hover:border-muted-foreground/50";
-            bgClass = "";
+            bgClass = "bg-muted/20";
         } else {
             borderClass = "border-dashed border-muted-foreground/12";
-            bgClass = "";
+            bgClass = "bg-muted/10";
         }
     }
+
+    const coverImage = widget ? WIDGET_COVER_IMAGES[widget.widget_type] : undefined;
 
     return (
         <div
             ref={setNodeRef}
-            className={`relative rounded-lg border-2 h-16 flex items-center justify-center transition-all duration-150 overflow-hidden ${borderClass} ${bgClass}`}
+            className={`relative rounded-lg border-2 h-48 flex items-center justify-center transition-all duration-150 overflow-hidden ${borderClass} ${bgClass}`}
         >
+            {/* Blurred, faded cover image background */}
+            {widget && coverImage && (
+                <img
+                    src={coverImage}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover blur-sm opacity-15 pointer-events-none select-none"
+                />
+            )}
+
             {widget ? (
                 <DraggableWidget
                     widget={widget}
@@ -166,7 +186,7 @@ function CanvasSlot({
                 />
             ) : (
                 <span
-                    className={`text-[10px] select-none transition-colors ${
+                    className={`font-archia text-xs select-none transition-colors ${
                         isOver && isScreenActive && isBlocked
                             ? "text-destructive font-medium"
                             : isOver && isScreenActive
@@ -179,12 +199,12 @@ function CanvasSlot({
                     }`}
                 >
                     {isOver && isScreenActive && isBlocked
-                        ? "Niet beschikbaar"
+                        ? "Not available"
                         : isOver && isScreenActive
-                          ? "Loslaten"
+                          ? "Drop here"
                           : isBlocked && isScreenActive
                             ? blockedLabel
-                            : "Sleep hier"}
+                            : "Drag here"}
                 </span>
             )}
         </div>
@@ -224,16 +244,13 @@ export function ScreenCanvas({
     const isDragSmallOnly = activeDragWidgetType
         ? isSmallOnlyWidget(activeDragWidgetType)
         : false;
-    // Row 1 and row 2 are always opposite:
-    // bento_start_small: [3, 9, 9, 3] (out of 12)
-    // bento_start_large: [9, 3, 3, 9] (out of 12)
     const colSpans: Record<BentoLayout, [number, number, number, number]> = {
         bento_start_small: [3, 9, 9, 3],
         bento_start_large: [9, 3, 3, 9],
     };
 
     return (
-        <div className="grid grid-cols-12 gap-2 mt-1">
+        <div className="grid grid-cols-12 gap-3 mt-1">
             {Array.from({ length: SLOT_COUNT }, (_, i) => {
                 const widget = widgets.find((w) => w.grid_order === i);
                 const span = colSpans[layout][i];
@@ -252,8 +269,8 @@ export function ScreenCanvas({
                             }
                             blockedLabel={
                                 isDragSmallOnly
-                                    ? "Alleen klein"
-                                    : "Alleen breed"
+                                    ? "Small only"
+                                    : "Wide only"
                             }
                             onWidgetClick={onWidgetClick}
                             onWidgetRemove={onWidgetRemove}

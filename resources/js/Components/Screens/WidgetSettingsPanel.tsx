@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Pencil, Trash2, Upload } from 'lucide-react';
+import { Pencil, Trash2, Upload } from 'lucide-react';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
@@ -73,7 +73,7 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
             const msg: string =
                 err.response?.data?.errors?.image?.[0] ??
                 err.response?.data?.message ??
-                'Upload mislukt.';
+                'Upload failed.';
             setUploadError(msg);
         } finally {
             setUploading(false);
@@ -159,24 +159,14 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center gap-2">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onClose}
-                    className="h-7 w-7 p-0 flex-shrink-0"
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                </Button>
-                <h3 className="font-semibold text-sm truncate">
-                    {widgetTypes[widget.widget_type] || widget.widget_type}
-                </h3>
-            </div>
+            <h3 className="font-archia font-semibold text-base truncate">
+                {widgetTypes[widget.widget_type] || widget.widget_type}
+            </h3>
 
             {widget.widget_type === 'room_availability' && (
                 <div className="space-y-3">
                     <p className="text-xs text-muted-foreground">
-                        Deel de agenda met{' '}
+                        Share the calendar with{' '}
                         <code className="bg-muted px-1 rounded text-[10px]">
                             calendar@internship-2026.iam.gserviceaccount.com
                         </code>
@@ -184,9 +174,9 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
                     {roomConfigs.map((room, index) => (
                         <div key={index} className="space-y-2 p-3 rounded-lg border bg-muted/30">
                             <div className="space-y-1">
-                                <Label className="text-xs">Naam ruimte</Label>
+                                <Label className="text-xs">Room name</Label>
                                 <Input
-                                    placeholder="bijv. Vergaderzaal A"
+                                    placeholder="e.g. Meeting Room A"
                                     value={room.name}
                                     onChange={(e) => handleRoomChange(index, 'name', e.target.value)}
                                     className="h-8 text-sm"
@@ -210,7 +200,7 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
                                     className="w-full h-7 text-xs"
                                     onClick={() => handleRemoveRoom(index)}
                                 >
-                                    Verwijder ruimte
+                                    Remove room
                                 </Button>
                             )}
                         </div>
@@ -221,7 +211,7 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
                         className="w-full h-8 text-xs"
                         onClick={handleAddRoom}
                     >
-                        + Ruimte toevoegen
+                        + Add room
                     </Button>
                 </div>
             )}
@@ -245,7 +235,7 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
                             onClick={() => fileInputRef.current?.click()}
                         >
                             <Upload className="h-3 w-3 mr-1" />
-                            {uploading ? 'Uploaden...' : 'Afbeelding uploaden'}
+                            {uploading ? 'Uploading...' : 'Upload image'}
                         </Button>
                         {uploadError && (
                             <p className="text-xs text-destructive mt-1">{uploadError}</p>
@@ -255,7 +245,7 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
                     {/* Image grid */}
                     {allImages.length === 0 ? (
                         <p className="text-xs text-muted-foreground text-center py-4">
-                            Nog geen afbeeldingen geüpload.
+                            No images uploaded yet.
                         </p>
                     ) : (
                         <div className="grid grid-cols-2 gap-2">
@@ -302,9 +292,9 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
                                                     </button>
                                                 </PopoverTrigger>
                                                 <PopoverContent className="w-52 p-3 space-y-2" side="top">
-                                                    <p className="text-xs font-medium">Verticale positie</p>
+                                                    <p className="text-xs font-medium">Vertical position</p>
                                                     <p className="text-[10px] text-muted-foreground">
-                                                        0% = boven, 50% = midden, 100% = onder
+                                                        0% = top, 50% = center, 100% = bottom
                                                     </p>
                                                     <Input
                                                         type="number"
@@ -321,7 +311,7 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
                                                             className="flex-1 h-6 text-[10px]"
                                                             onClick={() => handlePositionChange(img.url, 0)}
                                                         >
-                                                            Boven
+                                                            Top
                                                         </Button>
                                                         <Button
                                                             variant="outline"
@@ -329,7 +319,7 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
                                                             className="flex-1 h-6 text-[10px]"
                                                             onClick={() => handlePositionChange(img.url, 50)}
                                                         >
-                                                            Midden
+                                                            Center
                                                         </Button>
                                                         <Button
                                                             variant="outline"
@@ -337,7 +327,7 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
                                                             className="flex-1 h-6 text-[10px]"
                                                             onClick={() => handlePositionChange(img.url, 100)}
                                                         >
-                                                            Onder
+                                                            Bottom
                                                         </Button>
                                                     </div>
                                                 </PopoverContent>
@@ -360,7 +350,7 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
 
                     {/* Transition time */}
                     <div className="space-y-1">
-                        <Label className="text-xs">Transitietijd (seconden)</Label>
+                        <Label className="text-xs">Transition time (seconds)</Label>
                         <Input
                             type="number"
                             min={1}
@@ -372,7 +362,7 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
                         />
                         {selectedImages.length < 2 && (
                             <p className="text-[10px] text-muted-foreground">
-                                Selecteer minimaal 2 afbeeldingen om de transitietijd in te stellen.
+                                Select at least 2 images to set transition time.
                             </p>
                         )}
                     </div>
@@ -384,18 +374,18 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
                     {announcementConfigs.map((announcement, index) => (
                         <div key={index} className="space-y-2 p-3 rounded-lg border bg-muted/30">
                             <div className="space-y-1">
-                                <Label className="text-xs">Titel</Label>
+                                <Label className="text-xs">Title</Label>
                                 <Input
-                                    placeholder="bijv. Team Lunch"
+                                    placeholder="e.g. Team Lunch"
                                     value={announcement.title}
                                     onChange={(e) => handleAnnouncementChange(index, 'title', e.target.value)}
                                     className="h-8 text-sm"
                                 />
                             </div>
                             <div className="space-y-1">
-                                <Label className="text-xs">Bericht</Label>
+                                <Label className="text-xs">Message</Label>
                                 <Input
-                                    placeholder="bijv. Vergeet de team lunch niet om 12:30!"
+                                    placeholder="e.g. Don't forget the team lunch at 12:30!"
                                     value={announcement.message}
                                     onChange={(e) => handleAnnouncementChange(index, 'message', e.target.value)}
                                     className="h-8 text-sm"
@@ -408,7 +398,7 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
                                     className="w-full h-7 text-xs"
                                     onClick={() => handleRemoveAnnouncement(index)}
                                 >
-                                    Verwijder mededeling
+                                    Remove announcement
                                 </Button>
                             )}
                         </div>
@@ -420,7 +410,7 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
                             className="w-full h-8 text-xs"
                             onClick={handleAddAnnouncement}
                         >
-                            + Mededeling toevoegen
+                            + Add announcement
                         </Button>
                     )}
                 </div>
@@ -429,7 +419,7 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
             {widget.widget_type !== 'room_availability' && widget.widget_type !== 'image_widget' && widget.widget_type !== 'announcements' && (
                 <div className="py-6 text-center">
                     <p className="text-xs text-muted-foreground">
-                        Geen instellingen beschikbaar voor dit widget type.
+                        No settings available for this widget type.
                     </p>
                 </div>
             )}
@@ -442,7 +432,7 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
                     size="sm"
                     variant={saved ? 'outline' : 'default'}
                 >
-                    {saving ? 'Opslaan...' : saved ? 'Opgeslagen!' : 'Opslaan'}
+                    {saving ? 'Saving...' : saved ? 'Saved!' : 'Save'}
                 </Button>
             )}
         </div>
