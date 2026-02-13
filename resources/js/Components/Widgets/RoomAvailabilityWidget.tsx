@@ -18,16 +18,16 @@ interface RoomAvailabilityWidgetProps {
 
 // Light positions as % of the reference frame
 const lightPositions = [
-    { top: 16.7, left: 22.85 },
-    { top: 16.7, left: 49.7 },
-    { top: 16.7, left: 76.2 },
+    { top: 14.1, left: 22.85 },
+    { top: 14.1, left: 49.7 },
+    { top: 14.1, left: 76.2 },
 ];
 
 // Room container positions as % of the reference frame
 const roomPositions = [
-    { top: 35.6, left: 23 },
-    { top: 35.6, left: 49.7 },
-    { top: 35.6, left: 76.1 },
+    { top: 32.6, left: 23 },
+    { top: 32.6, left: 49.7 },
+    { top: 32.6, left: 76.1 },
 ];
 
 // Helper function to format duration
@@ -52,17 +52,29 @@ export default function RoomAvailabilityWidget({
     const rooms = data.rooms || [];
 
     return (
-        <div className="border-2 border-white/20 relative w-full h-full rounded-lg overflow-hidden">
-            {/* Reference frame maintaining Base.png aspect ratio */}
-            <div className="relative w-full" style={{ paddingTop: "39%" }}>
+        <div className="relative w-full h-full rounded-lg overflow-hidden">
+            {/* Reference frame maintaining aspect ratio but covering the container */}
+            <div
+                className="absolute inset-0"
+                style={{
+                    aspectRatio: "2560 / 1000", // Adjust this to match your Base.png aspect ratio
+                    minWidth: "100%",
+                    minHeight: "100%",
+                    width: "auto",
+                    height: "auto",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                }}
+            >
                 {/* Base image */}
                 <div
-                    className="absolute top-0 left-0 w-full h-full"
+                    className="absolute inset-0 w-full h-full"
                     style={{
                         backgroundImage:
                             "url('/storage/meetingRooms/Base.png')",
                         backgroundSize: "cover",
-                        backgroundPosition: "center 83%",
+                        backgroundPosition: "center 90%",
                     }}
                 >
                     {/* Lights */}
@@ -71,13 +83,13 @@ export default function RoomAvailabilityWidget({
                         return (
                             <div
                                 key={index}
-                                className={`absolute rounded-[7px] ${
+                                className={`absolute rounded-[8px] ${
                                     room.status === "available"
                                         ? "bg-green-500"
                                         : "bg-red-500"
                                 }`}
                                 style={{
-                                    width: "14.3%",
+                                    width: "14.5%",
                                     height: "4.6%",
                                     top: `${pos.top}%`,
                                     left: `${pos.left}%`,
@@ -116,7 +128,7 @@ export default function RoomAvailabilityWidget({
                         return (
                             <div
                                 key={`container-${index}`}
-                                className="absolute bg-black bg-opacity-80 text-white p-1 rounded-md text-center shadow"
+                                className="absolute bg-transparent bg-opacity-80 text-white p-1 rounded-[20px] text-center shadow"
                                 style={{
                                     width: "7.0%",
                                     height: "16.9%",
