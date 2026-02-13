@@ -20,19 +20,14 @@ class ScreenController extends Controller
         return Inertia::render('Dashboard/Screens/Index', [
             'screens' => $screens,
             'widgetTypes' => [
-                'birthday' => 'Verjaardagen',
-                'room_availability' => 'Ruimte Beschikbaarheid',
-                'clock_weather' => 'Klok/Datum/Weer',
-                'announcements' => 'Mededelingen',
-                'toggl_time_tracking' => 'Toggl Uren Tracking',
-                'image_widget' => 'Afbeelding Slideshow',
+                'birthday' => 'Birthdays',
+                'room_availability' => 'Room Availability',
+                'clock_weather' => 'Clock/Date/Weather',
+                'announcements' => 'Announcements',
+                'toggl_time_tracking' => 'Toggl Time Tracking',
+                'image_widget' => 'Image Slideshow',
             ],
         ]);
-    }
-
-    public function create(): Response
-    {
-        return Inertia::render('Dashboard/Screens/Create');
     }
 
     public function store(Request $request): RedirectResponse
@@ -43,26 +38,9 @@ class ScreenController extends Controller
             'refresh_interval' => 'required|integer|min:5|max:300',
         ]);
 
-        Screen::create($validated);
+        $screen = Screen::create($validated);
 
-        return redirect()->route('screens.index')->with('success', 'Screen created successfully.');
-    }
-
-    public function edit(Screen $screen): Response
-    {
-        $screen->load('widgets');
-
-        return Inertia::render('Dashboard/Screens/Edit', [
-            'screen' => $screen,
-            'widgetTypes' => [
-                'birthday' => 'Verjaardagen',
-                'room_availability' => 'Ruimte Beschikbaarheid',
-                'clock_weather' => 'Klok/Datum/Weer',
-                'announcements' => 'Mededelingen',
-                'toggl_time_tracking' => 'Toggl Uren Tracking',
-                'image_widget' => 'Afbeelding Slideshow',
-            ],
-        ]);
+        return redirect()->route('screens.index', ['active' => $screen->id])->with('success', 'Screen created successfully.');
     }
 
     public function update(Request $request, Screen $screen): RedirectResponse
@@ -75,7 +53,7 @@ class ScreenController extends Controller
 
         $screen->update($validated);
 
-        return redirect()->route('screens.index')->with('success', 'Screen updated successfully.');
+        return redirect()->route('screens.index', ['active' => $screen->id])->with('success', 'Screen updated successfully.');
     }
 
     public function updateLayout(Request $request, Screen $screen): JsonResponse

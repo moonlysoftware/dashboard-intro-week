@@ -23,7 +23,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Screen Management Routes
-    Route::resource('screens', ScreenController::class);
+    Route::resource('screens', ScreenController::class)->except(['create', 'edit', 'show']);
 
     // Screen Layout Route
     Route::patch('screens/{screen}/layout', [ScreenController::class, 'updateLayout'])->name('screens.updateLayout');

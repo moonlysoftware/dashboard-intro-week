@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import axios from 'axios';
 import {
@@ -14,21 +14,19 @@ import {
 } from '@dnd-kit/core';
 import { Button } from '@/Components/ui/button';
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from '@/Components/ui/card';
+    PanelLeft,
+    PanelRight,
+    ExternalLink,
+    GripVertical,
+    Monitor,
+} from 'lucide-react';
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from '@/Components/ui/dropdown-menu';
-import { MoreVertical, Pencil, Trash2, GripVertical, PanelLeft, PanelRight } from 'lucide-react';
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetDescription,
+} from '@/Components/ui/sheet';
 import { ScreenCanvas } from '@/Components/Screens/ScreenCanvas';
 import { WidgetLibraryPanel } from '@/Components/Screens/WidgetLibraryPanel';
 import { WidgetSettingsPanel } from '@/Components/Screens/WidgetSettingsPanel';
@@ -59,12 +57,18 @@ interface SelectedWidget {
     screenId: number;
 }
 
-export default function Index({ auth, screens: initialScreens, widgetTypes }: ScreensIndexProps) {
+export default function Index({ screens: initialScreens, widgetTypes }: ScreensIndexProps) {
     const [screens, setScreens] = useState<Screen[]>(initialScreens);
-    const [activeScreenId, setActiveScreenId] = useState<number | null>(null);
     const [selectedWidget, setSelectedWidget] = useState<SelectedWidget | null>(null);
     const [activeDragLabel, setActiveDragLabel] = useState<string | null>(null);
     const [activeDragWidgetType, setActiveDragWidgetType] = useState<string | null>(null);
+
+    // Parse active screen ID from URL query params
+    const activeScreenId = useMemo(() => {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('active');
+        return id ? parseInt(id, 10) : null;
+    }, [window.location.search]);
 
     useEffect(() => {
         router.reload({ only: ['screens'] });
@@ -80,32 +84,21 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
         })
     );
 
-
-    const handleSelectScreen = (screenId: number) => {
-        setActiveScreenId(screenId);
-    };
+    const activeScreen = screens.find((s) => s.id === activeScreenId) ?? null;
 
     const handleDelete = (screenId: number) => {
-        if (confirm('Weet je zeker dat je dit scherm wilt verwijderen?')) {
+        if (confirm('Are you sure you want to delete this screen?')) {
             router.delete(route('screens.destroy', screenId));
         }
     };
-
 
     const handleWidgetDrop = async (screenId: number, slotIndex: number, widgetType: string) => {
         const screen = screens.find((s) => s.id === screenId);
         if (!screen) return;
 
-        // Max 4 widgets
         if (screen.widgets.length >= 4) return;
-
-        // Slot already occupied
         if (screen.widgets.some((w) => w.grid_order === slotIndex)) return;
-
-        // Wide-only widget cannot go into a small slot
         if (isWideOnlyWidget(widgetType) && isSmallSlot(slotIndex, screen.layout)) return;
-
-        // Small-only widget cannot go into a large slot
         if (isSmallOnlyWidget(widgetType) && !isSmallSlot(slotIndex, screen.layout)) return;
 
         try {
@@ -131,7 +124,6 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
         }
     };
 
-
     const handleWidgetReorder = async (
         screenId: number,
         widgetId: number,
@@ -141,11 +133,8 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
         const screen = screens.find((s) => s.id === screenId);
         if (!screen) return;
 
-        // Wide-only widget cannot be moved to a small slot
         const movingWidget = screen.widgets.find((w) => w.id === widgetId);
         if (movingWidget && isWideOnlyWidget(movingWidget.widget_type) && isSmallSlot(newOrder, screen.layout)) return;
-
-        // Small-only widget cannot be moved to a large slot
         if (movingWidget && isSmallOnlyWidget(movingWidget.widget_type) && !isSmallSlot(newOrder, screen.layout)) return;
 
         const targetWidget = screen.widgets.find((w) => w.grid_order === newOrder);
@@ -199,14 +188,15 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
         }
     };
 
-    const handleWidgetRemove = async (screenId: number, widgetId: number) => {
-        if (!confirm('Widget verwijderen?')) return;
+    const handleWidgetRemove = async (widgetId: number) => {
+        if (!activeScreenId) return;
+        if (!confirm('Remove widget?')) return;
         try {
             await axios.delete(route('widgets.destroy', widgetId));
 
             setScreens((prev) =>
                 prev.map((s) =>
-                    s.id === screenId
+                    s.id === activeScreenId
                         ? { ...s, widgets: s.widgets.filter((w) => w.id !== widgetId), widgets_count: s.widgets_count - 1 }
                         : s
                 )
@@ -220,26 +210,24 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
         }
     };
 
-    const handleWidgetClick = (widget: Widget, screenId: number) => {
-        setSelectedWidget({ widget, screenId });
+    const handleWidgetClick = (widget: Widget) => {
+        if (!activeScreenId) return;
+        setSelectedWidget({ widget, screenId: activeScreenId });
     };
 
     const handleWidgetTypeClick = (widgetType: string) => {
-        for (const screen of screens) {
-            const widget = screen.widgets.find((w) => w.widget_type === widgetType);
-            if (widget) {
-                setSelectedWidget({ widget, screenId: screen.id });
-                return;
-            }
+        if (!activeScreen) return;
+        const widget = activeScreen.widgets.find((w) => w.widget_type === widgetType);
+        if (widget) {
+            setSelectedWidget({ widget, screenId: activeScreen.id });
         }
     };
 
-    const handleLayoutChange = async (screenId: number, layout: BentoLayout) => {
-        const screen = screens.find((s) => s.id === screenId);
-        if (!screen) return;
+    const handleLayoutChange = async (layout: BentoLayout) => {
+        if (!activeScreen) return;
+        const screenId = activeScreen.id;
+        const screen = activeScreen;
 
-        // For each slot pair, check if any widget violates the new layout.
-        // If so, swap the two widgets in that pair.
         const pairs: [number, number][] = [[0, 1], [2, 3]];
         const swaps: { id: number; newOrder: number; oldOrder: number }[] = [];
 
@@ -262,7 +250,6 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
             }
         }
 
-        // Optimistic update: apply layout + swaps at once
         setScreens((prev) =>
             prev.map((s) => {
                 if (s.id !== screenId) return s;
@@ -283,7 +270,6 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
             ]);
         } catch (error) {
             console.error('Error updating layout:', error);
-            // Rollback layout and any swapped widgets
             const oldLayout: BentoLayout = layout === 'bento_start_small' ? 'bento_start_large' : 'bento_start_small';
             setScreens((prev) =>
                 prev.map((s) => {
@@ -298,15 +284,14 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
         }
     };
 
-    const handleWidgetSaved = (screenId: number, updatedWidget: Widget) => {
+    const handleWidgetSaved = (updatedWidget: Widget) => {
+        if (!activeScreenId) return;
         setScreens((prev) =>
             prev.map((s) => ({
                 ...s,
                 widgets: s.widgets.map((w) => {
                     if (w.id === updatedWidget.id) return updatedWidget;
-                    // image_widget has per-instance config — don't sync to other instances
                     if (updatedWidget.widget_type === 'image_widget') return w;
-                    // All other widget types share config globally
                     if (w.widget_type === updatedWidget.widget_type) {
                         return { ...w, config: updatedWidget.config };
                     }
@@ -315,7 +300,7 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
             }))
         );
         if (selectedWidget) {
-            setSelectedWidget({ widget: updatedWidget, screenId });
+            setSelectedWidget({ widget: updatedWidget, screenId: activeScreenId });
         }
     };
 
@@ -351,7 +336,6 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
         if (data?.widgetType) {
             if (targetScreenId !== activeScreenId) return;
             handleWidgetDrop(targetScreenId, targetSlotIndex, data.widgetType);
-
         } else if (data?.existingWidgetId) {
             if (data.screenId !== targetScreenId) return;
             if (data.currentOrder === targetSlotIndex) return;
@@ -364,206 +348,142 @@ export default function Index({ auth, screens: initialScreens, widgetTypes }: Sc
             <Head title="Screens" />
 
             <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-semibold leading-tight">Screens</h2>
-                    <Button asChild>
-                        <Link href={route('screens.create')}>Create Screen</Link>
-                    </Button>
-                </div>
-
-                <div className="flex gap-6 items-start">
-
-                    <div className="flex-1 min-w-0">
-                        {screens.length === 0 ? (
-                            <Card>
-                                <CardContent className="pt-6">
-                                    <div className="text-center py-12">
-                                        <p className="text-muted-foreground mb-4">
-                                            Nog geen schermen. Maak je eerste scherm aan!
-                                        </p>
-                                        <Button asChild>
-                                            <Link href={route('screens.create')}>Create Screen</Link>
-                                        </Button>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ) : (
-                            <div className="grid gap-4 md:grid-cols-2">
-                                {screens.map((screen) => {
-                                    const isActive = screen.id === activeScreenId;
-                                    return (
-                                        <Card
-                                            key={screen.id}
-                                            className={`transition-all cursor-pointer ${
-                                                isActive
-                                                    ? 'ring-2 ring-primary shadow-lg'
-                                                    : 'hover:shadow-md'
-                                            }`}
-                                            onClick={() => handleSelectScreen(screen.id)}
-                                        >
-                                            <CardHeader className="pb-2">
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                        <CardTitle className="text-base truncate">
-                                                            {screen.name}
-                                                        </CardTitle>
-                                                    </div>
-
-                                                    <div className="flex items-center gap-1 flex-shrink-0">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className={`h-7 w-7 p-0 ${screen.layout === 'bento_start_small' ? 'text-primary bg-primary/10' : 'text-muted-foreground'}`}
-                                                            title="Smal links, breed rechts"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleLayoutChange(screen.id, 'bento_start_small');
-                                                            }}
-                                                        >
-                                                            <PanelLeft className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className={`h-7 w-7 p-0 ${screen.layout === 'bento_start_large' ? 'text-primary bg-primary/10' : 'text-muted-foreground'}`}
-                                                            title="Breed links, smal rechts"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleLayoutChange(screen.id, 'bento_start_large');
-                                                            }}
-                                                        >
-                                                            <PanelRight className="h-4 w-4" />
-                                                        </Button>
-
-                                                        <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="h-7 w-7 p-0 flex-shrink-0"
-                                                                onClick={(e) => e.stopPropagation()}
-                                                            >
-                                                                <MoreVertical className="h-4 w-4" />
-                                                                <span className="sr-only">Opties</span>
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end" className="min-w-36">
-                                                            <DropdownMenuItem asChild>
-                                                                <Link href={route('screens.edit', screen.id)}>
-                                                                    <Pencil className="h-4 w-4 mr-2" />
-                                                                    Bewerken
-                                                                </Link>
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator />
-                                                            <DropdownMenuItem
-                                                                className="text-destructive focus:text-destructive"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    handleDelete(screen.id);
-                                                                }}
-                                                            >
-                                                                <Trash2 className="h-4 w-4 mr-2" />
-                                                                Verwijderen
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                    </div>
-                                                </div>
-
-                                                {screen.description && (
-                                                    <CardDescription className="text-xs mt-1">
-                                                        {screen.description}
-                                                    </CardDescription>
-                                                )}
-                                            </CardHeader>
-
-                                            <CardContent className="pb-2">
-                                                {!isActive && screen.widgets.length === 0 && (
-                                                    <p className="text-[11px] text-muted-foreground/50 text-center py-2">
-                                                        Klik om te selecteren en widgets toe te voegen
-                                                    </p>
-                                                )}
-                                                <ScreenCanvas
-                                                    screenId={screen.id}
-                                                    widgets={screen.widgets}
-                                                    widgetTypes={widgetTypes}
-                                                    isScreenActive={isActive}
-                                                    layout={screen.layout ?? 'bento_start_small'}
-                                                    activeDragWidgetType={activeDragWidgetType}
-                                                    onWidgetClick={(widget) => handleWidgetClick(widget, screen.id)}
-                                                    onWidgetRemove={(widgetId) => handleWidgetRemove(screen.id, widgetId)}
-                                                    selectedWidgetId={
-                                                        selectedWidget && selectedWidget.screenId === screen.id
-                                                            ? selectedWidget.widget.id
-                                                            : null
-                                                    }
-                                                />
-                                            </CardContent>
-
-                                            <CardFooter className="pt-2">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    asChild
-                                                    className="w-full"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                >
-                                                    <Link href={route('display.show', screen.id)} target="_blank">
-                                                        View Display
-                                                    </Link>
-                                                </Button>
-                                            </CardFooter>
-                                        </Card>
-                                    );
-                                })}
-                            </div>
-                        )}
+                {/* No screens exist */}
+                {screens.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-24">
+                        <Monitor className="h-12 w-12 text-muted-foreground/40 mb-4" />
+                        <h2 className="font-archia text-2xl font-semibold mb-2">No screens yet</h2>
+                        <p className="text-muted-foreground mb-6 text-center max-w-md">
+                            Create your first screen to start building your dashboard display.
+                            Use the + button in the sidebar to get started.
+                        </p>
                     </div>
+                )}
 
-                    <div className="w-96 flex-shrink-0 sticky top-4 space-y-4">
-                        <Card>
-                            <CardHeader className="pb-3">
-                                <CardTitle className="text-sm">Widgets</CardTitle>
-                                {activeScreenId === null && (
-                                    <p className="text-xs text-muted-foreground">
-                                        Selecteer een scherm om widgets te slepen
-                                    </p>
-                                )}
-                            </CardHeader>
-                            <CardContent>
+                {/* Screens exist but none selected */}
+                {screens.length > 0 && !activeScreen && (
+                    <div className="flex flex-col items-center justify-center py-24">
+                        <Monitor className="h-12 w-12 text-muted-foreground/40 mb-4" />
+                        <h2 className="font-archia text-2xl font-semibold mb-2">Select a screen</h2>
+                        <p className="text-muted-foreground text-center max-w-md">
+                            Choose a screen from the sidebar to view and edit its canvas.
+                        </p>
+                    </div>
+                )}
+
+                {/* Active screen selected */}
+                {activeScreen && (
+                    <div className="flex gap-6 items-start">
+                        {/* Main content area */}
+                        <div className="flex-1 min-w-0 space-y-5">
+                            {/* Toolbar */}
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <h2 className="font-archia text-2xl font-semibold">{activeScreen.name}</h2>
+                                    {activeScreen.description && (
+                                        <span className="text-sm text-muted-foreground hidden md:inline">
+                                            {activeScreen.description}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {/* Layout toggle */}
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className={`h-8 w-8 p-0 ${activeScreen.layout === 'bento_start_small' ? 'text-primary bg-primary/10' : 'text-muted-foreground'}`}
+                                        title="Small left, wide right"
+                                        onClick={() => handleLayoutChange('bento_start_small')}
+                                    >
+                                        <PanelLeft className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className={`h-8 w-8 p-0 ${activeScreen.layout === 'bento_start_large' ? 'text-primary bg-primary/10' : 'text-muted-foreground'}`}
+                                        title="Wide left, small right"
+                                        onClick={() => handleLayoutChange('bento_start_large')}
+                                    >
+                                        <PanelRight className="h-4 w-4" />
+                                    </Button>
+
+                                    {/* View Display */}
+                                    <Button variant="outline" size="sm" asChild className="h-8">
+                                        <a href={route('display.show', activeScreen.id)} target="_blank">
+                                            <ExternalLink className="h-4 w-4 mr-1" />
+                                            View Display
+                                        </a>
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Canvas area with subtle background */}
+                            <div className="rounded-xl bg-muted/40 p-5">
+                                <h3 className="font-archia text-sm font-medium text-muted-foreground mb-3">Canvas</h3>
+                                <ScreenCanvas
+                                    screenId={activeScreen.id}
+                                    widgets={activeScreen.widgets}
+                                    widgetTypes={widgetTypes}
+                                    isScreenActive={true}
+                                    layout={activeScreen.layout ?? 'bento_start_small'}
+                                    activeDragWidgetType={activeDragWidgetType}
+                                    onWidgetClick={handleWidgetClick}
+                                    onWidgetRemove={handleWidgetRemove}
+                                    selectedWidgetId={
+                                        selectedWidget && selectedWidget.screenId === activeScreen.id
+                                            ? selectedWidget.widget.id
+                                            : null
+                                    }
+                                />
+                            </div>
+                        </div>
+
+                        {/* Right-side Widget Library panel */}
+                        <div className="w-72 flex-shrink-0 sticky top-4">
+                            <div className="rounded-xl border bg-muted/30 p-4">
+                                <h3 className="font-archia text-base font-semibold mb-1">Widgets</h3>
                                 <WidgetLibraryPanel
                                     widgetTypes={widgetTypes}
                                     onWidgetTypeClick={handleWidgetTypeClick}
                                 />
-                            </CardContent>
-                        </Card>
-
-                        {selectedWidget && (
-                            <Card>
-                                <CardHeader className="pb-3">
-                                    <CardTitle className="text-sm">Widget Instellingen</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <WidgetSettingsPanel
-                                        key={selectedWidget.widget.id}
-                                        widget={selectedWidget.widget}
-                                        widgetTypes={widgetTypes}
-                                        onClose={() => setSelectedWidget(null)}
-                                        onSaved={(updatedWidget) =>
-                                            handleWidgetSaved(selectedWidget.screenId, updatedWidget)
-                                        }
-                                    />
-                                </CardContent>
-                            </Card>
-                        )}
+                            </div>
+                        </div>
                     </div>
-                </div>
+                )}
+
+                {/* Widget Settings Sheet */}
+                <Sheet
+                    open={selectedWidget !== null}
+                    onOpenChange={(open) => {
+                        if (!open) setSelectedWidget(null);
+                    }}
+                >
+                    <SheetContent side="right">
+                        <SheetHeader>
+                            <SheetTitle className="font-archia">Widget Settings</SheetTitle>
+                            <SheetDescription>
+                                Configure the selected widget.
+                            </SheetDescription>
+                        </SheetHeader>
+                        {selectedWidget && (
+                            <div className="mt-4">
+                                <WidgetSettingsPanel
+                                    key={selectedWidget.widget.id}
+                                    widget={selectedWidget.widget}
+                                    widgetTypes={widgetTypes}
+                                    onClose={() => setSelectedWidget(null)}
+                                    onSaved={handleWidgetSaved}
+                                />
+                            </div>
+                        )}
+                    </SheetContent>
+                </Sheet>
 
                 <DragOverlay dropAnimation={null}>
                     {activeDragLabel ? (
                         <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-card shadow-xl opacity-95 pointer-events-none">
                             <GripVertical className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-sm font-medium">{activeDragLabel}</span>
+                            <span className="font-archia text-sm font-medium">{activeDragLabel}</span>
                         </div>
                     ) : null}
                 </DragOverlay>
