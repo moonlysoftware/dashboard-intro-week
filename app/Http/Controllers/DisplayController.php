@@ -42,6 +42,8 @@ class DisplayController extends Controller
             'widgets' => $widgetsWithData,
             'refresh_interval' => $screen->refresh_interval,
             'layout' => $screen->layout,
+            'view_mode' => $screen->view_mode,
+            'featured_widget_id' => $screen->featured_widget_id,
         ]);
     }
 

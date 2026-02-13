@@ -164,7 +164,7 @@ function CanvasSlot({
     return (
         <div
             ref={setNodeRef}
-            className={`relative rounded-lg border-2 h-48 flex items-center justify-center transition-all duration-150 overflow-hidden ${borderClass} ${bgClass}`}
+            className={`relative rounded-lg border-2 h-48 flex items-center justify-center min-v-h[30vh] transition-all duration-150 overflow-hidden ${borderClass} ${bgClass}`}
         >
             {/* Blurred, faded cover image background */}
             {widget && coverImage && (
@@ -205,6 +205,73 @@ function CanvasSlot({
                           : isBlocked && isScreenActive
                             ? blockedLabel
                             : "Drag here"}
+                </span>
+            )}
+        </div>
+    );
+}
+
+interface SingleWidgetSlotProps {
+    screenId: number;
+    widget?: Widget;
+    widgetTypes: Record<string, string>;
+    onWidgetClick: (widget: Widget) => void;
+    onWidgetRemove: (widgetId: number) => void;
+}
+
+export function SingleWidgetSlot({
+    screenId,
+    widget,
+    widgetTypes,
+    onWidgetClick,
+    onWidgetRemove,
+}: SingleWidgetSlotProps) {
+    const slotId = `slot-${screenId}-single`;
+    const { isOver, setNodeRef } = useDroppable({ id: slotId });
+
+    const coverImage = widget ? WIDGET_COVER_IMAGES[widget.widget_type] : undefined;
+
+    let borderClass: string;
+    let bgClass: string;
+
+    if (widget) {
+        borderClass = "border-solid border-primary";
+        bgClass = "bg-primary/10";
+    } else if (isOver) {
+        borderClass = "border-dashed border-primary";
+        bgClass = "bg-primary/5 scale-[1.01]";
+    } else {
+        borderClass = "border-dashed border-muted-foreground/30 hover:border-muted-foreground/50";
+        bgClass = "bg-muted/20";
+    }
+
+    return (
+        <div
+            ref={setNodeRef}
+            className={`relative rounded-lg border-2 h-48 flex items-center justify-center min-h-[30vh] transition-all duration-150 overflow-hidden ${borderClass} ${bgClass}`}
+        >
+            {widget && coverImage && (
+                <img
+                    src={coverImage}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover blur-sm opacity-15 pointer-events-none select-none"
+                />
+            )}
+
+            {widget ? (
+                <DraggableWidget
+                    widget={widget}
+                    screenId={screenId}
+                    widgetTypes={widgetTypes}
+                    isSelected={true}
+                    onWidgetClick={onWidgetClick}
+                    onWidgetRemove={onWidgetRemove}
+                />
+            ) : (
+                <span className={`font-archia text-xs select-none transition-colors ${
+                    isOver ? "text-primary font-medium" : "text-muted-foreground/40"
+                }`}>
+                    {isOver ? "Drop here" : "Drag a widget here"}
                 </span>
             )}
         </div>

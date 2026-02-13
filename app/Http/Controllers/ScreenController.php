@@ -59,12 +59,25 @@ class ScreenController extends Controller
     public function updateLayout(Request $request, Screen $screen): JsonResponse
     {
         $validated = $request->validate([
-            'layout' => 'required|in:bento_start_small,bento_start_large',
+            'layout' => 'sometimes|in:bento_start_small,bento_start_large',
+            'view_mode' => 'sometimes|in:grid,single_widget',
+            'featured_widget_id' => 'sometimes|nullable|exists:widgets,id',
         ]);
+
+        if (isset($validated['featured_widget_id'])) {
+            $widgetBelongsToScreen = $screen->widgets()->where('id', $validated['featured_widget_id'])->exists();
+            if (!$widgetBelongsToScreen) {
+                return response()->json(['error' => 'Widget does not belong to this screen.'], 422);
+            }
+        }
 
         $screen->update($validated);
 
-        return response()->json(['layout' => $screen->layout]);
+        return response()->json([
+            'layout' => $screen->layout,
+            'view_mode' => $screen->view_mode,
+            'featured_widget_id' => $screen->featured_widget_id,
+        ]);
     }
 
     public function destroy(Screen $screen): RedirectResponse

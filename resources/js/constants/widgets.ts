@@ -1,4 +1,5 @@
 export type BentoLayout = 'bento_start_small' | 'bento_start_large';
+export type ViewMode = 'grid' | 'single_widget';
 
 /**
  * Widget types that require a 3/4-wide (large) slot.

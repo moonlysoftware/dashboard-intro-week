@@ -16,6 +16,7 @@ import { Button } from '@/Components/ui/button';
 import {
     PanelLeft,
     PanelRight,
+    Square,
     ExternalLink,
     GripVertical,
     Monitor,
@@ -27,11 +28,18 @@ import {
     SheetTitle,
     SheetDescription,
 } from '@/Components/ui/sheet';
-import { ScreenCanvas } from '@/Components/Screens/ScreenCanvas';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/Components/ui/tooltip';
+import { ScreenCanvas, SingleWidgetSlot } from '@/Components/Screens/ScreenCanvas';
 import { WidgetLibraryPanel } from '@/Components/Screens/WidgetLibraryPanel';
 import { WidgetSettingsPanel } from '@/Components/Screens/WidgetSettingsPanel';
 import type { Widget } from '@/Components/Screens/ScreenCanvas';
 import { isWideOnlyWidget, isSmallOnlyWidget, isSmallSlot } from '@/constants/widgets';
+import type { ViewMode } from '@/constants/widgets';
 
 type BentoLayout = 'bento_start_small' | 'bento_start_large';
 
@@ -41,6 +49,8 @@ interface Screen {
     description: string | null;
     refresh_interval: number;
     layout: BentoLayout;
+    view_mode: ViewMode;
+    featured_widget_id: number | null;
     widgets_count: number;
     widgets: Widget[];
     created_at: string;
@@ -193,10 +203,18 @@ export default function Index({ screens: initialScreens, widgetTypes }: ScreensI
         try {
             await axios.delete(route('widgets.destroy', widgetId));
 
+            const screen = screens.find((s) => s.id === activeScreenId);
+            const clearFeatured = screen?.featured_widget_id === widgetId;
+
             setScreens((prev) =>
                 prev.map((s) =>
                     s.id === activeScreenId
-                        ? { ...s, widgets: s.widgets.filter((w) => w.id !== widgetId), widgets_count: s.widgets_count - 1 }
+                        ? {
+                            ...s,
+                            widgets: s.widgets.filter((w) => w.id !== widgetId),
+                            widgets_count: s.widgets_count - 1,
+                            ...(clearFeatured ? { featured_widget_id: null } : {}),
+                        }
                         : s
                 )
             );
@@ -256,13 +274,13 @@ export default function Index({ screens: initialScreens, widgetTypes }: ScreensI
                     const swap = swaps.find((sw) => sw.id === w.id);
                     return swap ? { ...w, grid_order: swap.newOrder } : w;
                 });
-                return { ...s, layout, widgets: updatedWidgets };
+                return { ...s, layout, view_mode: 'grid' as ViewMode, widgets: updatedWidgets };
             })
         );
 
         try {
             await Promise.all([
-                axios.patch(route('screens.updateLayout', screenId), { layout }),
+                axios.patch(route('screens.updateLayout', screenId), { layout, view_mode: 'grid' }),
                 ...swaps.map((sw) =>
                     axios.patch(route('widgets.update', sw.id), { grid_order: sw.newOrder })
                 ),
@@ -279,6 +297,24 @@ export default function Index({ screens: initialScreens, widgetTypes }: ScreensI
                     });
                     return { ...s, layout: oldLayout, widgets: restoredWidgets };
                 })
+            );
+        }
+    };
+
+    const handleViewModeChange = async (viewMode: ViewMode) => {
+        if (!activeScreen) return;
+        const screenId = activeScreen.id;
+
+        setScreens((prev) =>
+            prev.map((s) => s.id === screenId ? { ...s, view_mode: viewMode } : s)
+        );
+
+        try {
+            await axios.patch(route('screens.updateLayout', screenId), { view_mode: viewMode });
+        } catch (error) {
+            console.error('Error updating view mode:', error);
+            setScreens((prev) =>
+                prev.map((s) => s.id === screenId ? { ...s, view_mode: activeScreen.view_mode } : s)
             );
         }
     };
@@ -316,6 +352,54 @@ export default function Index({ screens: initialScreens, widgetTypes }: ScreensI
         }
     };
 
+    const handleSingleWidgetDrop = async (screenId: number, widgetType: string) => {
+        const screen = screens.find((s) => s.id === screenId);
+        if (!screen) return;
+
+        // If there's already a featured widget, remove it first
+        const existingFeatured = screen.widgets.find((w) => w.id === screen.featured_widget_id);
+        if (existingFeatured) {
+            try {
+                await axios.delete(route('widgets.destroy', existingFeatured.id));
+                setScreens((prev) =>
+                    prev.map((s) =>
+                        s.id === screenId
+                            ? { ...s, widgets: s.widgets.filter((w) => w.id !== existingFeatured.id), widgets_count: s.widgets_count - 1, featured_widget_id: null }
+                            : s
+                    )
+                );
+            } catch (error) {
+                console.error('Error removing old featured widget:', error);
+                return;
+            }
+        }
+
+        try {
+            const response = await axios.post(route('widgets.store', screenId), {
+                widget_type: widgetType,
+                grid_col_span: 12,
+                grid_row_span: 2,
+                grid_order: 0,
+                config: null,
+            });
+
+            const newWidget: Widget = response.data;
+
+            // Set the new widget as featured
+            await axios.patch(route('screens.updateLayout', screenId), { featured_widget_id: newWidget.id });
+
+            setScreens((prev) =>
+                prev.map((s) =>
+                    s.id === screenId
+                        ? { ...s, widgets: [...s.widgets, newWidget], widgets_count: s.widgets_count + 1, featured_widget_id: newWidget.id }
+                        : s
+                )
+            );
+        } catch (error) {
+            console.error('Error creating single widget:', error);
+        }
+    };
+
     const handleDragEnd = (event: DragEndEvent) => {
         setActiveDragLabel(null);
         setActiveDragWidgetType(null);
@@ -327,6 +411,16 @@ export default function Index({ screens: initialScreens, widgetTypes }: ScreensI
 
         const parts = overId.split('-');
         const targetScreenId = parseInt(parts[1]);
+
+        // Single widget slot: "slot-{screenId}-single"
+        if (parts[2] === 'single') {
+            const data = active.data.current;
+            if (data?.widgetType && targetScreenId === activeScreenId) {
+                handleSingleWidgetDrop(targetScreenId, data.widgetType);
+            }
+            return;
+        }
+
         const targetSlotIndex = parseInt(parts[2]);
         if (isNaN(targetScreenId) || isNaN(targetSlotIndex)) return;
 
@@ -386,25 +480,52 @@ export default function Index({ screens: initialScreens, widgetTypes }: ScreensI
                                     )}
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    {/* Layout toggle */}
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className={`h-8 w-8 p-0 ${activeScreen.layout === 'bento_start_small' ? 'text-primary bg-primary/10' : 'text-muted-foreground'}`}
-                                        title="Small left, wide right"
-                                        onClick={() => handleLayoutChange('bento_start_small')}
-                                    >
-                                        <PanelLeft className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className={`h-8 w-8 p-0 ${activeScreen.layout === 'bento_start_large' ? 'text-primary bg-primary/10' : 'text-muted-foreground'}`}
-                                        title="Wide left, small right"
-                                        onClick={() => handleLayoutChange('bento_start_large')}
-                                    >
-                                        <PanelRight className="h-4 w-4" />
-                                    </Button>
+                                    <TooltipProvider delayDuration={300}>
+                                        {/* Layout toggle */}
+                                        {activeScreen.view_mode !== 'single_widget' && (
+                                            <>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className={`h-8 w-8 p-0 ${activeScreen.view_mode === 'grid' && activeScreen.layout === 'bento_start_small' ? 'text-primary bg-primary/10' : 'text-muted-foreground'}`}
+                                                            onClick={() => handleLayoutChange('bento_start_small')}
+                                                        >
+                                                            <PanelLeft className="h-4 w-4" />
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Small left, wide right</TooltipContent>
+                                                </Tooltip>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className={`h-8 w-8 p-0 ${activeScreen.view_mode === 'grid' && activeScreen.layout === 'bento_start_large' ? 'text-primary bg-primary/10' : 'text-muted-foreground'}`}
+                                                            onClick={() => handleLayoutChange('bento_start_large')}
+                                                        >
+                                                            <PanelRight className="h-4 w-4" />
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Wide left, small right</TooltipContent>
+                                                </Tooltip>
+                                            </>
+                                        )}
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className={`h-8 w-8 p-0 ${activeScreen.view_mode === 'single_widget' ? 'text-primary bg-primary/10' : 'text-muted-foreground'}`}
+                                                    onClick={() => handleViewModeChange(activeScreen.view_mode === 'single_widget' ? 'grid' : 'single_widget')}
+                                                >
+                                                    <Square className="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Single widget fullscreen</TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
 
                                     {/* View Display */}
                                     <Button variant="outline" size="sm" asChild className="h-8">
@@ -418,21 +539,31 @@ export default function Index({ screens: initialScreens, widgetTypes }: ScreensI
 
                             {/* Canvas area with subtle background */}
                             <div className="rounded-xl bg-muted/40 p-5">
-                                <ScreenCanvas
-                                    screenId={activeScreen.id}
-                                    widgets={activeScreen.widgets}
-                                    widgetTypes={widgetTypes}
-                                    isScreenActive={true}
-                                    layout={activeScreen.layout ?? 'bento_start_small'}
-                                    activeDragWidgetType={activeDragWidgetType}
-                                    onWidgetClick={handleWidgetClick}
-                                    onWidgetRemove={handleWidgetRemove}
-                                    selectedWidgetId={
-                                        selectedWidget && selectedWidget.screenId === activeScreen.id
-                                            ? selectedWidget.widget.id
-                                            : null
-                                    }
-                                />
+                                {activeScreen.view_mode === 'single_widget' ? (
+                                    <SingleWidgetSlot
+                                        screenId={activeScreen.id}
+                                        widget={activeScreen.widgets.find((w) => w.id === activeScreen.featured_widget_id) ?? undefined}
+                                        widgetTypes={widgetTypes}
+                                        onWidgetClick={handleWidgetClick}
+                                        onWidgetRemove={handleWidgetRemove}
+                                    />
+                                ) : (
+                                    <ScreenCanvas
+                                        screenId={activeScreen.id}
+                                        widgets={activeScreen.widgets}
+                                        widgetTypes={widgetTypes}
+                                        isScreenActive={true}
+                                        layout={activeScreen.layout ?? 'bento_start_small'}
+                                        activeDragWidgetType={activeDragWidgetType}
+                                        onWidgetClick={handleWidgetClick}
+                                        onWidgetRemove={handleWidgetRemove}
+                                        selectedWidgetId={
+                                            selectedWidget && selectedWidget.screenId === activeScreen.id
+                                                ? selectedWidget.widget.id
+                                                : null
+                                        }
+                                    />
+                                )}
                             </div>
                         </div>
 
