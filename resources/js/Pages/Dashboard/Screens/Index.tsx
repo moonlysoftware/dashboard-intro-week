@@ -190,7 +190,6 @@ export default function Index({ screens: initialScreens, widgetTypes }: ScreensI
 
     const handleWidgetRemove = async (widgetId: number) => {
         if (!activeScreenId) return;
-        if (!confirm('Remove widget?')) return;
         try {
             await axios.delete(route('widgets.destroy', widgetId));
 

@@ -37,15 +37,18 @@ export function NavScreens({ screens, activeScreenId, onCreateClick, onEditClick
 
     return (
         <SidebarGroup>
-            <SidebarGroupLabel className="font-archia">
-                Screens
+            <div className="flex items-center justify-between px-1 py-2 pb-4">
+                <span className="font-archia text-md font-semibold tracking-tight text-sidebar-foreground">
+                    Screens
+                </span>
                 <button
                     onClick={onCreateClick}
-                    className="ml-auto flex h-5 w-5 items-center justify-center rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+                    title="New screen"
                 >
                     <Plus className="h-4 w-4" />
                 </button>
-            </SidebarGroupLabel>
+            </div>
             <SidebarMenu>
                 {screens.map((screen) => (
                     <SidebarMenuItem key={screen.id}>
