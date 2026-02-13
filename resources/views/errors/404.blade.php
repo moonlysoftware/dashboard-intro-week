@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>404 - Page Not Found</title>
     
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css'])
 </head>
 <body class="bg-gradient-to-br from-[#6c52ff] via-[#d73fe8] to-[#ff4490] min-h-screen flex items-center justify-center p-5">
     <div class="text-center text-white max-w-2xl">
