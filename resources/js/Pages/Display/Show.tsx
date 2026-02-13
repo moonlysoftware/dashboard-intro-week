@@ -19,6 +19,7 @@ interface Widget {
 }
 
 type BentoLayout = 'bento_start_small' | 'bento_start_large';
+type ViewMode = 'grid' | 'single_widget';
 
 interface GridPosition {
     column: string; // e.g. "1 / 4"
@@ -62,6 +63,8 @@ interface Screen {
     name: string;
     refresh_interval: number;
     layout: BentoLayout;
+    view_mode: ViewMode;
+    featured_widget_id: number | null;
     widgets: Widget[];
 }
 
@@ -73,6 +76,8 @@ export default function Show({ screen: initialScreen }: DisplayShowProps) {
     const [widgets, setWidgets] = useState<Widget[]>(initialScreen.widgets || []);
     const [refreshInterval, setRefreshInterval] = useState(initialScreen.refresh_interval);
     const [layout, setLayout] = useState<BentoLayout>(initialScreen.layout ?? 'bento_start_small');
+    const [viewMode, setViewMode] = useState<ViewMode>(initialScreen.view_mode ?? 'grid');
+    const [featuredWidgetId, setFeaturedWidgetId] = useState<number | null>(initialScreen.featured_widget_id ?? null);
 
     useEffect(() => {
         // Fetch widget data immediately
@@ -92,6 +97,8 @@ export default function Show({ screen: initialScreen }: DisplayShowProps) {
             setWidgets(response.data.widgets);
             setRefreshInterval(response.data.refresh_interval);
             if (response.data.layout) setLayout(response.data.layout);
+            if (response.data.view_mode) setViewMode(response.data.view_mode);
+            setFeaturedWidgetId(response.data.featured_widget_id ?? null);
         } catch (error) {
             console.error('Error fetching widget data:', error);
         }
@@ -145,18 +152,62 @@ export default function Show({ screen: initialScreen }: DisplayShowProps) {
             <Head title={`Display: ${initialScreen.name}`} />
 
             <div className="h-screen flex flex-col bg-gradient-to-br from-background via-secondary/20 to-background p-6">
-                {/* Widgets Grid — always 2 rows, fills remaining height */}
-                <div className="grid grid-cols-12 grid-rows-2 gap-4 flex-1 min-h-0">
-                    {widgets.length === 0 ? (
-                        <div className="col-span-12 row-span-2 flex items-center justify-center">
-                            <p className="text-muted-foreground text-2xl">
-                                No widgets configured for this screen
-                            </p>
-                        </div>
-                    ) : (
-                        widgets.map(renderWidget)
-                    )}
-                </div>
+                {viewMode === 'single_widget' ? (
+                    <div className="flex-1 min-h-0">
+                        {(() => {
+                            const featuredWidget = widgets.find((w) => w.id === featuredWidgetId);
+                            if (!featuredWidget) {
+                                return (
+                                    <div className="h-full flex items-center justify-center">
+                                        <p className="text-muted-foreground text-2xl">
+                                            No widget selected
+                                        </p>
+                                    </div>
+                                );
+                            }
+
+                            const widgetProps = {
+                                config: featuredWidget.config || {},
+                                data: featuredWidget.data || {},
+                            };
+
+                            switch (featuredWidget.widget_type) {
+                                case 'birthday': {
+                                    const birthdayIndex = widgets
+                                        .filter(w => w.widget_type === 'birthday')
+                                        .sort((a, b) => a.grid_order - b.grid_order)
+                                        .findIndex(w => w.id === featuredWidget.id);
+                                    return <div className="h-full"><BirthdayWidget {...widgetProps} birthdayIndex={birthdayIndex} /></div>;
+                                }
+                                case 'room_availability':
+                                    return <div className="h-full"><RoomAvailabilityWidget {...widgetProps} /></div>;
+                                case 'clock_weather':
+                                    return <div className="h-full"><ClockWeatherWidget {...widgetProps} /></div>;
+                                case 'announcements':
+                                    return <div className="h-full"><AnnouncementsWidget {...widgetProps} /></div>;
+                                case 'toggl_time_tracking':
+                                    return <div className="h-full"><TogglTimeTrackingWidget {...widgetProps} /></div>;
+                                case 'image_widget':
+                                    return <div className="h-full"><ImageWidget {...widgetProps} /></div>;
+                                default:
+                                    return null;
+                            }
+                        })()}
+                    </div>
+                ) : (
+                    /* Widgets Grid — always 2 rows, fills remaining height */
+                    <div className="grid grid-cols-12 grid-rows-2 gap-4 flex-1 min-h-0">
+                        {widgets.length === 0 ? (
+                            <div className="col-span-12 row-span-2 flex items-center justify-center">
+                                <p className="text-muted-foreground text-2xl">
+                                    No widgets configured for this screen
+                                </p>
+                            </div>
+                        ) : (
+                            widgets.map(renderWidget)
+                        )}
+                    </div>
+                )}
 
                 {/* Footer with last update time */}
                 <div className="fixed bottom-4 right-4 text-muted-foreground text-sm">
