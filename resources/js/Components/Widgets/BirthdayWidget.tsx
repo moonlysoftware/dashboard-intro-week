@@ -3,6 +3,7 @@ import birthdaysData from '@/data/birthdays.json';
 interface BirthdayWidgetProps {
     config: Record<string, any>;
     data: Record<string, any>;
+    birthdayIndex?: number;
 }
 
 interface Person {
@@ -47,17 +48,17 @@ function formatDate(birthdate: string): string {
     return date.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' });
 }
 
-export default function BirthdayWidget({ config: _config, data: _data }: BirthdayWidgetProps) {
+export default function BirthdayWidget({ config: _config, data: _data, birthdayIndex = 0 }: BirthdayWidgetProps) {
     const people = birthdaysData as Person[];
 
-    const birthdayToday = people.filter((p) => isBirthdayToday(p.birthdate));
+    // Build one sorted list: today's birthdays first, then upcoming sorted by days until
+    const allSorted = [
+        ...people.filter(p => isBirthdayToday(p.birthdate)),
+        ...people.filter(p => !isBirthdayToday(p.birthdate))
+                 .sort((a, b) => daysUntil(a.birthdate) - daysUntil(b.birthdate)),
+    ];
 
-    const upcoming = people
-        .filter((p) => !isBirthdayToday(p.birthdate))
-        .sort((a, b) => daysUntil(a.birthdate) - daysUntil(b.birthdate));
-
-    const minDays = upcoming.length > 0 ? daysUntil(upcoming[0].birthdate) : null;
-    const nextGroup = upcoming.filter((p) => daysUntil(p.birthdate) === minDays);
+    const person = allSorted[birthdayIndex] ?? null;
 
     const backgroundLayers = (personImage?: string) => (
         <div style={{
@@ -95,15 +96,25 @@ export default function BirthdayWidget({ config: _config, data: _data }: Birthda
         </div>
     );
 
-    if (birthdayToday.length > 0) {
-        const primary = birthdayToday[0];
-        const others  = birthdayToday.slice(1);
+    if (!person) {
+        return (
+            <div
+                className="relative overflow-hidden rounded-lg shadow-lg h-full flex items-center justify-center"
+            >
+                {backgroundLayers()}
+                <p className="text-white/80 drop-shadow" style={{ zIndex: 30, position: 'relative' }}>
+                    Geen verjaardagen gevonden
+                </p>
+            </div>
+        );
+    }
 
+    if (isBirthdayToday(person.birthdate)) {
         return (
             <div
                 className="relative overflow-hidden rounded-lg shadow-lg h-full"
             >
-                {backgroundLayers(primary.image)}
+                {backgroundLayers(person.image)}
 
                 <div
                     className="absolute top-0 left-0 right-0 flex flex-col items-center text-white text-center"
@@ -130,37 +141,23 @@ export default function BirthdayWidget({ config: _config, data: _data }: Birthda
                     }}
                 >
                     <p className="font-bold drop-shadow" style={{ fontSize: 'clamp(1.8rem, 4vw, 3.5rem)' }}>
-                        {primary.name}
+                        {person.name}
                     </p>
                     <p className="font-semibold uppercase tracking-widest drop-shadow" style={{ fontSize: 'clamp(1rem, 2vw, 1.6rem)' }}>
-                        wordt vandaag {getAgeThisBirthday(primary.birthdate)} jaar!
+                        wordt vandaag {getAgeThisBirthday(person.birthdate)} jaar!
                     </p>
                 </div>
             </div>
         );
     }
 
-    if (nextGroup.length === 0) {
-        return (
-            <div
-                className="relative overflow-hidden rounded-lg shadow-lg h-full flex items-center justify-center"
-            >
-                {backgroundLayers()}
-                <p className="text-white/80 drop-shadow" style={{ zIndex: 30, position: 'relative' }}>
-                    Geen verjaardagen gevonden
-                </p>
-            </div>
-        );
-    }
-
-    const primary = nextGroup[0];
-    const days    = daysUntil(primary.birthdate);
+    const days = daysUntil(person.birthdate);
 
     return (
         <div
             className="relative overflow-hidden rounded-lg shadow-lg h-full"
         >
-            {backgroundLayers(primary.image)}
+            {backgroundLayers(person.image)}
 
             <div
                 className="absolute top-0 left-0 right-0 flex flex-col items-center text-white text-center"
@@ -187,10 +184,10 @@ export default function BirthdayWidget({ config: _config, data: _data }: Birthda
                 }}
             >
                 <p className="font-bold drop-shadow whitespace-nowrap" style={{ fontSize: 'clamp(1.8rem, 4vw, 3.5rem)' }}>
-                    {primary.name}
+                    {person.name}
                 </p>
                 <p className="font-semibold uppercase tracking-widest drop-shadow whitespace-nowrap" style={{ fontSize: 'clamp(1rem, 2vw, 1.6rem)' }}>
-                    wordt over {days} {days === 1 ? 'dag' : 'dagen'} {getAgeThisBirthday(primary.birthdate)} jaar
+                    wordt over {days} {days === 1 ? 'dag' : 'dagen'} {getAgeThisBirthday(person.birthdate)} jaar
                 </p>
             </div>
         </div>

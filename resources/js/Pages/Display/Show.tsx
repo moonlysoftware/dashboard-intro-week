@@ -105,39 +105,39 @@ export default function Show({ screen: initialScreen }: DisplayShowProps) {
             data: widget.data || {},
         };
 
-        let WidgetComponent;
-        switch (widget.widget_type) {
-            case 'birthday':
-                WidgetComponent = BirthdayWidget;
-                break;
-            case 'room_availability':
-                WidgetComponent = RoomAvailabilityWidget;
-                break;
-            case 'clock_weather':
-                WidgetComponent = ClockWeatherWidget;
-                break;
-            case 'announcements':
-                WidgetComponent = AnnouncementsWidget;
-                break;
-            case 'toggl_time_tracking':
-                WidgetComponent = TogglTimeTrackingWidget;
-                break;
-            case 'image_widget':
-                WidgetComponent = ImageWidget;
-                break;
-            default:
-                return null;
-        }
-
-        return (
+        const wrapWidget = (content: React.ReactNode) => (
             <div
                 key={widget.id}
                 style={{ gridColumn: column, gridRow: row }}
                 className="min-h-0 h-full"
             >
-                <WidgetComponent {...widgetProps} />
+                {content}
             </div>
         );
+
+        switch (widget.widget_type) {
+            case 'birthday': {
+                const birthdayIndex = widgets
+                    .filter(w => w.widget_type === 'birthday')
+                    .sort((a, b) => a.grid_order - b.grid_order)
+                    .findIndex(w => w.id === widget.id);
+                return wrapWidget(
+                    <BirthdayWidget {...widgetProps} birthdayIndex={birthdayIndex} />
+                );
+            }
+            case 'room_availability':
+                return wrapWidget(<RoomAvailabilityWidget {...widgetProps} />);
+            case 'clock_weather':
+                return wrapWidget(<ClockWeatherWidget {...widgetProps} />);
+            case 'announcements':
+                return wrapWidget(<AnnouncementsWidget {...widgetProps} />);
+            case 'toggl_time_tracking':
+                return wrapWidget(<TogglTimeTrackingWidget {...widgetProps} />);
+            case 'image_widget':
+                return wrapWidget(<ImageWidget {...widgetProps} />);
+            default:
+                return null;
+        }
     };
 
     return (
