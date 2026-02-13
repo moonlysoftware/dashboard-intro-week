@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Screen;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -34,6 +35,9 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'screens' => $request->user()
+                ? Screen::select('id', 'name', 'description', 'refresh_interval')->latest()->get()
+                : [],
         ];
     }
 }

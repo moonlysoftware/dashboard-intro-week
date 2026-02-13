@@ -15,11 +15,12 @@ export default {
     	extend: {
 			fontFamily: {
 				sans: [
-					'CeraPro',      // main app font
+					'Archia',
+					'CeraPro',
 					'Roboto',
 					...defaultTheme.fontFamily.sans
 				],
-				archia: ['Archia', 'sans-serif'],  // for headings
+				archia: ['Archia', 'sans-serif'],
 			},
     		colors: {
     			border: 'var(--border)',
