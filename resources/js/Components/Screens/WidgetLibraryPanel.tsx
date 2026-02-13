@@ -44,7 +44,7 @@ function DraggableWidgetTile({ widgetType, label, onWidgetTypeClick }: Draggable
                 ${isDragging ? 'opacity-40 shadow-lg' : ''}
             `}
         >
-            <div className="relative overflow-hidden h-20 bg-muted/30" style={{ pointerEvents: 'none' }}>
+            <div className="relative overflow-hidden h-28 bg-muted/30" style={{ pointerEvents: 'none' }}>
                 {coverImage ? (
                     <img
                         src={coverImage}
@@ -69,8 +69,8 @@ function DraggableWidgetTile({ widgetType, label, onWidgetTypeClick }: Draggable
                 )}
             </div>
 
-            <div className="px-2 py-1.5">
-                <span className="font-archia text-xs font-medium leading-tight line-clamp-1">{label}</span>
+            <div className="px-3 py-2">
+                <span className="font-archia text-sm font-medium leading-tight line-clamp-1">{label}</span>
             </div>
         </div>
     );
@@ -87,7 +87,7 @@ export function WidgetLibraryPanel({ widgetTypes, onWidgetTypeClick }: WidgetLib
             <p className="text-xs text-muted-foreground mb-3">
                 Drag a widget to a slot on the canvas
             </p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
                 {Object.entries(widgetTypes).map(([key, label]) => (
                     <DraggableWidgetTile
                         key={key}

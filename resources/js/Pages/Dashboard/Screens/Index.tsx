@@ -418,7 +418,6 @@ export default function Index({ screens: initialScreens, widgetTypes }: ScreensI
 
                             {/* Canvas area with subtle background */}
                             <div className="rounded-xl bg-muted/40 p-5">
-                                <h3 className="font-archia text-sm font-medium text-muted-foreground mb-3">Canvas</h3>
                                 <ScreenCanvas
                                     screenId={activeScreen.id}
                                     widgets={activeScreen.widgets}
@@ -438,7 +437,7 @@ export default function Index({ screens: initialScreens, widgetTypes }: ScreensI
                         </div>
 
                         {/* Right-side Widget Library panel */}
-                        <div className="w-72 flex-shrink-0 sticky top-4">
+                        <div className="w-96 flex-shrink-0 sticky top-4">
                             <div className="rounded-xl border bg-muted/30 p-4">
                                 <h3 className="font-archia text-base font-semibold mb-1">Widgets</h3>
                                 <WidgetLibraryPanel
