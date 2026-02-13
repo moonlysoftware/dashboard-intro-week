@@ -437,7 +437,7 @@ export default function Index({ screens: initialScreens, widgetTypes }: ScreensI
                         </div>
 
                         {/* Right-side Widget Library panel */}
-                        <div className="w-96 flex-shrink-0 sticky top-4">
+                        <div className="min-w-[25vw] flex-shrink-0 sticky top-4">
                             <div className="rounded-xl border bg-muted/30 p-4">
                                 <h3 className="font-archia text-base font-semibold mb-1">Widgets</h3>
                                 <WidgetLibraryPanel

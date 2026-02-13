@@ -2,12 +2,8 @@
 
 import * as React from "react"
 import {
-  MoonIcon,
   SettingsIcon,
-  SunIcon,
 } from "lucide-react"
-
-import { useTheme } from "@/Components/theme-provider"
 import { NavScreens } from "@/Components/nav-screens"
 import { NavUser } from "@/Components/nav-user"
 import { CreateScreenDialog } from "@/Components/Screens/CreateScreenDialog"
@@ -27,7 +23,6 @@ import { usePage } from "@inertiajs/react"
 import { PageProps, SharedScreen } from "@/types"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { theme, setTheme } = useTheme()
   const { auth, screens } = usePage<PageProps>().props
 
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false)
@@ -46,10 +41,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     setEditDialogOpen(true)
   }
 
-  const isDark =
-    theme === "dark" ||
-    (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)
-
   const user = {
     name: auth.user.name,
     email: auth.user.email,
@@ -67,7 +58,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 className="data-[slot=sidebar-menu-button]:!p-1.5"
               >
                 <a href={route('screens.index')}>
-                  <img src={isDark ? "/storage/moonly-logo-white.svg" : "/storage/moonly-logo-black.svg"} alt="Logo Moonly" className="h-6 w-auto" />
+                  <img src="/storage/moonly-logo-white.svg" alt="Logo Moonly" className="h-6 w-auto" />
                 </a>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -89,14 +80,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       <SettingsIcon />
                       <span>Settings</span>
                     </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    onClick={() => setTheme(isDark ? "light" : "dark")}
-                  >
-                    {isDark ? <SunIcon /> : <MoonIcon />}
-                    <span>{isDark ? "Light mode" : "Dark mode"}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
