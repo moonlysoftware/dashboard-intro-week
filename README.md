@@ -1,59 +1,93 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Dashboard Display Manager
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A web application for building customizable dashboard screens with drag-and-drop widgets. Create screens, configure widgets, and display them on any monitor or TV via a public URL.
 
-## About Laravel
+## Tech Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+**Backend:** Laravel 12 (PHP 8.2+), Inertia.js, Sanctum
+**Frontend:** React 18 (TypeScript), Tailwind CSS, Radix UI
+**Build:** Vite 7
+**Database:** SQLite (default)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **Screen Builder** — Visual canvas editor with drag-and-drop powered by `@dnd-kit`
+- **6 Widget Types:**
+  - **Clock/Date/Weather** — Real-time time, date, and weather info
+  - **Announcements** — Scrolling text announcements
+  - **Birthday** — Upcoming birthday display
+  - **Room Availability** — Live room status via Google Calendar integration
+  - **Toggl Time Tracking** — Weekly team stats from Toggl Track
+  - **Image Slideshow** — Rotating image gallery with upload management
+- **Layout Modes** — Bento grid layouts (small/large or large/small) and single-widget fullscreen mode
+- **Public Display** — Share screens via a public URL with configurable auto-refresh (5–300s)
+- **Dark Mode** — Dark theme enabled by default
 
-## Learning Laravel
+## Getting Started
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### Prerequisites
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- PHP 8.2+
+- Composer
+- Node.js & npm
 
-## Laravel Sponsors
+### Installation
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```bash
+# Clone the repository
+git clone <repository-url>
+cd dashboard-intro-week
 
-### Premium Partners
+# Install dependencies
+composer install
+npm install
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+# Set up environment
+cp .env.example .env
+php artisan key:generate
 
-## Contributing
+# Run migrations
+php artisan migrate
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# Start the development servers
+composer run dev
+# or run them separately:
+php artisan serve    # Backend at http://localhost:8000
+npm run dev          # Vite dev server
+```
 
-## Code of Conduct
+### External Services (Optional)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+These widgets require API credentials configured in your `.env` file:
 
-## Security Vulnerabilities
+- **Room Availability** — Requires Google Calendar API credentials
+- **Toggl Time Tracking** — Requires a Toggl Track API token
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Usage
 
-## License
+1. **Register/Login** — Create an account to access the screen builder
+2. **Create a Screen** — Add a new screen from the dashboard
+3. **Add Widgets** — Drag widgets from the library panel onto the canvas
+4. **Configure** — Click a widget to open its settings panel and customize it
+5. **Choose a Layout** — Pick a bento layout or switch to single-widget fullscreen mode
+6. **Display** — Open the public display URL (`/display/{screen}`) on any browser or monitor
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Project Structure
+
+```
+app/
+├── Http/Controllers/       # Screen, Widget, Display, Settings controllers
+├── Models/                  # Screen, Widget, User, Setting
+└── Services/                # GoogleCalendarService, TogglTimeTrackingService
+resources/js/
+├── Pages/                   # React pages (Dashboard, Display, Auth, Settings)
+├── Components/
+│   ├── Screens/             # Canvas editor, widget library, settings panel
+│   ├── Widgets/             # Individual widget implementations
+│   └── ui/                  # Reusable UI components (shadcn/ui style)
+├── Layouts/                 # App and guest layouts
+└── constants/               # Widget type definitions
+routes/
+├── web.php                  # Application routes
+└── auth.php                 # Authentication routes
+```
