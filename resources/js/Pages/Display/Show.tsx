@@ -151,7 +151,7 @@ export default function Show({ screen: initialScreen }: DisplayShowProps) {
         <>
             <Head title={`Display: ${initialScreen.name}`} />
 
-            <div className="h-screen flex flex-col bg-gradient-to-br from-background via-secondary/20 to-background p-6">
+            <div className="h-screen flex flex-col bg-gradient-to-br from-background via-secondary/20 to-background" style={{ padding: 'clamp(1rem, 1vw, 2rem)' }}>
                 {viewMode === 'single_widget' ? (
                     <div className="flex-1 min-h-0">
                         {(() => {

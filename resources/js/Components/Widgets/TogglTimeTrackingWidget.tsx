@@ -93,17 +93,18 @@ export default function TogglTimeTrackingWidget({
 
     return (
         <div
-            className="font-archia flex flex-col justify-between rounded-lg shadow-lg p-6 h-full border border-border bg-cover bg-center bg-no-repeat"
+            className="font-archia flex flex-col justify-between rounded-lg shadow-lg h-full border border-border bg-cover bg-center bg-no-repeat"
             style={{
                 backgroundImage: "url('/storage/toggl/toggl.jpg')",
+                padding: 'clamp(1rem, 1.5vw, 2.5rem)',
             }}
         >
-            <div className="flex items-center  gap-3 mb-4 ">
+            <div className="flex items-center gap-3 mb-4">
                 <div className="flex items-center justify-between w-full">
-                    <h3 className=" text-white text-[36px] font-bold text-foreground">
+                    <h3 className="text-white font-bold text-foreground" style={{ fontSize: 'clamp(1.5rem, 2.5vw, 3.5rem)' }}>
                         Toggl Wall of Shame
                     </h3>
-                    <p className="text-white/50 text-[36px]">
+                    <p className="text-white/50" style={{ fontSize: 'clamp(1.5rem, 2.5vw, 3.5rem)' }}>
                         Week {week_number} - {year}
                     </p>
                 </div>
@@ -156,22 +157,24 @@ export default function TogglTimeTrackingWidget({
                             return (
                                 <div
                                     key={index}
-                                    className={`flex items-center gap-3 border-2 border-white/10 bg-white/15 backdrop-blur-md border-l-4 rounded-lg p-3 transition-all`}
+                                    className="flex items-center border-2 border-white/10 bg-white/15 backdrop-blur-md border-l-4 rounded-lg transition-all"
+                                    style={{ gap: 'clamp(0.5rem, 0.8vw, 1.25rem)', padding: 'clamp(0.5rem, 0.8vw, 1.25rem)' }}
                                 >
                                     {medalSrc && (
                                         <img
                                             src={medalSrc}
                                             alt={`Medal ${index + 1}`}
-                                            className="w-16 h-16 object-contain shrink-0"
+                                            className="object-contain shrink-0"
+                                            style={{ width: 'clamp(2.5rem, 4vw, 5rem)', height: 'clamp(2.5rem, 4vw, 5rem)' }}
                                         />
                                     )}
                                     <div className="flex flex-col justify-center flex-1">
-                                        <div className="flex justify-between items-center mb-2 ">
+                                        <div className="flex justify-between items-center mb-2">
                                             <div className="flex items-center gap-2">
-                                                <p className="font-semibold text-white text-[30px]">
+                                                <p className="font-semibold text-white" style={{ fontSize: 'clamp(1.2rem, 2vw, 3rem)' }}>
                                                     {user.name}
                                                 </p>
-                                                <p className="text-[30px] text-white/50">
+                                                <p className="text-white/50" style={{ fontSize: 'clamp(1.2rem, 2vw, 3rem)' }}>
                                                     |{" "}
                                                     {user.hours_clocked.slice(
                                                         0,
@@ -200,8 +203,8 @@ export default function TogglTimeTrackingWidget({
                     </div>
                     <div className="flex flex-col text-red-500 w-full justify-end">
                         <div
-                            className=" text-white text-[36px] text-right"
-                            style={{ whiteSpace: "pre-line" }}
+                            className="text-white text-right"
+                            style={{ whiteSpace: "pre-line", fontSize: 'clamp(1.5rem, 2.5vw, 3.5rem)' }}
                         >
                             {fridayCountdown}
                         </div>
