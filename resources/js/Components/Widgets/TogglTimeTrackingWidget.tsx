@@ -101,10 +101,10 @@ export default function TogglTimeTrackingWidget({
         >
             <div className="flex items-center gap-3 mb-4">
                 <div className="flex items-center justify-between w-full">
-                    <h3 className="text-white font-bold text-foreground" style={{ fontSize: 'clamp(1.5rem, 2.5vw, 3.5rem)' }}>
+                    <h3 className="text-white font-bold text-foreground" style={{ fontSize: 'clamp(2rem, 3.5vw, 5rem)' }}>
                         Toggl Wall of Shame
                     </h3>
-                    <p className="text-white/50" style={{ fontSize: 'clamp(1.5rem, 2.5vw, 3.5rem)' }}>
+                    <p className="text-white/50" style={{ fontSize: 'clamp(2rem, 3.5vw, 5rem)' }}>
                         Week {week_number} - {year}
                     </p>
                 </div>
@@ -171,10 +171,10 @@ export default function TogglTimeTrackingWidget({
                                     <div className="flex flex-col justify-center flex-1">
                                         <div className="flex justify-between items-center mb-2">
                                             <div className="flex items-center gap-2">
-                                                <p className="font-semibold text-white" style={{ fontSize: 'clamp(1.2rem, 2vw, 3rem)' }}>
+                                                <p className="font-semibold text-white" style={{ fontSize: 'clamp(1.5rem, 2.8vw, 4rem)' }}>
                                                     {user.name}
                                                 </p>
-                                                <p className="text-white/50" style={{ fontSize: 'clamp(1.2rem, 2vw, 3rem)' }}>
+                                                <p className="text-white/50" style={{ fontSize: 'clamp(1.5rem, 2.8vw, 4rem)' }}>
                                                     |{" "}
                                                     {user.hours_clocked.slice(
                                                         0,
@@ -204,7 +204,7 @@ export default function TogglTimeTrackingWidget({
                     <div className="flex flex-col text-red-500 w-full justify-end">
                         <div
                             className="text-white text-right"
-                            style={{ whiteSpace: "pre-line", fontSize: 'clamp(1.5rem, 2.5vw, 3.5rem)' }}
+                            style={{ whiteSpace: "pre-line", fontSize: 'clamp(2rem, 3.5vw, 5rem)' }}
                         >
                             {fridayCountdown}
                         </div>

@@ -126,7 +126,7 @@ export default function BirthdayWidget({ config: _config, data: _data, birthdayI
                     }}
                 >
                     <p className="font-black uppercase tracking-widest drop-shadow"
-                        style={{ fontSize: 'clamp(1.5rem, 3vw, 2.8rem)' }}>
+                        style={{ fontSize: 'clamp(2rem, 4.5vw, 4.5rem)' }}>
                         Gefeliciteerd!
                     </p>
                 </div>
@@ -140,10 +140,10 @@ export default function BirthdayWidget({ config: _config, data: _data, birthdayI
                         paddingTop: 'clamp(4rem, 8vw, 8rem)',
                     }}
                 >
-                    <p className="font-bold drop-shadow" style={{ fontSize: 'clamp(1.8rem, 4vw, 3.5rem)' }}>
+                    <p className="font-bold drop-shadow" style={{ fontSize: 'clamp(2.2rem, 5.5vw, 5rem)' }}>
                         {person.name}
                     </p>
-                    <p className="font-semibold uppercase tracking-widest drop-shadow" style={{ fontSize: 'clamp(1rem, 2vw, 1.6rem)' }}>
+                    <p className="font-semibold uppercase tracking-widest drop-shadow" style={{ fontSize: 'clamp(1.2rem, 3vw, 2.5rem)' }}>
                         wordt vandaag {getAgeThisBirthday(person.birthdate)} jaar!
                     </p>
                 </div>
@@ -169,7 +169,7 @@ export default function BirthdayWidget({ config: _config, data: _data, birthdayI
                 }}
             >
                 <p className="font-black uppercase tracking-widest drop-shadow"
-                    style={{ fontSize: 'clamp(1.5rem, 5vw, 3rem)' }}>
+                    style={{ fontSize: 'clamp(2rem, 6.5vw, 4.5rem)' }}>
                     Bijna jarig!
                 </p>
             </div>
@@ -183,10 +183,10 @@ export default function BirthdayWidget({ config: _config, data: _data, birthdayI
                     paddingTop: 'clamp(4rem, 8vw, 8rem)',
                 }}
             >
-                <p className="font-bold drop-shadow whitespace-nowrap" style={{ fontSize: 'clamp(1.8rem, 4vw, 3.5rem)' }}>
+                <p className="font-bold drop-shadow whitespace-nowrap" style={{ fontSize: 'clamp(2.2rem, 5.5vw, 5rem)' }}>
                     {person.name}
                 </p>
-                <p className="font-semibold uppercase tracking-widest drop-shadow whitespace-nowrap" style={{ fontSize: 'clamp(1rem, 2vw, 1.6rem)' }}>
+                <p className="font-semibold uppercase tracking-widest drop-shadow whitespace-nowrap" style={{ fontSize: 'clamp(1.2rem, 3vw, 2.5rem)' }}>
                     wordt over {days} {days === 1 ? 'dag' : 'dagen'} {getAgeThisBirthday(person.birthdate)} jaar
                 </p>
             </div>
