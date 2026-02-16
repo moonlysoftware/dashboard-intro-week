@@ -26,20 +26,20 @@ export default function AnnouncementsWidget({
 
     return (
         <div
-            className="flex flex-col justify-between rounded-lg shadow-lg h-full border border-border bg-cover bg-center bg-no-repeat"
+            className="flex flex-col rounded-lg shadow-lg h-full border border-border bg-cover bg-center bg-no-repeat"
             style={{
                 backgroundImage:
                     "url('/storage/announcements/announcements.png')",
                 padding: 'clamp(1rem, 1.5vw, 2.5rem)',
             }}
         >
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center" style={{ marginBottom: 'clamp(0.5rem, 1.5vh, 2rem)' }}>
                 <h3 className="text-white font-bold font-archia" style={{ fontSize: 'clamp(2rem, 3.5vw, 5rem)' }}>
                     Mededelingen
                 </h3>
             </div>
 
-            <div className="space-y-3">
+            <div className="flex-1 flex flex-col justify-end" style={{ gap: 'clamp(0.5rem, 1vh, 1.5rem)' }}>
                 {announcements.map((announcement, index) => (
                     <div
                         key={index}
