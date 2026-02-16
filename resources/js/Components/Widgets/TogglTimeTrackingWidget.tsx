@@ -141,8 +141,8 @@ export default function TogglTimeTrackingWidget({
                     </p>
                 </div>
             ) : (
-                <div className="flex w-full min-h-0 flex-1 gap-2">
-                    <div className="flex flex-col gap-2 overflow-hidden w-full min-h-0 flex-1 justify-center">
+                <div className="flex w-full flex-1 min-h-0 gap-2">
+                    <div className="flex flex-col gap-2 w-full flex-1 justify-center">
                         {missing_hours_users.slice(0, 3).map((user, index) => {
                             const medalSrc = [
                                 "/storage/toggl/medal-1st.png",
