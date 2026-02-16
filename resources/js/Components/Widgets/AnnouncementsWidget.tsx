@@ -34,7 +34,7 @@ export default function AnnouncementsWidget({
             }}
         >
             <div className="flex items-center gap-3 mb-4">
-                <h3 className="text-white font-bold font-archia" style={{ fontSize: 'clamp(1.5rem, 2.5vw, 3.5rem)' }}>
+                <h3 className="text-white font-bold font-archia" style={{ fontSize: 'clamp(2rem, 3.5vw, 5rem)' }}>
                     Mededelingen
                 </h3>
             </div>
@@ -46,10 +46,10 @@ export default function AnnouncementsWidget({
                         className="flex items-center justify-between border-2 backdrop-blur-md border-white/10 bg-white/15 border-l-4 rounded-lg transition-all"
                         style={{ padding: 'clamp(0.5rem, 0.8vw, 1.25rem)' }}
                     >
-                        <h4 className="font-archia font-semibold text-white" style={{ fontSize: 'clamp(1.2rem, 2vw, 3rem)' }}>
+                        <h4 className="font-archia font-semibold text-white" style={{ fontSize: 'clamp(1.5rem, 2.8vw, 4rem)' }}>
                             {announcement.title}
                         </h4>
-                        <p className="text-white font-archia" style={{ fontSize: 'clamp(1.2rem, 2vw, 3rem)' }}>
+                        <p className="text-white font-archia" style={{ fontSize: 'clamp(1.5rem, 2.8vw, 4rem)' }}>
                             {announcement.message}
                         </p>
                     </div>
