@@ -58,10 +58,10 @@ export default function ClockWeatherWidget({
             <div className="flex flex-col h-full justify-between">
                 {/* Time */}
                 <div>
-                    <p className="font-bold mb-2" style={{ fontSize: 'clamp(1.5rem, 2.5vw, 3.5rem)' }}>
+                    <p className="font-bold mb-2" style={{ fontSize: 'clamp(2rem, 3.5vw, 5rem)' }}>
                         {formatTime(currentTime)}
                     </p>
-                    <p className="opacity-90" style={{ fontSize: 'clamp(1rem, 1.3vw, 2rem)' }}>
+                    <p className="opacity-90" style={{ fontSize: 'clamp(1.2rem, 1.8vw, 3rem)' }}>
                         {formatDate(currentTime)}
                     </p>
                 </div>
@@ -71,12 +71,12 @@ export default function ClockWeatherWidget({
                     <div className="mt-6 flex items-center backdrop-blur-md rounded-md bg-white/15 border-2 border-white/10 w-max"
                         style={{ gap: 'clamp(0.75rem, 1vw, 1.5rem)', padding: 'clamp(0.75rem, 1vw, 1.5rem)' }}
                     >
-                        <span style={{ fontSize: 'clamp(2.5rem, 4vw, 5rem)' }}>{weather.icon}</span>
+                        <span style={{ fontSize: 'clamp(3rem, 5vw, 7rem)' }}>{weather.icon}</span>
                         <div>
-                            <p className="font-bold" style={{ fontSize: 'clamp(1.5rem, 2.5vw, 3.5rem)' }}>
+                            <p className="font-bold" style={{ fontSize: 'clamp(2rem, 3.5vw, 5rem)' }}>
                                 {weather.temperature}°C
                             </p>
-                            <p className="opacity-90" style={{ fontSize: 'clamp(0.875rem, 1.2vw, 1.75rem)' }}>
+                            <p className="opacity-90" style={{ fontSize: 'clamp(1rem, 1.6vw, 2.5rem)' }}>
                                 {weather.condition}
                             </p>
                         </div>
