@@ -1,6 +1,6 @@
 import { useDroppable, useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { X, GripVertical } from "lucide-react";
+import { X, GripVertical, Pen } from "lucide-react";
 import { useState, useEffect } from "react";
 import { GridSizeSelector } from "./GridSizeSelector";
 import { getWidgetSupportedSizesCached } from "@/lib/widgetConfig";
@@ -155,28 +155,24 @@ function DraggableWidget({
             style={style}
             className={`w-full h-full relative flex flex-col ${isDragging ? "opacity-0" : ""}`}
         >
-            {/* Top Bar with Widget Title, Size Selector, and Delete Button */}
+            {/* Top Bar with Widget Title, Size Selector, Edit, and Delete Button */}
             <div className="flex items-center justify-between px-3 py-2 bg-muted/60 border-b border-border flex-shrink-0">
                 {/* Left side: Drag handle and title */}
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <div
-                        className="flex-shrink-0 cursor-grab active:cursor-grabbing text-muted-foreground/50 hover:text-muted-foreground/80 transition-colors"
-                        {...listeners}
-                        {...attributes}
-                        title="Drag to move widget"
-                    >
+                <div
+                    className="flex items-center gap-2 min-w-0 flex-1 cursor-grab active:cursor-grabbing hover:bg-muted/40 transition-colors rounded -ml-1 pl-1 py-0.5"
+                    {...listeners}
+                    {...attributes}
+                    title="Drag to move widget"
+                >
+                    <div className="flex-shrink-0 text-muted-foreground/50 transition-colors">
                         <GripVertical className="h-4 w-4" />
                     </div>
-                    <span
-                        className="font-archia text-sm font-semibold text-foreground truncate cursor-pointer hover:text-primary transition-colors"
-                        onClick={() => onWidgetClick(widget)}
-                        title={`Edit ${widgetTypes[widget.widget_type] ?? widget.widget_type}`}
-                    >
+                    <span className="font-archia text-sm font-semibold text-foreground truncate select-none">
                         {widgetTypes[widget.widget_type] ?? widget.widget_type}
                     </span>
                 </div>
 
-                {/* Right side: Size selector and delete button */}
+                {/* Right side: Size selector, edit button, and delete button */}
                 <div className="flex items-center gap-1 ml-2 flex-shrink-0">
                     <GridSizeSelector
                         currentColSpan={widget.grid_col_span}
@@ -187,6 +183,16 @@ function DraggableWidget({
                         supportedSizes={supportedSizes}
                         widgetType={widget.widget_type}
                     />
+                    <button
+                        className="h-6 w-6 rounded hover:bg-primary hover:text-primary-foreground text-muted-foreground/50 flex items-center justify-center transition-colors"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onWidgetClick(widget);
+                        }}
+                        title={`Edit ${widgetTypes[widget.widget_type] ?? widget.widget_type}`}
+                    >
+                        <Pen className="h-3.5 w-3.5" />
+                    </button>
                     <button
                         className="h-6 w-6 rounded hover:bg-destructive hover:text-destructive-foreground text-muted-foreground/50 flex items-center justify-center transition-colors"
                         onClick={(e) => {
