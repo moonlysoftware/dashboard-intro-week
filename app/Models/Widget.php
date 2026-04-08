@@ -17,6 +17,8 @@ class Widget extends Model
         'grid_col_span',
         'grid_row_span',
         'grid_order',
+        'grid_row',
+        'grid_col',
     ];
 
     protected $casts = [
@@ -24,6 +26,8 @@ class Widget extends Model
         'grid_col_span' => 'integer',
         'grid_row_span' => 'integer',
         'grid_order' => 'integer',
+        'grid_row' => 'integer',
+        'grid_col' => 'integer',
     ];
 
     public function screen(): BelongsTo

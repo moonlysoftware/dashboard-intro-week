@@ -1,19 +1,23 @@
-import '../css/app.css';
-import './bootstrap';
+import "../css/app.css";
+import "./bootstrap";
 
-import { createInertiaApp } from '@inertiajs/react';
-import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-import { createRoot } from 'react-dom/client';
-import { ThemeProvider } from './Components/theme-provider';
+import { createInertiaApp } from "@inertiajs/react";
+import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
+import { createRoot } from "react-dom/client";
+import { ThemeProvider } from "./Components/theme-provider";
+import { initializeWidgetSizes } from "./lib/widgetConfig";
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+// Initialize widget sizes on app load
+initializeWidgetSizes();
+
+const appName = import.meta.env.VITE_APP_NAME || "Laravel";
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) =>
         resolvePageComponent(
             `./Pages/${name}.tsx`,
-            import.meta.glob('./Pages/**/*.tsx'),
+            import.meta.glob("./Pages/**/*.tsx"),
         ),
     setup({ el, App, props }) {
         const root = createRoot(el);
@@ -21,10 +25,10 @@ createInertiaApp({
         root.render(
             <ThemeProvider defaultTheme="dark" storageKey="dashboard-theme">
                 <App {...props} />
-            </ThemeProvider>
+            </ThemeProvider>,
         );
     },
     progress: {
-        color: '#4B5563',
+        color: "#4B5563",
     },
 });

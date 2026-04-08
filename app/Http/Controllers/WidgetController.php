@@ -17,6 +17,8 @@ class WidgetController extends Controller
             'grid_col_span' => 'required|integer|min:1|max:12',
             'grid_row_span' => 'required|integer|min:1|max:6',
             'grid_order' => 'required|integer|min:0',
+            'grid_row' => 'sometimes|integer|min:0',
+            'grid_col' => 'sometimes|integer|min:0',
         ]);
 
         if (empty($validated['config'])) {
@@ -42,6 +44,8 @@ class WidgetController extends Controller
             'grid_col_span' => 'sometimes|integer|min:1|max:12',
             'grid_row_span' => 'sometimes|integer|min:1|max:6',
             'grid_order' => 'sometimes|integer|min:0',
+            'grid_row' => 'sometimes|integer|min:0',
+            'grid_col' => 'sometimes|integer|min:0',
         ]);
 
         if (array_key_exists('config', $validated)) {

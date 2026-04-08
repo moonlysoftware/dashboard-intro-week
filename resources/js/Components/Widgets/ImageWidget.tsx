@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import WidgetNotConfigured from '@/Components/Widgets/WidgetNotConfigured';
+import { useEffect, useState } from "react";
+import WidgetNotConfigured from "@/Components/Widgets/WidgetNotConfigured";
 
 interface ImageWidgetProps {
     config: {
@@ -9,6 +9,12 @@ interface ImageWidgetProps {
     };
     data: Record<string, any>;
 }
+
+export const supportedGridSizes = [
+    { cols: 2, rows: 1 },
+    { cols: 2, rows: 2 },
+    { cols: 2, rows: 5 },
+];
 
 export default function ImageWidget({ config }: ImageWidgetProps) {
     const images = config.selected_images ?? [];
@@ -49,7 +55,7 @@ export default function ImageWidget({ config }: ImageWidgetProps) {
                 style={{
                     objectPosition: `center ${imagePositions[images[currentIndex]] ?? 0}%`,
                     opacity: visible ? 1 : 0,
-                    transition: 'opacity 0.7s ease-in-out',
+                    transition: "opacity 0.7s ease-in-out",
                 }}
             />
         </div>

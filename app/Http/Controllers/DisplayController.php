@@ -34,6 +34,8 @@ class DisplayController extends Controller
                 'grid_col_span' => $widget->grid_col_span,
                 'grid_row_span' => $widget->grid_row_span,
                 'grid_order' => $widget->grid_order,
+                'grid_row' => $widget->grid_row,
+                'grid_col' => $widget->grid_col,
                 'data' => $this->getWidgetData($widget),
             ];
         });
