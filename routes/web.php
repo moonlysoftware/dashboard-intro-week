@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DisplayController;
 use App\Http\Controllers\ImageUploadController;
+use App\Http\Controllers\OverlayController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ScreenController;
 use App\Http\Controllers\SettingController;
@@ -28,10 +29,16 @@ Route::middleware('auth')->group(function () {
     // Screen Layout Route
     Route::patch('screens/{screen}/layout', [ScreenController::class, 'updateLayout'])->name('screens.updateLayout');
 
+    // Screen Config Route
+    Route::patch('screens/{screen}/config', [ScreenController::class, 'updateConfig'])->name('screens.updateConfig');
+
     // Widget Management Routes
     Route::post('screens/{screen}/widgets', [WidgetController::class, 'store'])->name('widgets.store');
     Route::patch('widgets/{widget}', [WidgetController::class, 'update'])->name('widgets.update');
     Route::delete('widgets/{widget}', [WidgetController::class, 'destroy'])->name('widgets.destroy');
+
+    // Overlay (global meeting room bar for slideshow & general displays)
+    Route::patch('overlay', [OverlayController::class, 'update'])->name('overlay.update');
 
     // Settings Routes
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index');

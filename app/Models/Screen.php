@@ -18,10 +18,13 @@ class Screen extends Model
         'layout',
         'view_mode',
         'featured_widget_id',
+        'screen_type',
+        'screen_config',
     ];
 
     protected $casts = [
         'refresh_interval' => 'integer',
+        'screen_config' => 'array',
     ];
 
     public function widgets(): HasMany
