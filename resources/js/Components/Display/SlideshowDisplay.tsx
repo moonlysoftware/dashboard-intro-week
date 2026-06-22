@@ -47,9 +47,14 @@ function renderSlide(widget: SlideWidget) {
 }
 
 export default function SlideshowDisplay({ widgets, screenConfig }: SlideshowDisplayProps) {
+    const todayStr = new Date().toISOString().slice(0, 10);
     const slides = [...widgets]
         .filter((w) => SLIDE_TYPES.has(w.widget_type))
         .filter((w) => w.config?._enabled !== false)
+        .filter((w) => {
+            const until = w.config?._availableUntil;
+            return !until || todayStr <= until;
+        })
         .sort((a, b) => a.grid_order - b.grid_order);
     const cycleMs = Math.max(10, (screenConfig?.cycleSeconds ?? 60)) * 1000;
     const rooms = screenConfig?.rooms ?? [];
@@ -113,7 +118,7 @@ export default function SlideshowDisplay({ widgets, screenConfig }: SlideshowDis
 
                     {/* Progress bar */}
                     {slides.length > 1 && !paused && (
-                        <div className="absolute top-0 left-0 right-0 h-[6px] bg-white/10 z-20">
+                        <div className="absolute top-0 left-0 right-0 h-[3px] bg-white/8 z-20">
                             <div
                                 key={`${idx}|${cycleMs}`}
                                 className="h-full"
@@ -128,7 +133,7 @@ export default function SlideshowDisplay({ widgets, screenConfig }: SlideshowDis
                     {/* Dot navigation */}
                     {slides.length > 1 && (
                         <div
-                            className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-4 px-6 py-3 rounded-full"
+                            className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 px-4 py-2 rounded-full"
                             style={{ background: 'rgba(5,2,21,.5)', border: '1px solid rgba(255,255,255,.12)', backdropFilter: 'blur(8px)' }}
                         >
                             {slides.map((s, i) => (
@@ -138,8 +143,8 @@ export default function SlideshowDisplay({ widgets, screenConfig }: SlideshowDis
                                     aria-label={`Ga naar slide ${i + 1}`}
                                     className="transition-all duration-300 rounded-full cursor-pointer border-0"
                                     style={{
-                                        width: i === idx ? 56 : 18,
-                                        height: 18,
+                                        width: i === idx ? 36 : 10,
+                                        height: 10,
                                         background: i === idx
                                             ? 'linear-gradient(90deg,#6C52FF,#FF4490)'
                                             : 'rgba(255,255,255,.28)',

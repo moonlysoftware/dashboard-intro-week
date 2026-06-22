@@ -6,7 +6,8 @@
       "runtimeExecutable": "vendor/bin/sail",
       "runtimeArgs": ["up"],
       "port": 8080,
-      "autoPort": false
+      "autoPort": false,
+      "attachToExisting": true
     },
     {
       "name": "Laravel (standalone)",

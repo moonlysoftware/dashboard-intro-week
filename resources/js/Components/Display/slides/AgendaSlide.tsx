@@ -102,29 +102,21 @@ function AgendaCard({
                 className={`relative h-full flex flex-col ${bottom ? "justify-end" : "justify-center"} ${big ? "p-12" : "p-9"}`}
                 style={variant === "row" ? { maxWidth: "64%" } : undefined}
             >
-                <span
-                    className="grad-pill self-start rounded-full text-white font-poster font-bold mb-5"
-                    style={{
-                        padding: big ? "11px 28px" : "8px 22px",
-                        fontSize: big ? 33 : 26,
-                        boxShadow: "0 12px 36px -12px rgba(178,61,240,.6)",
-                    }}
-                >
+                <span className="slide-pill self-start mb-5">
                     {ev.tag}
                 </span>
-                <h2
-                    className={`font-poster font-bold text-white leading-[1.0] mb-3 ann-shadow ${big ? "text-[78px]" : "text-[56px]"}`}
-                >
+                <h2 className="slide-title mb-3 ann-shadow">
                     {ev.name}
                 </h2>
-                <div
-                    className={`font-poster font-semibold text-white ann-shadow ${big ? "text-[42px] mb-4" : "text-[33px] mb-3"}`}
-                >
-                    {variant === "row" ? ev.when : `Datum: ${ev.when}`}
+                <div className="slide-date ann-shadow mb-3">
+                    {variant === "row" ? ev.when : (
+                        <>
+                            <span className="font-bold">Datum: </span>
+                            {ev.when}
+                        </>
+                    )}
                 </div>
-                <p
-                    className={`text-white/80 font-manrope font-medium leading-snug ann-shadow ${big ? "text-[31px] max-w-[600px]" : "text-[27px]"}`}
-                >
+                <p className="slide-body text-white/80 ann-shadow max-w-[600px]">
                     {ev.tagline}
                 </p>
             </div>

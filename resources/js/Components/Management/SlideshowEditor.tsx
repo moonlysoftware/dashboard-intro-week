@@ -1,14 +1,25 @@
-import { useState } from 'react';
-import axios from 'axios';
-import { notifyDisplayRefresh } from '@/lib/displayRefresh';
+import { useState } from "react";
+import axios from "axios";
+import { notifyDisplayRefresh } from "@/lib/displayRefresh";
 import {
-    Field, TextInput, TextArea, NumberInput, Toggle,
-    Segmented, RowCard, AddButton, SaveButton, SectionTitle, Divider, ImageUploadField,
-} from './Ui';
+    Field,
+    TextInput,
+    TextArea,
+    NumberInput,
+    Toggle,
+    Segmented,
+    RowCard,
+    AddButton,
+    SaveButton,
+    SectionTitle,
+    Divider,
+    FormWithImagePreview,
+    ImagePreviewPanel,
+} from "./Ui";
 
 interface SlideWidget {
     id: number;
-    widget_type: 'agenda' | 'birthdays' | 'appreciation' | 'announcement';
+    widget_type: "agenda" | "birthdays" | "appreciation" | "announcement";
     grid_order: number;
     config: Record<string, any> | null;
 }
@@ -19,64 +30,111 @@ interface Props {
     onSlidesChange: (slides: SlideWidget[]) => void;
 }
 
-const SLIDE_META: Record<string, { label: string; icon: string; defaultConfig: Record<string, any> }> = {
+const SLIDE_META: Record<
+    string,
+    { label: string; icon: string; defaultConfig: Record<string, any> }
+> = {
     agenda: {
-        label: 'Agenda',
-        icon: '📅',
-        defaultConfig: { _enabled: true, layout: 'featured', events: [] },
+        label: "Agenda",
+        icon: "📅",
+        defaultConfig: { _enabled: true, layout: "featured", events: [] },
     },
     birthdays: {
-        label: 'Verjaardagen',
-        icon: '🎂',
-        defaultConfig: { _enabled: true, layout: 'featured', list: [] },
+        label: "Verjaardagen",
+        icon: "🎂",
+        defaultConfig: { _enabled: true, layout: "featured", list: [] },
     },
     appreciation: {
-        label: 'Klantwaardering',
-        icon: '⭐',
-        defaultConfig: { _enabled: true, layout: 'grid', style: 'review', items: [] },
-    },
-    announcement: {
-        label: 'Aankondiging',
-        icon: '📢',
+        label: "Klantwaardering",
+        icon: "⭐",
         defaultConfig: {
             _enabled: true,
-            style: 'split',
-            badge: '',
-            title: '',
-            date: '',
-            time: '',
-            location: '',
-            body: '',
-            photo: '',
+            layout: "grid",
+            style: "review",
+            items: [],
+        },
+    },
+    announcement: {
+        label: "Aankondiging",
+        icon: "📢",
+        defaultConfig: {
+            _enabled: true,
+            style: "split",
+            badge: "",
+            title: "",
+            date: "",
+            time: "",
+            location: "",
+            body: "",
+            photo: "",
         },
     },
 };
 
+function getSlideTitle(slide: SlideWidget): string {
+    const cfg = slide.config ?? {};
+    if (slide.widget_type === "announcement")
+        return cfg.title || "Aankondiging";
+    if (slide.widget_type === "agenda") {
+        const first = cfg.events?.[0]?.title;
+        return first ? first : "Agenda";
+    }
+    return SLIDE_META[slide.widget_type]?.label ?? slide.widget_type;
+}
+
+function getSlideSubtitle(slide: SlideWidget): string {
+    const cfg = slide.config ?? {};
+    if (slide.widget_type === "announcement") return cfg.badge || "";
+    if (slide.widget_type === "agenda") {
+        const n = cfg.events?.length ?? 0;
+        return `${n} evenement${n !== 1 ? "en" : ""}`;
+    }
+    if (slide.widget_type === "birthdays") {
+        const n = cfg.list?.length ?? 0;
+        return `${n} jarige${n !== 1 ? "n" : ""}`;
+    }
+    if (slide.widget_type === "appreciation") {
+        const n = cfg.items?.length ?? 0;
+        return `${n} beoordeling${n !== 1 ? "en" : ""}`;
+    }
+    return "";
+}
+
 // ─── Per-slide content editors ────────────────────────────────────────────────
 
-function AgendaEditor({ cfg, onChange }: { cfg: Record<string, any>; onChange: (c: Record<string, any>) => void }) {
+function AgendaEditor({
+    cfg,
+    onChange,
+}: {
+    cfg: Record<string, any>;
+    onChange: (c: Record<string, any>) => void;
+}) {
     const events: any[] = cfg.events ?? [];
 
     const setEvents = (ev: any[]) => onChange({ ...cfg, events: ev });
 
     const addEvent = () =>
-        setEvents([...events, { title: '', when: '', where: '', accent: '#6C52FF', photo: '' }]);
+        setEvents([
+            ...events,
+            { title: "", when: "", where: "", accent: "#6C52FF", photo: "" },
+        ]);
 
     const updateEvent = (i: number, patch: Record<string, any>) =>
         setEvents(events.map((e, idx) => (idx === i ? { ...e, ...patch } : e)));
 
-    const removeEvent = (i: number) => setEvents(events.filter((_, idx) => idx !== i));
+    const removeEvent = (i: number) =>
+        setEvents(events.filter((_, idx) => idx !== i));
 
     return (
         <div className="space-y-4">
             <Field label="Lay-out">
                 <Segmented
                     options={[
-                        { value: 'featured', label: 'Uitgelicht' },
-                        { value: 'grid', label: 'Grid' },
-                        { value: 'list', label: 'Lijst' },
+                        { value: "featured", label: "Uitgelicht" },
+                        { value: "grid", label: "Grid" },
+                        { value: "list", label: "Lijst" },
                     ]}
-                    value={cfg.layout ?? 'featured'}
+                    value={cfg.layout ?? "featured"}
                     onChange={(v) => onChange({ ...cfg, layout: v })}
                 />
             </Field>
@@ -85,49 +143,73 @@ function AgendaEditor({ cfg, onChange }: { cfg: Record<string, any>; onChange: (
             <div className="space-y-3">
                 {events.map((ev, i) => (
                     <RowCard key={i} onDelete={() => removeEvent(i)}>
-                        <Field label="Titel">
-                            <TextInput
-                                value={ev.title}
-                                onChange={(e) => updateEvent(i, { title: e.target.value })}
-                                placeholder="Teammeeting"
-                            />
-                        </Field>
-                        <div className="grid grid-cols-2 gap-3">
-                            <Field label="Wanneer">
-                                <TextInput
-                                    value={ev.when}
-                                    onChange={(e) => updateEvent(i, { when: e.target.value })}
-                                    placeholder="Ma 14:00"
-                                />
-                            </Field>
-                            <Field label="Waar">
-                                <TextInput
-                                    value={ev.where}
-                                    onChange={(e) => updateEvent(i, { where: e.target.value })}
-                                    placeholder="Room 3"
-                                />
-                            </Field>
-                        </div>
-                        <Field label="Accentkleur">
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="color"
-                                    value={ev.accent ?? '#6C52FF'}
-                                    onChange={(e) => updateEvent(i, { accent: e.target.value })}
-                                    className="h-8 w-10 rounded cursor-pointer border border-[#e6e2f4]"
-                                />
-                                <TextInput
-                                    value={ev.accent ?? '#6C52FF'}
-                                    onChange={(e) => updateEvent(i, { accent: e.target.value })}
-                                    className="font-mono"
-                                />
+                        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-4 items-start pr-6">
+                            <div className="space-y-3 min-w-0">
+                                <Field label="Titel">
+                                    <TextInput
+                                        value={ev.title}
+                                        onChange={(e) =>
+                                            updateEvent(i, {
+                                                title: e.target.value,
+                                            })
+                                        }
+                                        placeholder="Teammeeting"
+                                    />
+                                </Field>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <Field label="Wanneer">
+                                        <TextInput
+                                            value={ev.when}
+                                            onChange={(e) =>
+                                                updateEvent(i, {
+                                                    when: e.target.value,
+                                                })
+                                            }
+                                            placeholder="Ma 14:00"
+                                        />
+                                    </Field>
+                                    <Field label="Waar">
+                                        <TextInput
+                                            value={ev.where}
+                                            onChange={(e) =>
+                                                updateEvent(i, {
+                                                    where: e.target.value,
+                                                })
+                                            }
+                                            placeholder="Room 3"
+                                        />
+                                    </Field>
+                                </div>
+                                <Field label="Accentkleur">
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="color"
+                                            value={ev.accent ?? "#6C52FF"}
+                                            onChange={(e) =>
+                                                updateEvent(i, {
+                                                    accent: e.target.value,
+                                                })
+                                            }
+                                            className="h-8 w-10 rounded cursor-pointer border border-[#e6e2f4]"
+                                        />
+                                        <TextInput
+                                            value={ev.accent ?? "#6C52FF"}
+                                            onChange={(e) =>
+                                                updateEvent(i, {
+                                                    accent: e.target.value,
+                                                })
+                                            }
+                                            className="font-mono"
+                                        />
+                                    </div>
+                                </Field>
                             </div>
-                        </Field>
-                        <ImageUploadField
-                            value={ev.photo ?? ''}
-                            onChange={(url) => updateEvent(i, { photo: url })}
-                            hint="Wordt als achtergrond op de agenda-kaart getoond. Zonder afbeelding wordt de accentkleur gebruikt."
-                        />
+                            <ImagePreviewPanel
+                                value={ev.photo ?? ""}
+                                onChange={(url) => updateEvent(i, { photo: url })}
+                                hint="Wordt als achtergrond op de agenda-kaart getoond. Zonder afbeelding wordt de accentkleur gebruikt."
+                            />
+                        </div>
                     </RowCard>
                 ))}
             </div>
@@ -136,12 +218,18 @@ function AgendaEditor({ cfg, onChange }: { cfg: Record<string, any>; onChange: (
     );
 }
 
-function BirthdaysEditor({ cfg, onChange }: { cfg: Record<string, any>; onChange: (c: Record<string, any>) => void }) {
+function BirthdaysEditor({
+    cfg,
+    onChange,
+}: {
+    cfg: Record<string, any>;
+    onChange: (c: Record<string, any>) => void;
+}) {
     const list: any[] = cfg.list ?? [];
 
     const setList = (l: any[]) => onChange({ ...cfg, list: l });
 
-    const add = () => setList([...list, { name: '', date: '', photo: '' }]);
+    const add = () => setList([...list, { name: "", date: "", photo: "" }]);
     const update = (i: number, patch: Record<string, any>) =>
         setList(list.map((e, idx) => (idx === i ? { ...e, ...patch } : e)));
     const remove = (i: number) => setList(list.filter((_, idx) => idx !== i));
@@ -151,10 +239,10 @@ function BirthdaysEditor({ cfg, onChange }: { cfg: Record<string, any>; onChange
             <Field label="Lay-out">
                 <Segmented
                     options={[
-                        { value: 'featured', label: 'Uitgelicht' },
-                        { value: 'grid', label: 'Grid' },
+                        { value: "featured", label: "Uitgelicht" },
+                        { value: "grid", label: "Grid" },
                     ]}
-                    value={cfg.layout ?? 'featured'}
+                    value={cfg.layout ?? "featured"}
                     onChange={(v) => onChange({ ...cfg, layout: v })}
                 />
             </Field>
@@ -163,21 +251,38 @@ function BirthdaysEditor({ cfg, onChange }: { cfg: Record<string, any>; onChange
             <div className="space-y-3">
                 {list.map((p, i) => (
                     <RowCard key={i} onDelete={() => remove(i)}>
-                        <div className="grid grid-cols-2 gap-3">
-                            <Field label="Naam">
-                                <TextInput
-                                    value={p.name}
-                                    onChange={(e) => update(i, { name: e.target.value })}
-                                    placeholder="Jan de Vries"
-                                />
-                            </Field>
-                            <Field label="Datum">
-                                <TextInput
-                                    value={p.date}
-                                    onChange={(e) => update(i, { date: e.target.value })}
-                                    placeholder="19 jun"
-                                />
-                            </Field>
+                        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-4 items-start pr-6">
+                            <div className="space-y-3 min-w-0">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <Field label="Naam">
+                                        <TextInput
+                                            value={p.name}
+                                            onChange={(e) =>
+                                                update(i, {
+                                                    name: e.target.value,
+                                                })
+                                            }
+                                            placeholder="Jan de Vries"
+                                        />
+                                    </Field>
+                                    <Field label="Datum">
+                                        <TextInput
+                                            value={p.date}
+                                            onChange={(e) =>
+                                                update(i, {
+                                                    date: e.target.value,
+                                                })
+                                            }
+                                            placeholder="19 jun"
+                                        />
+                                    </Field>
+                                </div>
+                            </div>
+                            <ImagePreviewPanel
+                                value={p.photo ?? ""}
+                                onChange={(url) => update(i, { photo: url })}
+                                label="Foto"
+                            />
                         </div>
                     </RowCard>
                 ))}
@@ -187,11 +292,17 @@ function BirthdaysEditor({ cfg, onChange }: { cfg: Record<string, any>; onChange
     );
 }
 
-function AppreciationEditor({ cfg, onChange }: { cfg: Record<string, any>; onChange: (c: Record<string, any>) => void }) {
+function AppreciationEditor({
+    cfg,
+    onChange,
+}: {
+    cfg: Record<string, any>;
+    onChange: (c: Record<string, any>) => void;
+}) {
     const items: any[] = cfg.items ?? [];
 
     const setItems = (it: any[]) => onChange({ ...cfg, items: it });
-    const add = () => setItems([...items, { author: '', stars: 5, text: '' }]);
+    const add = () => setItems([...items, { author: "", stars: 5, text: "" }]);
     const update = (i: number, patch: Record<string, any>) =>
         setItems(items.map((e, idx) => (idx === i ? { ...e, ...patch } : e)));
     const remove = (i: number) => setItems(items.filter((_, idx) => idx !== i));
@@ -202,21 +313,21 @@ function AppreciationEditor({ cfg, onChange }: { cfg: Record<string, any>; onCha
                 <Field label="Lay-out">
                     <Segmented
                         options={[
-                            { value: 'grid', label: 'Grid' },
-                            { value: 'spotlight', label: 'Spotlight' },
-                            { value: 'list', label: 'Lijst' },
+                            { value: "grid", label: "Grid" },
+                            { value: "spotlight", label: "Spotlight" },
+                            { value: "list", label: "Lijst" },
                         ]}
-                        value={cfg.layout ?? 'grid'}
+                        value={cfg.layout ?? "grid"}
                         onChange={(v) => onChange({ ...cfg, layout: v })}
                     />
                 </Field>
                 <Field label="Stijl">
                     <Segmented
                         options={[
-                            { value: 'review', label: 'Review' },
-                            { value: 'chat', label: 'Chat' },
+                            { value: "review", label: "Review" },
+                            { value: "chat", label: "Chat" },
                         ]}
-                        value={cfg.style ?? 'review'}
+                        value={cfg.style ?? "review"}
                         onChange={(v) => onChange({ ...cfg, style: v })}
                     />
                 </Field>
@@ -230,14 +341,20 @@ function AppreciationEditor({ cfg, onChange }: { cfg: Record<string, any>; onCha
                             <Field label="Auteur">
                                 <TextInput
                                     value={item.author}
-                                    onChange={(e) => update(i, { author: e.target.value })}
+                                    onChange={(e) =>
+                                        update(i, { author: e.target.value })
+                                    }
                                     placeholder="Maria K."
                                 />
                             </Field>
                             <Field label="Sterren (1–5)">
                                 <NumberInput
                                     value={item.stars ?? 5}
-                                    onChange={(e) => update(i, { stars: Number(e.target.value) })}
+                                    onChange={(e) =>
+                                        update(i, {
+                                            stars: Number(e.target.value),
+                                        })
+                                    }
                                     min={1}
                                     max={5}
                                 />
@@ -246,7 +363,9 @@ function AppreciationEditor({ cfg, onChange }: { cfg: Record<string, any>; onCha
                         <Field label="Tekst">
                             <TextArea
                                 value={item.text}
-                                onChange={(e) => update(i, { text: e.target.value })}
+                                onChange={(e) =>
+                                    update(i, { text: e.target.value })
+                                }
                                 rows={2}
                                 placeholder="Geweldige service!"
                             />
@@ -259,41 +378,60 @@ function AppreciationEditor({ cfg, onChange }: { cfg: Record<string, any>; onCha
     );
 }
 
-function AnnouncementEditor({ cfg, onChange }: { cfg: Record<string, any>; onChange: (c: Record<string, any>) => void }) {
-    const isSplit = (cfg.style ?? 'split') === 'split';
+function AnnouncementEditor({
+    cfg,
+    onChange,
+}: {
+    cfg: Record<string, any>;
+    onChange: (c: Record<string, any>) => void;
+}) {
+    const isSplit = (cfg.style ?? "split") === "split";
 
-    const setDetails = (patch: Record<string, string>) => onChange({ ...cfg, ...patch });
+    const setDetails = (patch: Record<string, string>) =>
+        onChange({ ...cfg, ...patch });
 
     return (
-        <div className="space-y-4">
+        <FormWithImagePreview
+            imageUrl={cfg.photo ?? ""}
+            onImageChange={(url) => onChange({ ...cfg, photo: url })}
+            imageHint={
+                isSplit
+                    ? "Wordt rechts getoond met gradient-overgang."
+                    : "Volledige achtergrond van de slide."
+            }
+        >
             <Field label="Variant">
                 <Segmented
                     options={[
-                        { value: 'split', label: 'Tekst + foto' },
-                        { value: 'overlay', label: 'Foto overlay' },
+                        { value: "split", label: "Tekst + foto" },
+                        { value: "overlay", label: "Foto overlay" },
                     ]}
-                    value={cfg.style ?? 'split'}
+                    value={cfg.style ?? "split"}
                     onChange={(v) => onChange({ ...cfg, style: v })}
                 />
             </Field>
             <p className="text-xs text-[#8b84a8]">
                 {isSplit
-                    ? 'Tekst links, foto rechts — met titel en details (datum, tijd, locatie).'
-                    : 'Volledige achtergrondfoto met badge en tekst linksonder.'}
+                    ? "Tekst links, foto rechts — met titel en details (datum, tijd, locatie)."
+                    : "Volledige achtergrondfoto met badge en tekst linksonder."}
             </p>
             <Divider />
             <Field label="Badge">
                 <TextInput
-                    value={cfg.badge ?? ''}
-                    onChange={(e) => onChange({ ...cfg, badge: e.target.value })}
-                    placeholder={isSplit ? 'Moonly Alert' : 'Pieter Pot & Andy'}
+                    value={cfg.badge ?? ""}
+                    onChange={(e) =>
+                        onChange({ ...cfg, badge: e.target.value })
+                    }
+                    placeholder={isSplit ? "Moonly Alert" : "Pieter Pot & Andy"}
                 />
             </Field>
             {isSplit && (
                 <Field label="Titel">
                     <TextInput
-                        value={cfg.title ?? ''}
-                        onChange={(e) => onChange({ ...cfg, title: e.target.value })}
+                        value={cfg.title ?? ""}
+                        onChange={(e) =>
+                            onChange({ ...cfg, title: e.target.value })
+                        }
                         placeholder="Moonly BBQ"
                     />
                 </Field>
@@ -302,45 +440,49 @@ function AnnouncementEditor({ cfg, onChange }: { cfg: Record<string, any>; onCha
                 <div className="grid grid-cols-1 gap-3">
                     <Field label="Datum">
                         <TextInput
-                            value={cfg.date ?? ''}
-                            onChange={(e) => setDetails({ date: e.target.value })}
+                            value={cfg.date ?? ""}
+                            onChange={(e) =>
+                                setDetails({ date: e.target.value })
+                            }
                             placeholder="18 juli 2026"
                         />
                     </Field>
                     <Field label="Tijd">
                         <TextInput
-                            value={cfg.time ?? ''}
-                            onChange={(e) => setDetails({ time: e.target.value })}
+                            value={cfg.time ?? ""}
+                            onChange={(e) =>
+                                setDetails({ time: e.target.value })
+                            }
                             placeholder="17:00 – 21:00"
                         />
                     </Field>
                     <Field label="Locatie">
                         <TextInput
-                            value={cfg.location ?? ''}
-                            onChange={(e) => setDetails({ location: e.target.value })}
+                            value={cfg.location ?? ""}
+                            onChange={(e) =>
+                                setDetails({ location: e.target.value })
+                            }
                             placeholder="Theehuis 't Stroomdal"
                         />
                     </Field>
                 </div>
             )}
-            <Field label="Tekst" hint="Gebruik een lege regel voor meerdere alinea's (overlay-variant).">
+            <Field
+                label="Tekst"
+                hint="Gebruik een lege regel voor meerdere alinea's (overlay-variant)."
+            >
                 <TextArea
-                    value={cfg.body ?? ''}
+                    value={cfg.body ?? ""}
                     onChange={(e) => onChange({ ...cfg, body: e.target.value })}
                     rows={isSplit ? 4 : 6}
                     placeholder={
                         isSplit
-                            ? 'Aanvullende omschrijving…'
-                            : 'Eerste alinea…\n\nTweede alinea…'
+                            ? "Aanvullende omschrijving…"
+                            : "Eerste alinea…\n\nTweede alinea…"
                     }
                 />
             </Field>
-            <ImageUploadField
-                value={cfg.photo ?? ''}
-                onChange={(url) => onChange({ ...cfg, photo: url })}
-                hint={isSplit ? 'Wordt rechts getoond met gradient-overgang.' : 'Volledige achtergrond van de slide.'}
-            />
-        </div>
+        </FormWithImagePreview>
     );
 }
 
@@ -355,7 +497,9 @@ function SlideEditor({
     onSave: (slide: SlideWidget) => void;
     onBack: () => void;
 }) {
-    const [cfg, setCfg] = useState<Record<string, any>>(slide.config ?? SLIDE_META[slide.widget_type]?.defaultConfig ?? {});
+    const [cfg, setCfg] = useState<Record<string, any>>(
+        slide.config ?? SLIDE_META[slide.widget_type]?.defaultConfig ?? {},
+    );
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
 
@@ -364,7 +508,9 @@ function SlideEditor({
     const handleSave = async () => {
         setSaving(true);
         try {
-            const res = await axios.patch(route('widgets.update', slide.id), { config: cfg });
+            const res = await axios.patch(route("widgets.update", slide.id), {
+                config: cfg,
+            });
             onSave({ ...slide, config: res.data.config });
             notifyDisplayRefresh(screenId);
             setSaved(true);
@@ -375,10 +521,13 @@ function SlideEditor({
     };
 
     const EditorComponent =
-        slide.widget_type === 'agenda' ? AgendaEditor :
-        slide.widget_type === 'birthdays' ? BirthdaysEditor :
-        slide.widget_type === 'appreciation' ? AppreciationEditor :
-        AnnouncementEditor;
+        slide.widget_type === "agenda"
+            ? AgendaEditor
+            : slide.widget_type === "birthdays"
+              ? BirthdaysEditor
+              : slide.widget_type === "appreciation"
+                ? AppreciationEditor
+                : AnnouncementEditor;
 
     return (
         <div className="space-y-5">
@@ -396,10 +545,31 @@ function SlideEditor({
                 </span>
             </div>
 
+            <Field
+                label="Beschikbaar tot (optioneel)"
+                hint="De slide wordt automatisch uitgeschakeld na deze datum."
+            >
+                <TextInput
+                    type="date"
+                    value={cfg._availableUntil ?? ""}
+                    onChange={(e) =>
+                        setCfg({
+                            ...cfg,
+                            _availableUntil: e.target.value || null,
+                        })
+                    }
+                />
+            </Field>
+            <Divider />
+
             <EditorComponent cfg={cfg} onChange={setCfg} />
 
             <div className="pt-2">
-                <SaveButton onClick={handleSave} saving={saving} saved={saved} />
+                <SaveButton
+                    onClick={handleSave}
+                    saving={saving}
+                    saved={saved}
+                />
             </div>
         </div>
     );
@@ -414,8 +584,14 @@ export function SlideshowEditor({ screenId, slides, onSlidesChange }: Props) {
     const handleToggle = async (slide: SlideWidget) => {
         const newEnabled = !(slide.config?._enabled ?? true);
         const newConfig = { ...(slide.config ?? {}), _enabled: newEnabled };
-        await axios.patch(route('widgets.update', slide.id), { config: newConfig });
-        onSlidesChange(slides.map((s) => (s.id === slide.id ? { ...s, config: newConfig } : s)));
+        await axios.patch(route("widgets.update", slide.id), {
+            config: newConfig,
+        });
+        onSlidesChange(
+            slides.map((s) =>
+                s.id === slide.id ? { ...s, config: newConfig } : s,
+            ),
+        );
         notifyDisplayRefresh(screenId);
     };
 
@@ -424,8 +600,12 @@ export function SlideshowEditor({ screenId, slides, onSlidesChange }: Props) {
         const updated = [...slides];
         [updated[idx - 1], updated[idx]] = [updated[idx], updated[idx - 1]];
         await Promise.all([
-            axios.patch(route('widgets.update', updated[idx - 1].id), { grid_order: idx - 1 }),
-            axios.patch(route('widgets.update', updated[idx].id), { grid_order: idx }),
+            axios.patch(route("widgets.update", updated[idx - 1].id), {
+                grid_order: idx - 1,
+            }),
+            axios.patch(route("widgets.update", updated[idx].id), {
+                grid_order: idx,
+            }),
         ]);
         onSlidesChange(updated.map((s, i) => ({ ...s, grid_order: i })));
         notifyDisplayRefresh(screenId);
@@ -436,23 +616,32 @@ export function SlideshowEditor({ screenId, slides, onSlidesChange }: Props) {
         const updated = [...slides];
         [updated[idx], updated[idx + 1]] = [updated[idx + 1], updated[idx]];
         await Promise.all([
-            axios.patch(route('widgets.update', updated[idx].id), { grid_order: idx }),
-            axios.patch(route('widgets.update', updated[idx + 1].id), { grid_order: idx + 1 }),
+            axios.patch(route("widgets.update", updated[idx].id), {
+                grid_order: idx,
+            }),
+            axios.patch(route("widgets.update", updated[idx + 1].id), {
+                grid_order: idx + 1,
+            }),
         ]);
         onSlidesChange(updated.map((s, i) => ({ ...s, grid_order: i })));
         notifyDisplayRefresh(screenId);
     };
 
     const handleDelete = async (slide: SlideWidget) => {
-        if (!confirm(`Slide "${SLIDE_META[slide.widget_type]?.label}" verwijderen?`)) return;
-        await axios.delete(route('widgets.destroy', slide.id));
+        if (
+            !confirm(
+                `Slide "${SLIDE_META[slide.widget_type]?.label}" verwijderen?`,
+            )
+        )
+            return;
+        await axios.delete(route("widgets.destroy", slide.id));
         onSlidesChange(slides.filter((s) => s.id !== slide.id));
         notifyDisplayRefresh(screenId);
     };
 
     const handleAdd = async (type: keyof typeof SLIDE_META) => {
         const meta = SLIDE_META[type];
-        const res = await axios.post(route('widgets.store', screenId), {
+        const res = await axios.post(route("widgets.store", screenId), {
             widget_type: type,
             config: { ...meta.defaultConfig },
             grid_order: slides.length,
@@ -490,17 +679,23 @@ export function SlideshowEditor({ screenId, slides, onSlidesChange }: Props) {
                 >
                     ← Annuleer
                 </button>
-                <h3 className="font-semibold text-[#1a1430]">Slide type kiezen</h3>
+                <h3 className="font-semibold text-[#1a1430]">
+                    Slide type kiezen
+                </h3>
                 <div className="grid grid-cols-2 gap-3">
                     {Object.entries(SLIDE_META).map(([type, meta]) => (
                         <button
                             key={type}
                             type="button"
-                            onClick={() => handleAdd(type as keyof typeof SLIDE_META)}
+                            onClick={() =>
+                                handleAdd(type as keyof typeof SLIDE_META)
+                            }
                             className="flex items-center gap-3 rounded-xl border border-[#e6e2f4] bg-white p-4 text-left hover:border-[#6C52FF] hover:bg-[#6C52FF]/5 transition-all"
                         >
                             <span className="text-2xl">{meta.icon}</span>
-                            <span className="text-sm font-semibold text-[#1a1430]">{meta.label}</span>
+                            <span className="text-sm font-semibold text-[#1a1430]">
+                                {meta.label}
+                            </span>
                         </button>
                     ))}
                 </div>
@@ -515,65 +710,131 @@ export function SlideshowEditor({ screenId, slides, onSlidesChange }: Props) {
                     Nog geen slides. Voeg er een toe!
                 </p>
             )}
-            {slides.map((slide, idx) => {
-                const meta = SLIDE_META[slide.widget_type];
-                const enabled = slide.config?._enabled ?? true;
-                return (
-                    <div
-                        key={slide.id}
-                        className={`flex items-center gap-3 rounded-xl border bg-white p-3 transition-all ${enabled ? 'border-[#e6e2f4]' : 'border-[#e6e2f4] opacity-50'}`}
-                    >
-                        <span className="text-xl w-8 text-center">{meta?.icon}</span>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-[#1a1430] truncate">{meta?.label}</p>
-                            <p className="text-xs text-[#8b84a8]">Slide {idx + 1}</p>
+            <div className="grid grid-cols-2 gap-3">
+                {slides.map((slide, idx) => {
+                    const meta = SLIDE_META[slide.widget_type];
+                    const enabled = slide.config?._enabled ?? true;
+                    const title = getSlideTitle(slide);
+                    const subtitle = getSlideSubtitle(slide);
+                    const until = slide.config?._availableUntil;
+                    return (
+                        <div
+                            key={slide.id}
+                            className={`rounded-2xl border bg-white p-4 flex flex-col gap-2 transition-all ${enabled ? "border-[#e6e2f4]" : "border-[#e6e2f4] opacity-50"}`}
+                        >
+                            <div>
+                                <span className="text-2xl">{meta?.icon}</span>
+                                <p className="text-[10px] font-bold uppercase tracking-wide text-[#8b84a8] mt-1">
+                                    {meta?.label}
+                                </p>
+                                <p className="text-sm font-bold text-[#1a1430] mt-0.5 leading-snug truncate">
+                                    {title}
+                                </p>
+                                {subtitle && (
+                                    <p className="text-xs text-[#b0abc8] mt-0.5">
+                                        {subtitle}
+                                    </p>
+                                )}
+                                {until && (
+                                    <p className="text-xs text-[#FFB020] font-medium mt-1">
+                                        t/m{" "}
+                                        {new Date(
+                                            until + "T12:00:00",
+                                        ).toLocaleDateString("nl-NL", {
+                                            day: "numeric",
+                                            month: "short",
+                                            year: "numeric",
+                                        })}
+                                    </p>
+                                )}
+                            </div>
+                            <div className="mt-auto flex items-center justify-between pt-2 border-t border-[#f0eefa]">
+                                <Toggle
+                                    checked={enabled}
+                                    onChange={() => handleToggle(slide)}
+                                />
+                                <div className="flex items-center gap-0.5">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleMoveUp(idx)}
+                                        disabled={idx === 0}
+                                        className="p-1.5 text-[#b0abc8] hover:text-[#6C52FF] disabled:opacity-30 transition-colors"
+                                        title="Omhoog"
+                                    >
+                                        <svg
+                                            width="10"
+                                            height="10"
+                                            viewBox="0 0 12 12"
+                                            fill="none"
+                                        >
+                                            <path
+                                                d="M6 10V2M2 6l4-4 4 4"
+                                                stroke="currentColor"
+                                                strokeWidth="1.5"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                            />
+                                        </svg>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleMoveDown(idx)}
+                                        disabled={idx === slides.length - 1}
+                                        className="p-1.5 text-[#b0abc8] hover:text-[#6C52FF] disabled:opacity-30 transition-colors"
+                                        title="Omlaag"
+                                    >
+                                        <svg
+                                            width="10"
+                                            height="10"
+                                            viewBox="0 0 12 12"
+                                            fill="none"
+                                        >
+                                            <path
+                                                d="M6 2v8M10 6l-4 4-4-4"
+                                                stroke="currentColor"
+                                                strokeWidth="1.5"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                            />
+                                        </svg>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditingSlide(slide)}
+                                        className="rounded-lg bg-[#f3f1fb] px-2.5 py-1 text-xs font-semibold text-[#6C52FF] hover:bg-[#6C52FF]/10 transition-colors"
+                                    >
+                                        Bewerk
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDelete(slide)}
+                                        className="p-1.5 text-[#b0abc8] hover:text-[#DD2727] transition-colors"
+                                        title="Verwijder"
+                                    >
+                                        <svg
+                                            width="12"
+                                            height="12"
+                                            viewBox="0 0 14 14"
+                                            fill="none"
+                                        >
+                                            <path
+                                                d="M1 1l12 12M13 1L1 13"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                strokeLinecap="round"
+                                            />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                            <button
-                                type="button"
-                                onClick={() => handleMoveUp(idx)}
-                                disabled={idx === 0}
-                                className="p-1.5 text-[#b0abc8] hover:text-[#6C52FF] disabled:opacity-30 transition-colors"
-                                title="Omhoog"
-                            >
-                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                    <path d="M6 10V2M2 6l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleMoveDown(idx)}
-                                disabled={idx === slides.length - 1}
-                                className="p-1.5 text-[#b0abc8] hover:text-[#6C52FF] disabled:opacity-30 transition-colors"
-                                title="Omlaag"
-                            >
-                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                    <path d="M6 2v8M10 6l-4 4-4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                            </button>
-                            <Toggle checked={enabled} onChange={() => handleToggle(slide)} />
-                            <button
-                                type="button"
-                                onClick={() => setEditingSlide(slide)}
-                                className="ml-1 rounded-lg bg-[#f3f1fb] px-3 py-1.5 text-xs font-semibold text-[#6C52FF] hover:bg-[#6C52FF]/10 transition-colors"
-                            >
-                                Bewerk
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleDelete(slide)}
-                                className="p-1.5 text-[#b0abc8] hover:text-[#DD2727] transition-colors"
-                                title="Verwijder"
-                            >
-                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                    <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                );
-            })}
-            <AddButton onClick={() => setAdding(true)} label="Slide toevoegen" />
+                    );
+                })}
+            </div>
+            <AddButton
+                onClick={() => setAdding(true)}
+                label="Slide toevoegen"
+            />
         </div>
     );
 }

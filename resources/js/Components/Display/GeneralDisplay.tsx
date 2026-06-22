@@ -1,4 +1,5 @@
 import { Backdrop, TopBar, AppBar, Avatar } from '@/Components/Display/Shell';
+import { getUpcomingBirthdays } from '@/lib/birthdays';
 import type { ScreenConfig } from '@/types';
 
 interface BlockWidget {
@@ -40,10 +41,12 @@ function BlockHead({ icon, title, sub, accent }: { icon: string; title: string; 
 const MEDALS = ['#FFC53D', '#cfd4e0', '#e0935b'];
 
 function TogglBlock({ data }: { data: any }) {
-    const entries = ((data?.data?.entries || data?.entries || []) as any[]).slice(0, 5);
-    const title = data?.data?.title || data?.config?.title || 'Toggl Leaderboard';
-    const subtitle = data?.data?.subtitle || data?.config?.subtitle || 'Deze week · gewerkte uren';
-    const max = Math.max(1, ...entries.map((e: any) => e.hours || 0));
+    const apiEntries = (data?.data?.entries ?? []) as { name: string; hours: number }[];
+    const configEntries = (data?.config?.entries ?? []) as { name: string; hours: number }[];
+    const entries = (apiEntries.length ? apiEntries : configEntries).slice(0, 5);
+    const title = data?.config?.title || 'Toggl Leaderboard';
+    const subtitle = data?.config?.subtitle || 'Deze week · gewerkte uren';
+    const max = Math.max(1, ...entries.map((e) => e.hours || 0));
 
     return (
         <Block className="p-10 flex flex-col">
@@ -110,7 +113,8 @@ function BirthdayMini({ b }: { b: any }) {
 }
 
 function BirthdaysBlock({ data }: { data: any }) {
-    const list = (data?.data?.birthdays || data?.config?.list || []).slice(0, 3);
+    const configList = data?.config?.list ?? [];
+    const list = (configList.length ? configList : getUpcomingBirthdays(3)).slice(0, 3);
     return (
         <Block className="p-10 flex flex-col">
             <BlockHead icon="🎂" title="Komende verjaardagen" sub="De eerstvolgende 3" accent="#FFC53D" />

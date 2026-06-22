@@ -384,6 +384,12 @@ export default function Index({ screens: initialScreens, overlay: initialOverlay
         );
     }, []);
 
+    const updateWidgets = useCallback((screenId: number, widgets: MgmtWidget[]) => {
+        setScreens((prev) =>
+            prev.map((s) => (s.id === screenId ? { ...s, widgets } : s))
+        );
+    }, []);
+
     const slides = (activeScreen?.widgets ?? []).filter((w) =>
         ['agenda', 'birthdays', 'appreciation', 'announcement'].includes(w.widget_type)
     ) as SlideWidget[];
@@ -443,7 +449,9 @@ export default function Index({ screens: initialScreens, overlay: initialOverlay
                             {activeTab === 'content' && activeScreen.screen_type === 'general' && (
                                 <GeneralEditor
                                     screenId={activeScreen.id}
+                                    widgets={activeScreen.widgets}
                                     screenConfig={screenConfig}
+                                    onWidgetsChange={(updated) => updateWidgets(activeScreen.id, updated)}
                                     onConfigChange={(cfg) => updateScreenConfig(activeScreen.id, cfg)}
                                 />
                             )}

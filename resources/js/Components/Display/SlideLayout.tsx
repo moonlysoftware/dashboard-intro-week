@@ -6,7 +6,7 @@ interface SlideHeaderProps {
 
 export function SlideHeader({ children }: SlideHeaderProps) {
     return (
-        <h1 className="font-poster font-bold text-white leading-none text-5xl mb-7">
+        <h1 className="slide-title mb-7">
             {children}
         </h1>
     );

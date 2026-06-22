@@ -28,7 +28,7 @@ const FALLBACK: AppreciationItem[] = [
     { kind: 'review', name: 'Kevin Pos', role: 'CTO · Northdock', quote: 'Ze maakten van een rommelig idee een product waar onze gebruikers dol op zijn.' },
 ];
 
-function Stars({ n = 5, size = 26 }: { n?: number; size?: number }) {
+function Stars({ n = 5, size = 20 }: { n?: number; size?: number }) {
     return (
         <div className="flex gap-[3px]">
             {Array.from({ length: n }).map((_, i) => (
@@ -47,10 +47,10 @@ function ChatCard({ item, big = false }: { item: ChatItem; big?: boolean }) {
             style={{ background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.10)', minHeight: 0 }}
         >
             <div className="flex items-center gap-4 mb-4">
-                <Avatar name={item.name} size={big ? 76 : 58} ring={false} />
+                <Avatar name={item.name} size={big ? 64 : 52} ring={false} />
                 <div className="min-w-0">
-                    <div className={`text-white font-bold leading-none truncate ${big ? 'text-[38px]' : 'text-[28px]'}`}>{item.name}</div>
-                    <div className={`text-[#27DD36] font-semibold flex items-center gap-2 mt-2 ${big ? 'text-[24px]' : 'text-[19px]'}`}>
+                    <div className="slide-title truncate">{item.name}</div>
+                    <div className="slide-body text-[#27DD36] flex items-center gap-2 mt-2">
                         <span className="h-2 w-2 rounded-full bg-[#27DD36]" />online
                     </div>
                 </div>
@@ -59,14 +59,14 @@ function ChatCard({ item, big = false }: { item: ChatItem; big?: boolean }) {
                 {item.msgs.map((m, i) => (
                     <div
                         key={i}
-                        className={`self-start max-w-[90%] rounded-[20px] rounded-tl-md text-white font-medium leading-snug ${big ? 'px-8 py-4 text-[34px]' : 'px-6 py-3 text-[26px]'}`}
+                        className="slide-body self-start max-w-[90%] rounded-[20px] rounded-tl-md text-white px-6 py-3"
                         style={{ background: 'linear-gradient(135deg,#1f7a44,#27a85a)' }}
                     >
                         {m}
                     </div>
                 ))}
             </div>
-            <div className={`text-right text-white/40 font-semibold mt-2 ${big ? 'text-[22px]' : 'text-[18px]'}`}>{item.time} · ✓✓</div>
+            <div className="slide-body-muted text-right mt-2">{item.time} · ✓✓</div>
         </div>
     );
 }
@@ -79,18 +79,18 @@ function ReviewCard({ item, big = false }: { item: ReviewItem; big?: boolean }) 
         >
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-4 min-w-0">
-                    <Avatar name={item.name} size={big ? 80 : 62} ring={false} />
+                    <Avatar name={item.name} size={big ? 68 : 56} ring={false} />
                     <div className="min-w-0">
-                        <div className={`text-[#050215] font-bold leading-none truncate ${big ? 'text-[38px]' : 'text-[29px]'}`}>{item.name}</div>
-                        <div className={`text-[#050215]/50 font-semibold mt-2 truncate ${big ? 'text-[27px]' : 'text-[22px]'}`}>{item.role}</div>
+                        <div className="slide-title text-[#050215] truncate">{item.name}</div>
+                        <div className="slide-body-muted text-[#050215]/50 mt-2 truncate">{item.role}</div>
                     </div>
                 </div>
                 <div className="text-right shrink-0 ml-3">
-                    <Stars size={big ? 32 : 26} />
-                    <div className="text-[#050215]/40 text-[18px] font-bold mt-1 tracking-wide">via Google</div>
+                    <Stars size={20} />
+                    <div className="slide-body text-[#050215]/40 mt-1">via Google</div>
                 </div>
             </div>
-            <p className={`text-[#050215]/85 font-semibold leading-snug flex-1 ${big ? 'text-[40px]' : 'text-[29px]'}`}>
+            <p className="slide-body text-[#050215]/85 flex-1">
                 "{item.quote}"
             </p>
         </div>
@@ -110,25 +110,25 @@ function AppreciationRow({ item }: { item: AppreciationItem }) {
             className="flex items-center gap-7 rounded-[26px] px-9 flex-1 overflow-hidden"
             style={{ background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.10)' }}
         >
-            <Avatar name={item.name} size={96} ring={false} />
+            <Avatar name={item.name} size={80} ring={false} />
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-2">
-                    <span className="font-display font-bold text-white text-[36px] leading-none truncate">{item.name}</span>
+                    <span className="slide-title truncate">{item.name}</span>
                     {isReview && item.kind === 'review'
-                        ? <span className="text-white/45 text-[25px] font-semibold truncate">· {item.role}</span>
-                        : <span className="text-[#27DD36] text-[23px] font-semibold flex items-center gap-2 whitespace-nowrap">
+                        ? <span className="slide-body-muted truncate">· {item.role}</span>
+                        : <span className="slide-body text-[#27DD36] flex items-center gap-2 whitespace-nowrap">
                             <span className="h-2 w-2 rounded-full bg-[#27DD36]" />online
                           </span>}
                 </div>
-                <p className="text-white/75 text-[28px] font-medium leading-tight truncate">
+                <p className="slide-body text-white/75 truncate">
                     {isReview && item.kind === 'review'
                         ? `"${item.quote}"`
                         : item.kind === 'chat' ? item.msgs.join('   ·   ') : ''}
                 </p>
             </div>
             {isReview
-                ? <div className="shrink-0"><Stars size={28} /></div>
-                : item.kind === 'chat' && <div className="shrink-0 text-white/40 text-[22px] font-semibold whitespace-nowrap">{item.time}</div>}
+                ? <div className="shrink-0"><Stars size={20} /></div>
+                : item.kind === 'chat' && <div className="shrink-0 slide-body-muted whitespace-nowrap">{item.time}</div>}
         </div>
     );
 }
@@ -172,15 +172,15 @@ export default function AppreciationSlide({ content }: { content?: AppreciationC
                 <div>
                     <div className="flex items-center gap-4 mb-3">
                         <span className="h-[14px] w-[14px] rounded-full" style={{ background: '#05BFDB', boxShadow: '0 0 22px #05BFDB' }} />
-                        <span className="uppercase tracking-[.34em] text-[#B5A9FF]/80 font-bold text-[26px] whitespace-nowrap">
+                        <span className="slide-label uppercase tracking-[.34em] text-[#B5A9FF]/80 whitespace-nowrap">
                             Jullie maken het de moeite waard
                         </span>
                     </div>
-                    <h1 className="font-display font-bold text-white leading-[0.98] text-[80px] whitespace-nowrap">Klantwaardering</h1>
+                    <h1 className="slide-title whitespace-nowrap">Klantwaardering</h1>
                 </div>
                 <div className="text-right">
-                    <div className="font-display text-white/40 text-[26px] font-medium">Rechtstreeks uit de inbox</div>
-                    <div className="grad-text font-display font-bold text-[40px]">★ 4,9 gem. score</div>
+                    <div className="slide-body-muted">Rechtstreeks uit de inbox</div>
+                    <div className="grad-text slide-label">★ 4,9 gem. score</div>
                 </div>
             </div>
             <div className="flex-1 min-h-0">{body}</div>

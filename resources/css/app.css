@@ -248,6 +248,14 @@
 .bento      { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }
 .panel      { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }
 
+/* Slide typography — 48 / 32 / 20 / 32 scale */
+.slide-title       { @apply font-poster font-bold text-[48px] leading-none text-white; }
+.slide-label       { @apply font-poster font-bold text-[32px] leading-tight text-white; }
+.slide-body        { @apply font-manrope font-normal text-[20px] leading-snug; }
+.slide-body-muted  { @apply font-manrope font-normal text-[20px] leading-snug text-white/55; }
+.slide-date        { @apply font-poster font-light text-[32px] leading-tight text-white; }
+.slide-pill        { @apply grad-pill slide-label inline-flex rounded-full whitespace-nowrap; padding: 8px 22px; box-shadow: 0 12px 36px -12px rgba(178,61,240,.6); }
+
 /* Stage scaling container */
 #moonly-stage-wrap {
     position: fixed;

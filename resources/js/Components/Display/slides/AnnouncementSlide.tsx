@@ -56,14 +56,7 @@ export function normalizeAnnouncementContent(
 
 function Pill({ children }: { children: React.ReactNode }) {
     return (
-        <span
-            className="grad-pill inline-flex self-start rounded-full text-white font-poster font-bold whitespace-nowrap"
-            style={{
-                padding: "11px 30px",
-                fontSize: 36,
-                boxShadow: "0 16px 46px -12px rgba(178,61,240,.65)",
-            }}
-        >
+        <span className="slide-pill self-start">
             {children}
         </span>
     );
@@ -94,8 +87,9 @@ function PhotoPanel({
     );
 }
 
-const SPLIT_SCRIM =
-    "linear-gradient(90deg, #08060f 0%, #08060f 38%, rgba(8,6,15,0.94) 44%, rgba(8,6,15,0.72) 52%, rgba(8,6,15,0.28) 62%, rgba(8,6,15,0) 72%)";
+/** Fades from the text column into the photo on the left edge of the image panel */
+const SPLIT_PHOTO_BLEND =
+    "linear-gradient(90deg, #08060f 0%, rgba(8,6,15,0.94) 6%, rgba(8,6,15,0.72) 14%, rgba(8,6,15,0.42) 26%, rgba(8,6,15,0.14) 40%, transparent 54%)";
 
 /** Variant 1 — text left, photo right (Moonly BBQ layout) */
 function AnnSplit({
@@ -110,38 +104,28 @@ function AnnSplit({
 
     return (
         <div
-            className="h-full w-full relative overflow-hidden"
+            className="h-full w-full flex overflow-hidden"
             style={{ background: "#08060f" }}
         >
-            <div className="absolute inset-0">
-                <PhotoPanel photo={photo} pos={pos} fade="split" />
-            </div>
-            <div
-                className="absolute inset-0 z-[1]"
-                style={{ background: SPLIT_SCRIM }}
-            />
-            <div
-                className="relative z-10 flex h-full flex-col justify-center px-16 py-14"
-                style={{ width: "42%" }}
-            >
+            <div className="relative z-10 flex h-full w-1/4 shrink-0 flex-col justify-center px-10 py-14">
                 {badge && (
                     <div className="mb-7">
                         <Pill>{badge}</Pill>
                     </div>
                 )}
                 {title && (
-                    <h2 className="font-poster font-bold text-white leading-[0.98] text-[76px] mb-7">
+                    <h2 className="slide-title mb-7">
                         {title}
                     </h2>
                 )}
                 {details.length > 0 && (
                     <div className="flex flex-col gap-2.5 mb-7">
                         {details.map((d, i) => (
-                            <div key={i} className="text-[32px] leading-tight">
-                                <span className="font-poster font-medium text-white">
+                            <div key={i} className="leading-tight">
+                                <span className="slide-label">
                                     {d.label}:{" "}
                                 </span>
-                                <span className="font-poster font-bold text-white">
+                                <span className="slide-date font-normal">
                                     {d.value}
                                 </span>
                             </div>
@@ -153,13 +137,21 @@ function AnnSplit({
                         {lines.map((p, i) => (
                             <p
                                 key={i}
-                                className="text-white/45 font-manrope font-medium text-[26px] leading-[1.32] max-w-[760px]"
+                                className="slide-body-muted max-w-[760px]"
                             >
                                 {p}
                             </p>
                         ))}
                     </div>
                 )}
+            </div>
+
+            <div className="relative h-full w-3/4 min-w-0">
+                <PhotoPanel photo={photo} pos={pos} fade="split" />
+                <div
+                    className="pointer-events-none absolute inset-0 z-[1]"
+                    style={{ background: SPLIT_PHOTO_BLEND }}
+                />
             </div>
         </div>
     );
@@ -210,7 +202,7 @@ function AnnOverlay({
                         {lines.map((p, i) => (
                             <p
                                 key={i}
-                                className="text-white font-manrope font-medium text-[40px] leading-[1.3] ann-shadow"
+                                className="slide-body text-white ann-shadow"
                             >
                                 {p}
                             </p>
@@ -230,9 +222,7 @@ export default function AnnouncementSlide({
     const c = normalizeAnnouncementContent(content || {});
 
     if (c.style === "overlay") {
-        return (
-            <AnnOverlay {...c} badge={c.badge || "Moonly Alert"} />
-        );
+        return <AnnOverlay {...c} badge={c.badge || "Moonly Alert"} />;
     }
 
     return (
