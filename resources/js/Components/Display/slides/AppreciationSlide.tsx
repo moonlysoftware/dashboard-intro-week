@@ -40,11 +40,11 @@ function Stars({ n = 5, size = 26 }: { n?: number; size?: number }) {
     );
 }
 
-function ChatCard({ item, delay, big = false }: { item: ChatItem; delay: string; big?: boolean }) {
+function ChatCard({ item, big = false }: { item: ChatItem; big?: boolean }) {
     return (
         <div
-            className="reveal rounded-[30px] p-8 h-full flex flex-col overflow-hidden"
-            style={{ animationDelay: delay, background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.10)', minHeight: 0 }}
+            className="rounded-[30px] p-8 h-full flex flex-col overflow-hidden"
+            style={{ background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.10)', minHeight: 0 }}
         >
             <div className="flex items-center gap-4 mb-4">
                 <Avatar name={item.name} size={big ? 76 : 58} ring={false} />
@@ -71,11 +71,11 @@ function ChatCard({ item, delay, big = false }: { item: ChatItem; delay: string;
     );
 }
 
-function ReviewCard({ item, delay, big = false }: { item: ReviewItem; delay: string; big?: boolean }) {
+function ReviewCard({ item, big = false }: { item: ReviewItem; big?: boolean }) {
     return (
         <div
-            className="reveal rounded-[30px] bg-white p-8 h-full flex flex-col overflow-hidden"
-            style={{ animationDelay: delay, boxShadow: '0 30px 70px -25px rgba(0,0,0,.55)', minHeight: 0 }}
+            className="rounded-[30px] bg-white p-8 h-full flex flex-col overflow-hidden"
+            style={{ boxShadow: '0 30px 70px -25px rgba(0,0,0,.55)', minHeight: 0 }}
         >
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-4 min-w-0">
@@ -97,18 +97,18 @@ function ReviewCard({ item, delay, big = false }: { item: ReviewItem; delay: str
     );
 }
 
-function AppreciationCard({ item, delay, big = false }: { item: AppreciationItem; delay: string; big?: boolean }) {
+function AppreciationCard({ item, big = false }: { item: AppreciationItem; big?: boolean }) {
     return item.kind === 'chat'
-        ? <ChatCard item={item} delay={delay} big={big} />
-        : <ReviewCard item={item} delay={delay} big={big} />;
+        ? <ChatCard item={item} big={big} />
+        : <ReviewCard item={item} big={big} />;
 }
 
-function AppreciationRow({ item, delay }: { item: AppreciationItem; delay: string }) {
+function AppreciationRow({ item }: { item: AppreciationItem }) {
     const isReview = item.kind !== 'chat';
     return (
         <div
-            className="reveal flex items-center gap-7 rounded-[26px] px-9 flex-1 overflow-hidden"
-            style={{ animationDelay: delay, background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.10)' }}
+            className="flex items-center gap-7 rounded-[26px] px-9 flex-1 overflow-hidden"
+            style={{ background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.10)' }}
         >
             <Avatar name={item.name} size={96} ring={false} />
             <div className="flex-1 min-w-0">
@@ -136,17 +136,16 @@ function AppreciationRow({ item, delay }: { item: AppreciationItem; delay: strin
 export default function AppreciationSlide({ content }: { content?: AppreciationContent }) {
     const items = (content?.items?.length ? content.items : FALLBACK).slice(0, 4);
     const layout = content?.layout || 'grid';
-    const delays = ['.2s', '.3s', '.4s', '.5s'];
 
     let body;
     if (layout === 'spotlight') {
         const [first, ...rest] = items;
         body = (
             <div className="h-full grid gap-8" style={{ gridTemplateColumns: '1.25fr 0.75fr' }}>
-                <div className="min-h-0"><AppreciationCard item={first} delay=".2s" big /></div>
+                <div className="min-h-0"><AppreciationCard item={first} big /></div>
                 <div className="flex flex-col gap-7 min-h-0">
                     {rest.slice(0, 3).map((it, i) => (
-                        <div key={i} className="min-h-0 flex-1"><AppreciationCard item={it} delay={delays[i + 1]} /></div>
+                        <div key={i} className="min-h-0 flex-1"><AppreciationCard item={it} /></div>
                     ))}
                 </div>
             </div>
@@ -154,14 +153,14 @@ export default function AppreciationSlide({ content }: { content?: AppreciationC
     } else if (layout === 'list') {
         body = (
             <div className="h-full flex flex-col gap-5">
-                {items.map((it, i) => <AppreciationRow key={i} item={it} delay={delays[i]} />)}
+                {items.map((it, i) => <AppreciationRow key={i} item={it} />)}
             </div>
         );
     } else {
         body = (
             <div className="h-full grid gap-8" style={{ gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr' }}>
                 {items.map((it, i) => (
-                    <div key={i} className="min-h-0"><AppreciationCard item={it} delay={delays[i]} /></div>
+                    <div key={i} className="min-h-0"><AppreciationCard item={it} /></div>
                 ))}
             </div>
         );
@@ -170,7 +169,7 @@ export default function AppreciationSlide({ content }: { content?: AppreciationC
     return (
         <div className="h-full flex flex-col px-16 pt-10 pb-[82px]">
             <div className="flex items-end justify-between mb-8">
-                <div className="reveal" style={{ animationDelay: '.05s' }}>
+                <div>
                     <div className="flex items-center gap-4 mb-3">
                         <span className="h-[14px] w-[14px] rounded-full" style={{ background: '#05BFDB', boxShadow: '0 0 22px #05BFDB' }} />
                         <span className="uppercase tracking-[.34em] text-[#B5A9FF]/80 font-bold text-[26px] whitespace-nowrap">
@@ -179,7 +178,7 @@ export default function AppreciationSlide({ content }: { content?: AppreciationC
                     </div>
                     <h1 className="font-display font-bold text-white leading-[0.98] text-[80px] whitespace-nowrap">Klantwaardering</h1>
                 </div>
-                <div className="reveal text-right" style={{ animationDelay: '.1s' }}>
+                <div className="text-right">
                     <div className="font-display text-white/40 text-[26px] font-medium">Rechtstreeks uit de inbox</div>
                     <div className="grad-text font-display font-bold text-[40px]">★ 4,9 gem. score</div>
                 </div>

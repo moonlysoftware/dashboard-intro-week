@@ -84,7 +84,7 @@ function PhotoPanel({
                 <img
                     src={photo}
                     alt=""
-                    className={`kb absolute inset-0 h-full w-full object-cover${fade === "split" ? " origin-center" : ""}`}
+                    className={`absolute inset-0 h-full w-full object-cover${fade === "split" ? " origin-center" : ""}`}
                     style={{ objectPosition: pos || "center" }}
                 />
             ) : (
@@ -125,26 +125,17 @@ function AnnSplit({
                 style={{ width: "42%" }}
             >
                 {badge && (
-                    <div
-                        className="reveal mb-7"
-                        style={{ animationDelay: ".12s" }}
-                    >
+                    <div className="mb-7">
                         <Pill>{badge}</Pill>
                     </div>
                 )}
                 {title && (
-                    <h2
-                        className="reveal font-poster font-bold text-white leading-[0.98] text-[76px] mb-7"
-                        style={{ animationDelay: ".2s" }}
-                    >
+                    <h2 className="font-poster font-bold text-white leading-[0.98] text-[76px] mb-7">
                         {title}
                     </h2>
                 )}
                 {details.length > 0 && (
-                    <div
-                        className="reveal flex flex-col gap-2.5 mb-7"
-                        style={{ animationDelay: ".28s" }}
-                    >
+                    <div className="flex flex-col gap-2.5 mb-7">
                         {details.map((d, i) => (
                             <div key={i} className="text-[32px] leading-tight">
                                 <span className="font-poster font-medium text-white">
@@ -158,10 +149,7 @@ function AnnSplit({
                     </div>
                 )}
                 {lines.length > 0 && (
-                    <div
-                        className="reveal flex flex-col gap-4"
-                        style={{ animationDelay: ".36s" }}
-                    >
+                    <div className="flex flex-col gap-4">
                         {lines.map((p, i) => (
                             <p
                                 key={i}
@@ -213,18 +201,12 @@ function AnnOverlay({
             />
             <div className="absolute left-0 right-0 bottom-0 px-16 pb-14 pt-24">
                 {badge && (
-                    <div
-                        className="reveal mb-7"
-                        style={{ animationDelay: ".16s" }}
-                    >
+                    <div className="mb-7">
                         <Pill>{badge}</Pill>
                     </div>
                 )}
                 {lines.length > 0 && (
-                    <div
-                        className="reveal flex flex-col gap-5 max-w-[1180px]"
-                        style={{ animationDelay: ".24s" }}
-                    >
+                    <div className="flex flex-col gap-5 max-w-[1180px]">
                         {lines.map((p, i) => (
                             <p
                                 key={i}
@@ -248,7 +230,9 @@ export default function AnnouncementSlide({
     const c = normalizeAnnouncementContent(content || {});
 
     if (c.style === "overlay") {
-        return <AnnOverlay {...c} badge={c.badge || "Moonly Alert"} />;
+        return (
+            <AnnOverlay {...c} badge={c.badge || "Moonly Alert"} />
+        );
     }
 
     return (

@@ -1,4 +1,5 @@
 import React from "react";
+import { SlideLayout } from "@/Components/Display/SlideLayout";
 
 interface AgendaEvent {
     name?: string;
@@ -70,11 +71,9 @@ function normalizeEvent(
 function AgendaCard({
     e,
     variant = "row",
-    delay,
 }: {
     e: AgendaEvent;
     variant?: "big" | "row" | "col";
-    delay: string;
 }) {
     const ev = normalizeEvent(e);
     const bottom = variant !== "row";
@@ -85,9 +84,8 @@ function AgendaCard({
 
     return (
         <div
-            className={`reveal relative rounded-[30px] overflow-hidden ${variant === "col" ? "h-full" : "flex-1"}`}
+            className={`relative rounded-[30px] overflow-hidden ${variant === "col" ? "h-full" : "flex-1"}`}
             style={{
-                animationDelay: delay,
                 background: ev.photo ? "#0c0a18" : ev.grad || "#6C52FF",
             }}
         >
@@ -95,7 +93,7 @@ function AgendaCard({
                 <img
                     src={ev.photo}
                     alt=""
-                    className="kb absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover"
                     style={{ objectPosition: ev.pos || "center" }}
                 />
             )}
@@ -122,7 +120,7 @@ function AgendaCard({
                 <div
                     className={`font-poster font-semibold text-white ann-shadow ${big ? "text-[42px] mb-4" : "text-[33px] mb-3"}`}
                 >
-                    Datum: {ev.when}
+                    {variant === "row" ? ev.when : `Datum: ${ev.when}`}
                 </div>
                 <p
                     className={`text-white/80 font-manrope font-medium leading-snug ann-shadow ${big ? "text-[31px] max-w-[600px]" : "text-[27px]"}`}
@@ -138,7 +136,6 @@ export default function AgendaSlide({ content }: { content?: AgendaContent }) {
     const events = content?.events?.length ? content.events : DEFAULT_EVENTS;
     const layout = content?.layout || "featured";
     const [a, b, c] = events;
-    const delays = [".16s", ".24s", ".32s"];
 
     let body: React.ReactNode;
     if (layout === "grid") {
@@ -150,7 +147,7 @@ export default function AgendaSlide({ content }: { content?: AgendaContent }) {
                 }}
             >
                 {events.slice(0, 3).map((e, i) => (
-                    <AgendaCard key={i} e={e} variant="col" delay={delays[i]} />
+                    <AgendaCard key={i} e={e} variant="col" />
                 ))}
             </div>
         );
@@ -158,31 +155,25 @@ export default function AgendaSlide({ content }: { content?: AgendaContent }) {
         body = (
             <div className="h-full flex flex-col gap-7">
                 {events.slice(0, 3).map((e, i) => (
-                    <AgendaCard key={i} e={e} variant="row" delay={delays[i]} />
+                    <AgendaCard key={i} e={e} variant="row" />
                 ))}
             </div>
         );
     } else {
         body = (
             <div className="h-full grid grid-cols-[1fr_1fr] gap-7">
-                {a && <AgendaCard e={a} variant="big" delay=".16s" />}
+                {a && <AgendaCard e={a} variant="big" />}
                 <div className="flex flex-col gap-7 min-h-0">
-                    {b && <AgendaCard e={b} variant="row" delay=".24s" />}
-                    {c && <AgendaCard e={c} variant="row" delay=".32s" />}
+                    {b && <AgendaCard e={b} variant="row" />}
+                    {c && <AgendaCard e={c} variant="row" />}
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="h-full flex flex-col px-14 pt-9 pb-9">
-            <h1
-                className="reveal font-poster font-bold text-white leading-none text-[68px] mb-7"
-                style={{ animationDelay: ".05s" }}
-            >
-                Agenda
-            </h1>
-            <div className="flex-1 min-h-0">{body}</div>
-        </div>
+        <SlideLayout title="Agenda">
+            {body}
+        </SlideLayout>
     );
 }

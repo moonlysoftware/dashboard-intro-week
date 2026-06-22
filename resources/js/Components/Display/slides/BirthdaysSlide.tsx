@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Avatar } from "@/Components/Display/Shell";
+import { SlideLayout } from "@/Components/Display/SlideLayout";
 import birthdaysData from "../../../data/birthdays.json";
 
 interface BirthdayPerson {
@@ -45,62 +46,16 @@ function formatDate(birthdate: string): string {
     return date.toLocaleDateString("nl-NL", { day: "numeric", month: "long" });
 }
 
-function Confetti() {
-    const bits = useMemo(
-        () =>
-            Array.from({ length: 38 }).map(() => ({
-                x: Math.random() * 100,
-                delay: Math.random() * 3,
-                dur: 3.5 + Math.random() * 2.5,
-                c: [
-                    "#6C52FF",
-                    "#FF4490",
-                    "#05BFDB",
-                    "#FFC53D",
-                    "#B5A9FF",
-                    "#27DD36",
-                ][Math.floor(Math.random() * 6)],
-                w: 7 + Math.random() * 7,
-                r: Math.random() * 360,
-            })),
-        [],
-    );
-    return (
-        <div
-            className="absolute inset-0 overflow-hidden pointer-events-none"
-            style={{ opacity: 0.5 }}
-        >
-            {bits.map((b, i) => (
-                <span
-                    key={i}
-                    className="absolute top-0"
-                    style={{
-                        left: `${b.x}%`,
-                        width: b.w,
-                        height: b.w * 1.4,
-                        background: b.c,
-                        borderRadius: 2,
-                        transform: `rotate(${b.r}deg)`,
-                        animation: `confetti-fall ${b.dur}s linear ${b.delay}s infinite`,
-                    }}
-                />
-            ))}
-        </div>
-    );
-}
-
 function BdayFeatured({ p }: { p: BirthdayPerson }) {
     return (
         <div
-            className="reveal relative rounded-[30px] overflow-hidden h-full flex flex-col items-center justify-center text-center p-10"
+            className="relative rounded-[30px] overflow-hidden h-full flex flex-col items-center justify-center text-center p-10"
             style={{
-                animationDelay: ".12s",
                 background: "rgba(255,255,255,.025)",
                 border: "1px solid rgba(255,255,255,.07)",
             }}
         >
-            <Confetti />
-            <div className="relative pop" style={{ animationDelay: ".25s" }}>
+            <div className="relative">
                 <div
                     className="absolute -inset-7 rounded-full"
                     style={{
@@ -129,12 +84,11 @@ function BdayFeatured({ p }: { p: BirthdayPerson }) {
     );
 }
 
-function BdayRow({ p, delay }: { p: BirthdayPerson; delay: string }) {
+function BdayRow({ p }: { p: BirthdayPerson }) {
     return (
         <div
-            className="reveal flex items-center gap-8 rounded-[26px] px-9 flex-1 min-h-0"
+            className="flex items-center gap-8 rounded-[26px] px-9 flex-1 min-h-0"
             style={{
-                animationDelay: delay,
                 background: "rgba(255,255,255,.03)",
                 border: "1px solid rgba(255,255,255,.07)",
             }}
@@ -160,12 +114,11 @@ function BdayRow({ p, delay }: { p: BirthdayPerson; delay: string }) {
     );
 }
 
-function BdayCard({ p, delay }: { p: BirthdayPerson; delay: string }) {
+function BdayCard({ p }: { p: BirthdayPerson }) {
     return (
         <div
-            className="reveal flex flex-col items-center text-center justify-center gap-3.5 rounded-[28px] p-7 h-full"
+            className="flex flex-col items-center text-center justify-center gap-3.5 rounded-[28px] p-7 h-full"
             style={{
-                animationDelay: delay,
                 background: "rgba(255,255,255,.03)",
                 border: "1px solid rgba(255,255,255,.07)",
             }}
@@ -230,11 +183,7 @@ export default function BirthdaysSlide({
                 }}
             >
                 {list.slice(0, 4).map((p, i) => (
-                    <BdayCard
-                        key={i}
-                        p={p}
-                        delay={[".16s", ".24s", ".32s", ".4s"][i]}
-                    />
+                    <BdayCard key={i} p={p} />
                 ))}
             </div>
         );
@@ -244,11 +193,7 @@ export default function BirthdaysSlide({
                 {first && <BdayFeatured p={first} />}
                 <div className="flex flex-col gap-7 min-h-0">
                     {rest.slice(0, 3).map((p, i) => (
-                        <BdayRow
-                            key={i}
-                            p={p}
-                            delay={[".24s", ".32s", ".4s"][i]}
-                        />
+                        <BdayRow key={i} p={p} />
                     ))}
                 </div>
             </div>
@@ -256,14 +201,8 @@ export default function BirthdaysSlide({
     }
 
     return (
-        <div className="h-full flex flex-col px-14 pt-9 pb-9">
-            <h2
-                className="reveal font-poster font-bold text-white leading-none text-3xl mb-7"
-                style={{ animationDelay: ".05s" }}
-            >
-                Verjaardagen
-            </h2>
-            <div className="flex-1 min-h-0">{body}</div>
-        </div>
+        <SlideLayout title="Verjaardagen">
+            {body}
+        </SlideLayout>
     );
 }
