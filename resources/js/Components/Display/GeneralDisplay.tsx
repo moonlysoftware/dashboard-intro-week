@@ -200,7 +200,7 @@ function BirthdaysBlock({ data }: { data: any }) {
 
 // ---- Announcements mini-block ----
 const ANN_SPLIT_BLEND =
-    "linear-gradient(90deg, #08060f 0%, #08060f 6%, rgba(8,6,15,.8) 18%, rgba(8,6,15,.4) 34%, rgba(8,6,15,.1) 50%, transparent 64%)";
+    "linear-gradient(90deg, #08060f 0%, #08060f 20%, rgba(8,6,15,.85) 32%, rgba(8,6,15,.45) 46%, rgba(8,6,15,.1) 58%, transparent 70%)";
 
 const ANN_OVERLAY_BLEND =
     "linear-gradient(180deg, rgba(8,6,15,.05) 0%, rgba(8,6,15,.55) 55%, rgba(8,6,15,.95) 100%)";
@@ -208,7 +208,21 @@ const ANN_OVERLAY_BLEND =
 function AnnMiniSplit({ ann }: { ann: any }) {
     const body = typeof ann.body === "string" ? ann.body.split(/\n{2,}/)[0] : "";
     return (
-        <div className="h-full flex overflow-hidden" style={{ background: "#08060f" }}>
+        <div className="h-full w-full relative overflow-hidden" style={{ background: "#08060f" }}>
+            {ann.photo ? (
+                <img
+                    src={ann.photo}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover"
+                    style={{ objectPosition: ann.pos || "center" }}
+                />
+            ) : (
+                <div className="absolute inset-0 imgslot opacity-60" />
+            )}
+            <div
+                className="pointer-events-none absolute inset-0 z-[1]"
+                style={{ background: ANN_SPLIT_BLEND }}
+            />
             <div className="relative z-10 flex h-full w-[42%] shrink-0 flex-col justify-center px-8 py-7 gap-3">
                 {ann.badge && (
                     <span className="self-start text-[15px] font-bold bg-white/15 backdrop-blur-sm text-white rounded-full px-4 py-1.5 leading-none">
@@ -225,22 +239,6 @@ function AnnMiniSplit({ ann }: { ann: any }) {
                         {body}
                     </p>
                 )}
-            </div>
-            <div className="relative h-full w-[58%]">
-                {ann.photo ? (
-                    <img
-                        src={ann.photo}
-                        alt=""
-                        className="absolute inset-0 w-full h-full object-cover"
-                        style={{ objectPosition: ann.pos || "center" }}
-                    />
-                ) : (
-                    <div className="absolute inset-0 imgslot opacity-60" />
-                )}
-                <div
-                    className="pointer-events-none absolute inset-0"
-                    style={{ background: ANN_SPLIT_BLEND }}
-                />
             </div>
         </div>
     );
@@ -294,7 +292,7 @@ function AnnouncementsBlock({ data }: { data: any }) {
 
     useEffect(() => {
         if (slides.length <= 1) return;
-        const timer = setInterval(() => setIdx((i) => (i + 1) % slides.length), 6000);
+        const timer = setInterval(() => setIdx((i) => (i + 1) % slides.length), 300_000);
         return () => clearInterval(timer);
     }, [slides.length]);
 
