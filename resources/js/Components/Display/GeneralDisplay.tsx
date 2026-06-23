@@ -37,58 +37,68 @@ function BlockHead({ icon, title, sub, accent }: { icon: string; title: string; 
     );
 }
 
-// ---- Toggl leaderboard ----
-const MEDALS = ['#FFC53D', '#cfd4e0', '#e0935b'];
+// ---- Agenda block ----
+function MiniEventCard({ ev }: { ev: any }) {
+    const title = ev.title || ev.name || '';
+    const when = ev.when_label || ev.when || '';
+    const tag = ev.tag || ev.where || ev.location || '';
+    const grad = ev.grad || (ev.accent
+        ? `linear-gradient(150deg,${ev.accent}cc,${ev.accent}55)`
+        : 'linear-gradient(150deg,#6C52FF,#FF4490)');
 
-function TogglBlock({ data }: { data: any }) {
-    const apiEntries = (data?.data?.entries ?? []) as { name: string; hours: number }[];
-    const configEntries = (data?.config?.entries ?? []) as { name: string; hours: number }[];
-    const entries = (apiEntries.length ? apiEntries : configEntries).slice(0, 5);
-    const title = data?.config?.title || 'Toggl Leaderboard';
-    const subtitle = data?.config?.subtitle || 'Deze week · gewerkte uren';
-    const max = Math.max(1, ...entries.map((e) => e.hours || 0));
+    return (
+        <div
+            className="relative rounded-[24px] overflow-hidden min-h-0"
+            style={{ background: ev.photo ? '#0c0a18' : grad }}
+        >
+            {ev.photo && (
+                <img
+                    src={ev.photo}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover"
+                    style={{ objectPosition: ev.pos || 'center' }}
+                />
+            )}
+            <div
+                className="absolute inset-0"
+                style={{ background: 'linear-gradient(180deg,rgba(6,4,16,.08) 0%,rgba(6,4,16,.55) 60%,rgba(6,4,16,.92) 100%)' }}
+            />
+            <div className="relative h-full flex flex-col justify-end p-5">
+                {tag && (
+                    <span className="self-start text-[17px] font-bold bg-white/15 backdrop-blur-sm text-white rounded-full px-3 py-1 mb-2 truncate max-w-full leading-none">
+                        {tag}
+                    </span>
+                )}
+                <h3 className="font-display font-bold text-white text-[26px] leading-tight truncate">{title}</h3>
+                <div className="text-white/55 text-[20px] font-semibold mt-1 truncate">{when}</div>
+            </div>
+        </div>
+    );
+}
+
+function AgendaBlock({ data }: { data: any }) {
+    const events = (Array.isArray(data?.data) ? data.data : []) as any[];
+    const title = data?.config?.title || 'Agenda';
+    const subtitle = data?.config?.subtitle || 'Aankomende evenementen';
+    const count = Math.min(events.length, 6);
+    const cols = count <= 2 ? 1 : 2;
+    const rows = count === 0 ? 1 : Math.ceil(count / cols);
 
     return (
         <Block className="p-10 flex flex-col">
-            <BlockHead icon="⏱️" title={title} sub={subtitle} accent="#05BFDB" />
-            <div className="flex-1 flex flex-col justify-between gap-3 min-h-0">
-                {entries.map((e: any, i: number) => {
-                    const pct = Math.round(((e.hours || 0) / max) * 100);
-                    const medal = MEDALS[i];
-                    return (
-                        <div key={i} className="reveal flex items-center gap-5 rounded-[22px] px-5 py-4"
-                            style={{
-                                animationDelay: `${i * 0.08}s`,
-                                background: i === 0 ? 'rgba(255,197,61,.10)' : 'rgba(255,255,255,.04)',
-                                border: '1px solid ' + (i === 0 ? 'rgba(255,197,61,.30)' : 'rgba(255,255,255,.08)'),
-                            }}>
-                            <div className="w-[52px] shrink-0 text-center font-display font-bold text-[40px] leading-none"
-                                style={{ color: medal || 'rgba(255,255,255,.4)' }}>
-                                {i + 1}
-                            </div>
-                            <Avatar name={e.name} size={72} ring={false} />
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-baseline justify-between gap-3 mb-2">
-                                    <span className="font-display font-bold text-white text-[34px] leading-none truncate">{e.name}</span>
-                                    <span className="font-display font-bold text-[34px] leading-none shrink-0 whitespace-nowrap"
-                                        style={{ color: i === 0 ? '#FFC53D' : '#B5A9FF' }}>
-                                        {(e.hours || 0).toFixed(1)}<span className="text-white/40 text-[24px]"> u</span>
-                                    </span>
-                                </div>
-                                <div className="h-[12px] rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,.08)' }}>
-                                    <div className="h-full rounded-full"
-                                        style={{
-                                            width: `${pct}%`,
-                                            background: i === 0
-                                                ? 'linear-gradient(90deg,#FFC53D,#FF73AC)'
-                                                : 'linear-gradient(90deg,#05BFDB,#6C52FF)',
-                                            animation: 'growbarH 1.1s ease both',
-                                        }} />
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
+            <BlockHead icon="📅" title={title} sub={subtitle} accent="#6C52FF" />
+            <div
+                className="flex-1 min-h-0 grid gap-4"
+                style={{ gridTemplateColumns: `repeat(${cols}, 1fr)`, gridTemplateRows: `repeat(${rows}, 1fr)` }}
+            >
+                {count === 0 && (
+                    <div className="flex items-center justify-center text-white/20 text-[28px] font-medium">
+                        Geen evenementen gepland
+                    </div>
+                )}
+                {events.slice(0, 6).map((ev, i) => (
+                    <MiniEventCard key={i} ev={ev} />
+                ))}
             </div>
         </Block>
     );
@@ -175,7 +185,7 @@ export default function GeneralDisplay({ widgets, screenConfig }: GeneralDisplay
     const rooms = screenConfig?.rooms ?? [];
     const weather = screenConfig?.weather;
 
-    const toggl = widgets.find((w) => w.widget_type === 'toggl_time_tracking');
+    const agenda = widgets.find((w) => w.widget_type === 'agenda');
     const birthday = widgets.find((w) => w.widget_type === 'birthday' || w.widget_type === 'birthdays');
     const spotlight = widgets.find((w) => w.widget_type === 'spotlight_event');
     const moment = widgets.find((w) => w.widget_type === 'moment_photo');
@@ -188,9 +198,9 @@ export default function GeneralDisplay({ widgets, screenConfig }: GeneralDisplay
 
                 <main className="flex-1 min-h-0 px-12 pt-2 pb-3">
                     <div className="h-full grid gap-7" style={{ gridTemplateColumns: '1.04fr 0.96fr', gridTemplateRows: '1fr 1fr' }}>
-                        {/* Toggl spans both rows on the left */}
+                        {/* Agenda spans both rows on the left */}
                         <div className="row-span-2 min-h-0">
-                            <TogglBlock data={toggl || {}} />
+                            <AgendaBlock data={agenda || {}} />
                         </div>
                         {/* Top-right: birthdays */}
                         <div className="min-h-0">

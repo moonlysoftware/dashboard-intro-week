@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AgendaEventController;
 use App\Http\Controllers\DisplayController;
 use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\OverlayController;
@@ -48,6 +49,12 @@ Route::middleware('auth')->group(function () {
     Route::get('image-widget/images', [ImageUploadController::class, 'index'])->name('image-widget.index');
     Route::post('image-widget/upload', [ImageUploadController::class, 'store'])->name('image-widget.store');
     Route::delete('image-widget/images/{filename}', [ImageUploadController::class, 'destroy'])->name('image-widget.destroy');
+
+    // Agenda Events (central event library)
+    Route::get('agenda-events', [AgendaEventController::class, 'index'])->name('agenda-events.index');
+    Route::post('agenda-events', [AgendaEventController::class, 'store'])->name('agenda-events.store');
+    Route::patch('agenda-events/{agendaEvent}', [AgendaEventController::class, 'update'])->name('agenda-events.update');
+    Route::delete('agenda-events/{agendaEvent}', [AgendaEventController::class, 'destroy'])->name('agenda-events.destroy');
 });
 
 // Public Display Routes (no authentication)

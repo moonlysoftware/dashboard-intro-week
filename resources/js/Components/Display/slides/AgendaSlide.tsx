@@ -18,6 +18,7 @@ interface AgendaEvent {
 interface AgendaContent {
     layout?: "featured" | "grid" | "list";
     events?: AgendaEvent[];
+    selected_ids?: number[];
 }
 
 const DEFAULT_EVENTS: AgendaEvent[] = [
@@ -51,14 +52,15 @@ const DEFAULT_EVENTS: AgendaEvent[] = [
 ];
 
 function normalizeEvent(
-    e: AgendaEvent,
+    e: AgendaEvent & { when_label?: string; location?: string },
 ): Required<Pick<AgendaEvent, "name" | "when" | "tag" | "tagline">> &
     AgendaEvent {
     const accent = e.accent || "#6C52FF";
     return {
         ...e,
         name: e.name || e.title || "",
-        tag: e.tag || e.where || "",
+        when: e.when || (e as any).when_label || "",
+        tag: e.tag || e.where || (e as any).location || "",
         tagline: e.tagline || "",
         grad:
             e.grad ||
@@ -124,8 +126,14 @@ function AgendaCard({
     );
 }
 
-export default function AgendaSlide({ content }: { content?: AgendaContent }) {
-    const events = content?.events?.length ? content.events : DEFAULT_EVENTS;
+export default function AgendaSlide({ content, events: backendEvents }: { content?: AgendaContent; events?: any[] }) {
+    const rawEvents =
+        Array.isArray(backendEvents) && backendEvents.length > 0
+            ? backendEvents
+            : content?.events?.length
+              ? content.events
+              : DEFAULT_EVENTS;
+    const events = rawEvents;
     const layout = content?.layout || "featured";
     const [a, b, c] = events;
 

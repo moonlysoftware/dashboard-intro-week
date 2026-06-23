@@ -32,7 +32,7 @@ function renderSlide(widget: SlideWidget) {
     const content = widget.config || {};
     switch (widget.widget_type) {
         case 'agenda':
-            return <AgendaSlide content={content} />;
+            return <AgendaSlide content={content} events={widget.data} />;
         case 'birthdays':
         case 'birthday':
             return <BirthdaysSlide content={content} />;

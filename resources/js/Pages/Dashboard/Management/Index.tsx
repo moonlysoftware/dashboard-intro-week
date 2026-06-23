@@ -4,6 +4,7 @@ import { SlideshowEditor } from '@/Components/Management/SlideshowEditor';
 import { GeneralEditor } from '@/Components/Management/GeneralEditor';
 import { TechnicalEditor } from '@/Components/Management/TechnicalEditor';
 import { OverlayEditor } from '@/Components/Management/OverlayEditor';
+import { AgendaManager, type AgendaEventRecord } from '@/Components/Management/AgendaManager';
 import { Field, TextInput, SaveButton, Divider } from '@/Components/Management/Ui';
 import { CreateScreenDialog } from '@/Components/Screens/CreateScreenDialog';
 import axios from 'axios';
@@ -40,6 +41,7 @@ interface MgmtScreen {
 
 interface ManagementIndexProps {
     screens: MgmtScreen[];
+    agendaEvents: AgendaEventRecord[];
     overlay: {
         rooms: RoomConfig[];
         legacy_rooms: RoomConfig[];
@@ -56,7 +58,7 @@ interface RoomConfig {
 }
 
 type Tab = 'content' | 'settings';
-type ViewMode = 'screen' | 'overlay';
+type ViewMode = 'screen' | 'overlay' | 'agenda';
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
@@ -78,6 +80,7 @@ function Sidebar({
     viewMode,
     onSelect,
     onSelectOverlay,
+    onSelectAgenda,
     onNewScreen,
 }: {
     screens: MgmtScreen[];
@@ -85,15 +88,14 @@ function Sidebar({
     viewMode: ViewMode;
     onSelect: (id: number) => void;
     onSelectOverlay: () => void;
+    onSelectAgenda: () => void;
     onNewScreen: () => void;
 }) {
     return (
         <aside className="w-56 flex-none border-r border-[#e6e2f4] bg-[#f8f6fd] flex flex-col h-full">
             <div className="p-4 border-b border-[#e6e2f4]">
                 <div className="flex items-center gap-2">
-                    <span className="text-lg font-black tracking-tight text-[#1a1430]" style={{ fontFamily: '"Space Grotesk", sans-serif' }}>
-                        MOONLY
-                    </span>
+                    <img src="/images/MoonlyLogo_SpaceBlack.svg" alt="Moonly" className="h-4" />
                     <span className="text-[10px] bg-[#6C52FF]/10 text-[#6C52FF] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide">
                         mgmt
                     </span>
@@ -137,10 +139,27 @@ function Sidebar({
                 </div>
             </nav>
 
-            <div className="px-3 pb-2">
+            <div className="px-3 pb-2 space-y-0.5">
                 <p className="px-2 pt-2 pb-2 text-[10px] font-bold uppercase tracking-widest text-[#b0abc8]">
-                    Overlay
+                    Beheer
                 </p>
+                <button
+                    type="button"
+                    onClick={onSelectAgenda}
+                    className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-all ${
+                        viewMode === 'agenda'
+                            ? 'bg-[#6C52FF] text-white'
+                            : 'text-[#1a1430] hover:bg-[#e6e2f4]'
+                    }`}
+                >
+                    <span className="text-base leading-none">📅</span>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold truncate">Evenementen</p>
+                        <p className={`text-[11px] truncate ${viewMode === 'agenda' ? 'text-white/70' : 'text-[#8b84a8]'}`}>
+                            Centrale agenda
+                        </p>
+                    </div>
+                </button>
                 <button
                     type="button"
                     onClick={onSelectOverlay}
@@ -322,8 +341,9 @@ function PreviewPanel({ screen }: { screen: MgmtScreen | null }) {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
-export default function Index({ screens: initialScreens, overlay: initialOverlay }: ManagementIndexProps) {
+export default function Index({ screens: initialScreens, agendaEvents: initialAgendaEvents, overlay: initialOverlay }: ManagementIndexProps) {
     const [screens, setScreens] = useState<MgmtScreen[]>(initialScreens);
+    const [agendaEvents, setAgendaEvents] = useState<AgendaEventRecord[]>(initialAgendaEvents);
     const [overlayRooms, setOverlayRooms] = useState<RoomConfig[]>(initialOverlay.rooms ?? []);
     const [createOpen, setCreateOpen] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('screen');
@@ -331,7 +351,7 @@ export default function Index({ screens: initialScreens, overlay: initialOverlay
     // Persist active screen / overlay view in URL
     const [activeScreenId, setActiveScreenId] = useState<number | null>(() => {
         const params = new URLSearchParams(window.location.search);
-        if (params.get('view') === 'overlay') return null;
+        if (params.get('view') === 'overlay' || params.get('view') === 'agenda') return null;
         const id = params.get('active');
         const parsed = id ? parseInt(id, 10) : null;
         return parsed && initialScreens.some((s) => s.id === parsed)
@@ -343,9 +363,8 @@ export default function Index({ screens: initialScreens, overlay: initialOverlay
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
-        if (params.get('view') === 'overlay') {
-            setViewMode('overlay');
-        }
+        if (params.get('view') === 'overlay') setViewMode('overlay');
+        else if (params.get('view') === 'agenda') setViewMode('agenda');
     }, []);
 
     // Keep screens in sync with Inertia page data
@@ -367,6 +386,11 @@ export default function Index({ screens: initialScreens, overlay: initialOverlay
     const handleSelectOverlay = () => {
         setViewMode('overlay');
         window.history.replaceState(null, '', '?view=overlay');
+    };
+
+    const handleSelectAgenda = () => {
+        setViewMode('agenda');
+        window.history.replaceState(null, '', '?view=agenda');
     };
 
     const activeScreen = screens.find((s) => s.id === activeScreenId) ?? null;
@@ -404,11 +428,28 @@ export default function Index({ screens: initialScreens, overlay: initialOverlay
                 viewMode={viewMode}
                 onSelect={handleSelectScreen}
                 onSelectOverlay={handleSelectOverlay}
+                onSelectAgenda={handleSelectAgenda}
                 onNewScreen={() => setCreateOpen(true)}
             />
 
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {viewMode === 'overlay' ? (
+                {viewMode === 'agenda' ? (
+                    <>
+                        <div className="flex items-center gap-3 px-5 py-4 border-b border-[#e6e2f4] bg-white shrink-0">
+                            <span className="text-2xl leading-none">📅</span>
+                            <div>
+                                <h1 className="text-sm font-bold text-[#1a1430]">Evenementen</h1>
+                                <p className="text-xs text-[#8b84a8]">Centrale agenda — gebruikt door alle schermen</p>
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-5">
+                            <AgendaManager
+                                events={agendaEvents}
+                                onEventsChange={setAgendaEvents}
+                            />
+                        </div>
+                    </>
+                ) : viewMode === 'overlay' ? (
                     <>
                         <div className="flex items-center gap-3 px-5 py-4 border-b border-[#e6e2f4] bg-white shrink-0">
                             <span className="text-2xl leading-none">🏢</span>
@@ -444,6 +485,7 @@ export default function Index({ screens: initialScreens, overlay: initialOverlay
                                     screenId={activeScreen.id}
                                     slides={slides}
                                     onSlidesChange={(updated) => updateSlides(activeScreen.id, updated)}
+                                    agendaEvents={agendaEvents}
                                 />
                             )}
                             {activeTab === 'content' && activeScreen.screen_type === 'general' && (
@@ -484,7 +526,7 @@ export default function Index({ screens: initialScreens, overlay: initialOverlay
                 )}
             </div>
 
-            <PreviewPanel screen={viewMode === 'screen' ? activeScreen : null} />
+            <PreviewPanel screen={viewMode === 'screen' && activeScreen ? activeScreen : null} />
 
             <CreateScreenDialog open={createOpen} onOpenChange={setCreateOpen} />
         </div>

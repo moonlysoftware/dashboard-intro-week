@@ -74,6 +74,11 @@ export default function Show({ screen: initialScreen }: DisplayShowProps) {
         return subscribeDisplayRefresh(initialScreen.id, fetchData);
     }, [initialScreen.id, fetchData]);
 
+    useEffect(() => {
+        const id = setInterval(fetchData, 60_000);
+        return () => clearInterval(id);
+    }, [fetchData]);
+
     const displayProps = { widgets, screenConfig };
 
     return (

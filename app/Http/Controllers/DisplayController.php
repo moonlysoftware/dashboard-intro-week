@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AgendaEvent;
 use App\Models\Screen;
 use App\Models\Setting;
 use App\Services\GoogleCalendarService;
@@ -149,10 +150,34 @@ class DisplayController extends Controller
             'clock_weather' => $this->getClockWeatherData(),
             'announcements', 'announcement' => $this->getAnnouncementsData($widget),
             'toggl_time_tracking' => $this->getTogglTimeTrackingData(),
-            // New config-driven types — no external data needed
-            'agenda', 'appreciation', 'spotlight_event', 'moment_photo' => [],
+            'agenda' => $this->getAgendaData($widget),
+            // Config-driven types — no external data needed
+            'appreciation', 'spotlight_event', 'moment_photo' => [],
             default => [],
         };
+    }
+
+    private function getAgendaData($widget): array
+    {
+        $config = $widget->config ?? [];
+        $selectedIds = $config['selected_ids'] ?? [];
+
+        if (! empty($selectedIds)) {
+            // Slideshow: return only selected events, in selection order
+            $events = AgendaEvent::whereIn('id', $selectedIds)->get()->keyBy('id');
+
+            return collect($selectedIds)
+                ->map(fn ($id) => $events->get($id))
+                ->filter()
+                ->values()
+                ->toArray();
+        }
+
+        // General screen: return all events sorted by date (nulls last), max 6
+        return AgendaEvent::orderByRaw('when_date IS NULL, when_date ASC')
+            ->limit(6)
+            ->get()
+            ->toArray();
     }
 
     private function getBirthdayData(): array

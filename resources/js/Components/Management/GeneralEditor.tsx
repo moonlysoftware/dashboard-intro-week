@@ -6,7 +6,6 @@ import {
     Field,
     TextInput,
     TextArea,
-    RowCard,
     SaveButton,
     SectionTitle,
     Divider,
@@ -44,16 +43,17 @@ interface Props {
 }
 
 const GENERAL_WIDGETS = [
-    { type: 'toggl_time_tracking', order: 0 },
+    { type: 'agenda', order: 0 },
     { type: 'birthday', order: 1 },
     { type: 'spotlight_event', order: 2 },
     { type: 'moment_photo', order: 3 },
 ] as const;
 
 const DEFAULT_CONFIGS: Record<string, Record<string, any>> = {
-    toggl_time_tracking: {
-        title: 'Toggl Leaderboard',
-        subtitle: 'Deze week · gewerkte uren',
+    agenda: {
+        title: 'Agenda',
+        subtitle: 'Aankomende evenementen',
+        events: [],
     },
     birthday: {},
     spotlight_event: {
@@ -89,13 +89,6 @@ function migrateBentoConfig(
     type: string,
     cfg: Record<string, any>,
 ): Record<string, any> {
-    if (type === 'toggl_time_tracking' && bento.toggl) {
-        return {
-            ...cfg,
-            title: bento.toggl.title || cfg.title,
-            subtitle: bento.toggl.subtitle || cfg.subtitle,
-        };
-    }
     if (type === 'spotlight_event' && bento.spotlight) {
         return { ...cfg, ...bento.spotlight };
     }
@@ -114,13 +107,17 @@ export function GeneralEditor({
 }: Props) {
     const bento = screenConfig.bento ?? {};
 
-    const togglWidget = findWidget(widgets, 'toggl_time_tracking');
+    const agendaWidget = findWidget(widgets, 'agenda');
     const spotlightWidget = findWidget(widgets, 'spotlight_event');
     const momentWidget = findWidget(widgets, 'moment_photo');
 
-    const [togglCfg, setTogglCfg] = useState(() =>
-        migrateBentoConfig(bento, 'toggl_time_tracking', widgetConfig(togglWidget, 'toggl_time_tracking')),
-    );
+    const [agendaCfg, setAgendaCfg] = useState<{ title: string; subtitle: string }>(() => {
+        const cfg = widgetConfig(agendaWidget, 'agenda');
+        return {
+            title: cfg.title ?? 'Agenda',
+            subtitle: cfg.subtitle ?? 'Aankomende evenementen',
+        };
+    });
     const [spotlight, setSpotlight] = useState<SpotlightConfig>(() =>
         migrateBentoConfig(bento, 'spotlight_event', widgetConfig(spotlightWidget, 'spotlight_event')),
     );
@@ -173,7 +170,7 @@ export function GeneralEditor({
         setSaving(true);
         try {
             await Promise.all([
-                saveWidget(togglWidget, togglCfg),
+                saveWidget(agendaWidget, agendaCfg),
                 saveWidget(spotlightWidget, spotlight),
                 saveWidget(momentWidget, moment),
             ]);
@@ -205,31 +202,33 @@ export function GeneralEditor({
 
     return (
         <div className="space-y-6">
-            {/* Toggl Leaderboard */}
+            {/* Agenda */}
             <section className="space-y-4">
-                <SectionTitle>Toggl Leaderboard</SectionTitle>
+                <SectionTitle>Agenda</SectionTitle>
                 <div className="grid grid-cols-2 gap-3">
                     <Field label="Titel">
                         <TextInput
-                            value={togglCfg.title ?? ''}
-                            onChange={(e) => setTogglCfg({ ...togglCfg, title: e.target.value })}
-                            placeholder="Toggl Leaderboard"
+                            value={agendaCfg.title}
+                            onChange={(e) => setAgendaCfg({ ...agendaCfg, title: e.target.value })}
+                            placeholder="Agenda"
                         />
                     </Field>
                     <Field label="Ondertitel">
                         <TextInput
-                            value={togglCfg.subtitle ?? ''}
-                            onChange={(e) => setTogglCfg({ ...togglCfg, subtitle: e.target.value })}
-                            placeholder="Deze week · gewerkte uren"
+                            value={agendaCfg.subtitle}
+                            onChange={(e) => setAgendaCfg({ ...agendaCfg, subtitle: e.target.value })}
+                            placeholder="Aankomende evenementen"
                         />
                     </Field>
                 </div>
                 <div className="rounded-xl border border-[#e6e2f4] bg-[#f8f7fd] p-4 space-y-1.5">
-                    <p className="text-xs font-bold text-[#5b5478] uppercase tracking-wide">Live Toggl-data</p>
+                    <p className="text-xs font-bold text-[#5b5478] uppercase tracking-wide">Centrale agenda</p>
                     <p className="text-sm text-[#6b6490]">
-                        Uren per teamlid worden automatisch opgehaald via de Toggl API.
+                        De eerstvolgende 6 evenementen worden automatisch geladen uit de centrale agenda.
                     </p>
-                    <p className="text-xs text-[#8b84a8]">⏱️ Huidige week · top 5 op gewerkte uren</p>
+                    <p className="text-xs text-[#8b84a8]">
+                        📅 Beheer evenementen via <strong>Beheer → Evenementen</strong>
+                    </p>
                 </div>
             </section>
 

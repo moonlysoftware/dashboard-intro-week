@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { notifyDisplayRefresh } from "@/lib/displayRefresh";
+import type { AgendaEventRecord } from "./AgendaManager";
 import {
     Field,
     TextInput,
@@ -28,6 +29,7 @@ interface Props {
     screenId: number;
     slides: SlideWidget[];
     onSlidesChange: (slides: SlideWidget[]) => void;
+    agendaEvents?: AgendaEventRecord[];
 }
 
 const SLIDE_META: Record<
@@ -105,25 +107,20 @@ function getSlideSubtitle(slide: SlideWidget): string {
 function AgendaEditor({
     cfg,
     onChange,
+    agendaEvents = [],
 }: {
     cfg: Record<string, any>;
     onChange: (c: Record<string, any>) => void;
+    agendaEvents?: AgendaEventRecord[];
 }) {
-    const events: any[] = cfg.events ?? [];
+    const selectedIds: number[] = cfg.selected_ids ?? [];
 
-    const setEvents = (ev: any[]) => onChange({ ...cfg, events: ev });
-
-    const addEvent = () =>
-        setEvents([
-            ...events,
-            { title: "", when: "", where: "", accent: "#6C52FF", photo: "" },
-        ]);
-
-    const updateEvent = (i: number, patch: Record<string, any>) =>
-        setEvents(events.map((e, idx) => (idx === i ? { ...e, ...patch } : e)));
-
-    const removeEvent = (i: number) =>
-        setEvents(events.filter((_, idx) => idx !== i));
+    const toggle = (id: number) => {
+        const next = selectedIds.includes(id)
+            ? selectedIds.filter((x) => x !== id)
+            : [...selectedIds, id];
+        onChange({ ...cfg, selected_ids: next });
+    };
 
     return (
         <div className="space-y-4">
@@ -139,81 +136,61 @@ function AgendaEditor({
                 />
             </Field>
             <Divider />
-            <SectionTitle>Evenementen</SectionTitle>
-            <div className="space-y-3">
-                {events.map((ev, i) => (
-                    <RowCard key={i} onDelete={() => removeEvent(i)}>
-                        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-4 items-start pr-6">
-                            <div className="space-y-3 min-w-0">
-                                <Field label="Titel">
-                                    <TextInput
-                                        value={ev.title}
-                                        onChange={(e) =>
-                                            updateEvent(i, {
-                                                title: e.target.value,
-                                            })
-                                        }
-                                        placeholder="Teammeeting"
-                                    />
-                                </Field>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <Field label="Wanneer">
-                                        <TextInput
-                                            value={ev.when}
-                                            onChange={(e) =>
-                                                updateEvent(i, {
-                                                    when: e.target.value,
-                                                })
-                                            }
-                                            placeholder="Ma 14:00"
-                                        />
-                                    </Field>
-                                    <Field label="Waar">
-                                        <TextInput
-                                            value={ev.where}
-                                            onChange={(e) =>
-                                                updateEvent(i, {
-                                                    where: e.target.value,
-                                                })
-                                            }
-                                            placeholder="Room 3"
-                                        />
-                                    </Field>
+            <SectionTitle>Evenementen selecteren</SectionTitle>
+            {agendaEvents.length === 0 ? (
+                <div className="rounded-xl border border-[#e6e2f4] bg-[#f8f7fd] p-4">
+                    <p className="text-sm text-[#6b6490]">
+                        Geen evenementen in de centrale agenda. Voeg ze toe via{" "}
+                        <strong>Beheer → Evenementen</strong>.
+                    </p>
+                </div>
+            ) : (
+                <div className="space-y-2">
+                    {agendaEvents.map((ev) => {
+                        const selected = selectedIds.includes(ev.id);
+                        const grad = ev.grad || `linear-gradient(140deg,${ev.accent},${ev.accent}88)`;
+                        return (
+                            <button
+                                key={ev.id}
+                                type="button"
+                                onClick={() => toggle(ev.id)}
+                                className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-all ${
+                                    selected
+                                        ? "border-[#6C52FF] bg-[#6C52FF]/5"
+                                        : "border-[#e6e2f4] bg-white hover:border-[#6C52FF]/40"
+                                }`}
+                            >
+                                <div className="h-10 w-1.5 rounded-full shrink-0" style={{ background: grad }} />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-semibold text-[#1a1430] truncate">{ev.title}</p>
+                                    <p className="text-xs text-[#8b84a8] truncate">
+                                        {ev.when_label}
+                                        {ev.location ? ` · ${ev.location}` : ""}
+                                    </p>
                                 </div>
-                                <Field label="Accentkleur">
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="color"
-                                            value={ev.accent ?? "#6C52FF"}
-                                            onChange={(e) =>
-                                                updateEvent(i, {
-                                                    accent: e.target.value,
-                                                })
-                                            }
-                                            className="h-8 w-10 rounded cursor-pointer border border-[#e6e2f4]"
-                                        />
-                                        <TextInput
-                                            value={ev.accent ?? "#6C52FF"}
-                                            onChange={(e) =>
-                                                updateEvent(i, {
-                                                    accent: e.target.value,
-                                                })
-                                            }
-                                            className="font-mono"
-                                        />
-                                    </div>
-                                </Field>
-                            </div>
-                            <ImagePreviewPanel
-                                value={ev.photo ?? ""}
-                                onChange={(url) => updateEvent(i, { photo: url })}
-                                hint="Wordt als achtergrond op de agenda-kaart getoond. Zonder afbeelding wordt de accentkleur gebruikt."
-                            />
-                        </div>
-                    </RowCard>
-                ))}
-            </div>
-            <AddButton onClick={addEvent} label="Evenement toevoegen" />
+                                <div
+                                    className={`h-4 w-4 rounded shrink-0 border-2 flex items-center justify-center transition-all ${
+                                        selected
+                                            ? "border-[#6C52FF] bg-[#6C52FF]"
+                                            : "border-[#d0cce8] bg-white"
+                                    }`}
+                                >
+                                    {selected && (
+                                        <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                                            <path d="M1 4l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                    )}
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+            {selectedIds.length > 0 && (
+                <p className="text-xs text-[#8b84a8]">
+                    {selectedIds.length} evenement{selectedIds.length !== 1 ? "en" : ""} geselecteerd
+                </p>
+            )}
         </div>
     );
 }
@@ -381,16 +358,59 @@ function AppreciationEditor({
 function AnnouncementEditor({
     cfg,
     onChange,
+    agendaEvents = [],
 }: {
     cfg: Record<string, any>;
     onChange: (c: Record<string, any>) => void;
+    agendaEvents?: Record<string, any>[];
 }) {
     const isSplit = (cfg.style ?? "split") === "split";
 
     const setDetails = (patch: Record<string, string>) =>
         onChange({ ...cfg, ...patch });
 
+    const importEvent = (ev: typeof agendaEvents[0]) => {
+        onChange({
+            ...cfg,
+            title: ev.title || ev.name || '',
+            badge: ev.tag || ev.where || 'Evenement',
+            date: ev.when || '',
+            time: '',
+            location: ev.where || ev.tag || '',
+            body: ev.tagline || '',
+            photo: ev.photo || '',
+        });
+    };
+
     return (
+        <>
+        {agendaEvents.length > 0 && (
+            <div className="space-y-2 pb-4 border-b border-[#e6e2f4]">
+                <p className="text-xs font-bold text-[#5b5478] uppercase tracking-wide">Importeer uit agenda</p>
+                <div className="flex flex-col gap-2">
+                    {agendaEvents.map((ev, i) => {
+                        const grad = ev.grad || (ev.accent
+                            ? `linear-gradient(140deg,${ev.accent},${ev.accent})`
+                            : 'linear-gradient(140deg,#6C52FF,#FF4490)');
+                        return (
+                            <button
+                                key={i}
+                                type="button"
+                                onClick={() => importEvent(ev)}
+                                className="flex items-center gap-3 rounded-xl border border-[#e6e2f4] bg-white p-3 text-left hover:border-[#6C52FF] hover:bg-[#6C52FF]/5 transition-all"
+                            >
+                                <div className="h-10 w-1.5 rounded-full shrink-0" style={{ background: grad }} />
+                                <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-[#1a1430] truncate">{ev.title || ev.name}</p>
+                                    <p className="text-xs text-[#8b84a8]">{ev.when}{ev.tag || ev.where ? ` · ${ev.tag || ev.where}` : ''}</p>
+                                </div>
+                                <span className="ml-auto text-xs text-[#6C52FF] font-medium shrink-0">Importeer →</span>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+        )}
         <FormWithImagePreview
             imageUrl={cfg.photo ?? ""}
             onImageChange={(url) => onChange({ ...cfg, photo: url })}
@@ -483,6 +503,7 @@ function AnnouncementEditor({
                 />
             </Field>
         </FormWithImagePreview>
+        </>
     );
 }
 
@@ -491,11 +512,13 @@ function SlideEditor({
     screenId,
     onSave,
     onBack,
+    agendaEvents = [],
 }: {
     slide: SlideWidget;
     screenId: number;
     onSave: (slide: SlideWidget) => void;
     onBack: () => void;
+    agendaEvents?: AgendaEventRecord[];
 }) {
     const [cfg, setCfg] = useState<Record<string, any>>(
         slide.config ?? SLIDE_META[slide.widget_type]?.defaultConfig ?? {},
@@ -562,7 +585,13 @@ function SlideEditor({
             </Field>
             <Divider />
 
-            <EditorComponent cfg={cfg} onChange={setCfg} />
+            {slide.widget_type === "agenda" ? (
+                <AgendaEditor cfg={cfg} onChange={setCfg} agendaEvents={agendaEvents} />
+            ) : slide.widget_type === "announcement" ? (
+                <AnnouncementEditor cfg={cfg} onChange={setCfg} agendaEvents={agendaEvents} />
+            ) : (
+                <EditorComponent cfg={cfg} onChange={setCfg} />
+            )}
 
             <div className="pt-2">
                 <SaveButton
@@ -577,7 +606,7 @@ function SlideEditor({
 
 // ─── Slide card list ──────────────────────────────────────────────────────────
 
-export function SlideshowEditor({ screenId, slides, onSlidesChange }: Props) {
+export function SlideshowEditor({ screenId, slides, onSlidesChange, agendaEvents = [] }: Props) {
     const [editingSlide, setEditingSlide] = useState<SlideWidget | null>(null);
     const [adding, setAdding] = useState(false);
 
@@ -665,6 +694,7 @@ export function SlideshowEditor({ screenId, slides, onSlidesChange }: Props) {
                     setEditingSlide(updated);
                 }}
                 onBack={() => setEditingSlide(null)}
+                agendaEvents={agendaEvents}
             />
         );
     }

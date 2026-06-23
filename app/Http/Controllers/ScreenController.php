@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AgendaEvent;
 use App\Models\Screen;
 use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
@@ -18,8 +19,13 @@ class ScreenController extends Controller
             $query->orderBy('grid_order');
         }])->withCount('widgets')->latest()->get();
 
+        $agendaEvents = AgendaEvent::orderByRaw('when_date IS NULL, when_date ASC')
+            ->orderBy('id')
+            ->get();
+
         return Inertia::render('Dashboard/Management/Index', [
             'screens' => $screens,
+            'agendaEvents' => $agendaEvents,
             'overlay' => [
                 'rooms' => Setting::get('overlay_rooms', []),
                 'legacy_rooms' => $this->findLegacyOverlayRooms($screens),

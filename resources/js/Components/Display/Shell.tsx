@@ -169,12 +169,7 @@ export function TopBar({ weather }: TopBarProps) {
     });
     return (
         <header className="relative flex items-center justify-between px-14 h-[104px] shrink-0">
-            <span
-                className="font-poster text-white text-[36px] font-semibold"
-                style={{ letterSpacing: ".42em" }}
-            >
-                MOONLY
-            </span>
+            <img src="/images/MoonlyLogo_Wit.svg" alt="Moonly" className="h-7" />
             <div className="flex items-baseline gap-4 text-white font-poster">
                 <span className="text-white/70 text-[34px] font-medium">
                     {weather || ""}
