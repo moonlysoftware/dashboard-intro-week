@@ -11,6 +11,13 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/Components/ui/dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/Components/ui/select';
 
 interface CreateScreenDialogProps {
     open: boolean;
@@ -22,6 +29,8 @@ export function CreateScreenDialog({ open, onOpenChange }: CreateScreenDialogPro
         name: '',
         description: '',
         refresh_interval: 30,
+        screen_type: 'slideshow' as 'slideshow' | 'general' | 'technical',
+        screen_config: { cycleSeconds: 60 },
     });
 
     const submit: FormEventHandler = (e) => {
@@ -78,21 +87,19 @@ export function CreateScreenDialog({ open, onOpenChange }: CreateScreenDialogPro
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="create-refresh">Refresh Interval (seconds)</Label>
-                            <Input
-                                id="create-refresh"
-                                type="number"
-                                min="5"
-                                max="300"
-                                value={data.refresh_interval}
-                                onChange={(e) => setData('refresh_interval', parseInt(e.target.value))}
-                                required
-                            />
-                            <p className="text-sm text-muted-foreground">
-                                How often the display should refresh (5-300 seconds)
-                            </p>
-                            {errors.refresh_interval && (
-                                <p className="text-sm text-destructive">{errors.refresh_interval}</p>
+                            <Label>Screen Type</Label>
+                            <Select value={data.screen_type} onValueChange={(v) => setData('screen_type', v as any)}>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="slideshow">Slideshow — cycling carousel (coffee corner)</SelectItem>
+                                    <SelectItem value="general">General — static bento (common area)</SelectItem>
+                                    <SelectItem value="technical">Technical — status & sport (tech room)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            {errors.screen_type && (
+                                <p className="text-sm text-destructive">{errors.screen_type}</p>
                             )}
                         </div>
                     </div>

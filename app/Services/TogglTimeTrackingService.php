@@ -179,6 +179,20 @@ class TogglTimeTrackingService
 
         usort($usersWithMissingHours, fn($a, $b) => $a['percentage'] <=> $b['percentage']);
 
+        $leaderboard = $users
+            ->map(function ($user) {
+                $secondsClocked = collect($user['time_entries'])->sum('seconds');
+
+                return [
+                    'name'  => $user['name'],
+                    'hours' => round($secondsClocked / 3600, 1),
+                ];
+            })
+            ->sortByDesc('hours')
+            ->values()
+            ->take(5)
+            ->all();
+
         $percentageComplete = $totalUsers > 0
             ? round(($usersComplete / $totalUsers) * 100, 0)
             : 0;
@@ -191,6 +205,7 @@ class TogglTimeTrackingService
             'users_incomplete'   => $usersIncomplete,
             'percentage_complete' => $percentageComplete,
             'missing_hours_users' => $usersWithMissingHours,
+            'entries'            => $leaderboard,
         ];
     }
 
@@ -236,6 +251,7 @@ class TogglTimeTrackingService
             'users_incomplete'    => 0,
             'percentage_complete' => 0,
             'missing_hours_users' => [],
+            'entries'             => [],
         ];
     }
 }

@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AgendaEvent;
+use App\Models\Announcement;
 use App\Models\Screen;
+use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,14 +20,52 @@ class ScreenController extends Controller
             $query->orderBy('grid_order');
         }])->withCount('widgets')->latest()->get();
 
-        return Inertia::render('Dashboard/Screens/Index', [
+        $agendaEvents = AgendaEvent::orderByRaw('when_date IS NULL, when_date ASC')
+            ->orderBy('id')
+            ->get();
+
+        $announcements = Announcement::latest()->get();
+
+        return Inertia::render('Dashboard/Management/Index', [
             'screens' => $screens,
+            'agendaEvents' => $agendaEvents,
+            'announcements' => $announcements,
+            'overlay' => [
+                'rooms' => Setting::get('overlay_rooms', []),
+                'legacy_rooms' => $this->findLegacyOverlayRooms($screens),
+                'calendar_configured' => \App\Services\GoogleCalendarService::isConfigured(),
+                'calendar_credentials_path' => config('services.google_calendar.credentials'),
+            ],
+            'widgetTypesByScreenType' => [
+                'slideshow' => [
+                    'agenda' => 'Agenda',
+                    'birthdays' => 'Verjaardagen',
+                    'appreciation' => 'Klantwaardering',
+                    'announcement' => 'Aankondiging',
+                ],
+                'general' => [
+                    'toggl_time_tracking' => 'Toggl Leaderboard',
+                    'birthday' => 'Verjaardagen (compact)',
+                    'spotlight_event' => 'Uitgelicht evenement',
+                    'moment_photo' => 'Moonly Moment',
+                ],
+                'technical' => [],
+            ],
             'widgetTypes' => [
-                'birthday' => 'Birthdays',
+                // Slideshow slides
+                'agenda' => 'Agenda',
+                'birthdays' => 'Verjaardagen',
+                'appreciation' => 'Klantwaardering',
+                'announcement' => 'Aankondiging',
+                // General screen blocks
+                'toggl_time_tracking' => 'Toggl Leaderboard',
+                'birthday' => 'Verjaardagen (compact)',
+                'spotlight_event' => 'Uitgelicht evenement',
+                'moment_photo' => 'Moonly Moment',
+                // Legacy
                 'room_availability' => 'Room Availability',
                 'clock_weather' => 'Clock/Date/Weather',
                 'announcements' => 'Announcements',
-                'toggl_time_tracking' => 'Toggl Time Tracking',
                 'image_widget' => 'Image Slideshow',
             ],
         ]);
@@ -35,8 +76,21 @@ class ScreenController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'refresh_interval' => 'required|integer|min:5|max:300',
+            'refresh_interval' => 'sometimes|integer|min:5|max:300',
+            'screen_type' => 'sometimes|in:slideshow,general,technical',
+            'screen_config' => 'sometimes|nullable|array',
         ]);
+
+        if (! isset($validated['refresh_interval'])) {
+            $validated['refresh_interval'] = 30;
+        }
+
+        if (($validated['screen_type'] ?? 'slideshow') === 'slideshow') {
+            $validated['screen_config'] = array_merge(
+                ['cycleSeconds' => 60],
+                $validated['screen_config'] ?? [],
+            );
+        }
 
         $screen = Screen::create($validated);
 
@@ -48,7 +102,9 @@ class ScreenController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'refresh_interval' => 'required|integer|min:5|max:300',
+            'refresh_interval' => 'sometimes|integer|min:5|max:300',
+            'screen_type' => 'sometimes|in:slideshow,general,technical',
+            'screen_config' => 'sometimes|nullable|array',
         ]);
 
         $screen->update($validated);
@@ -80,10 +136,46 @@ class ScreenController extends Controller
         ]);
     }
 
+    public function updateConfig(Request $request, Screen $screen): JsonResponse
+    {
+        $validated = $request->validate([
+            'screen_config' => 'required|array',
+        ]);
+
+        $merged = array_merge($screen->screen_config ?? [], $validated['screen_config']);
+        $screen->update(['screen_config' => $merged]);
+
+        return response()->json(['screen_config' => $screen->fresh()->screen_config]);
+    }
+
     public function destroy(Screen $screen): RedirectResponse
     {
         $screen->delete();
 
         return redirect()->route('screens.index')->with('success', 'Screen deleted successfully.');
+    }
+
+    private function findLegacyOverlayRooms($screens): array
+    {
+        foreach ($screens as $screen) {
+            $rooms = $screen->screen_config['rooms'] ?? [];
+            if (! empty($rooms)) {
+                return $rooms;
+            }
+        }
+
+        foreach ($screens as $screen) {
+            foreach ($screen->widgets as $widget) {
+                if ($widget->widget_type !== 'room_availability') {
+                    continue;
+                }
+                $rooms = $widget->config['rooms'] ?? [];
+                if (! empty($rooms)) {
+                    return $rooms;
+                }
+            }
+        }
+
+        return [];
     }
 }

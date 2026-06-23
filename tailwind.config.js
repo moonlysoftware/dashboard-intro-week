@@ -17,12 +17,26 @@ export default {
 				sans: [
 					'Archia',
 					'CeraPro',
-					'Roboto',
 					...defaultTheme.fontFamily.sans
 				],
 				archia: ['Archia', 'sans-serif'],
+				kumbh: ['"Kumbh Sans"', 'sans-serif'],
+				'open-sans': ['"Open Sans"', 'sans-serif'],
+				display: ['Archia', 'sans-serif'],
+				poster: ['Archia', 'sans-serif'],
+				manrope: ['"Open Sans"', 'sans-serif'],
 			},
     		colors: {
+				/* Moonly display palette */
+				space:  '#050215',
+				space2: '#0a0720',
+				panel:  '#0f0b26',
+				mpurple: '#6C52FF',
+				lilac:  '#B5A9FF',
+				mpink:  '#FF4490',
+				mcyan:  '#05BFDB',
+				good:   '#27DD36',
+				busy:   '#DD2727',
     			border: 'var(--border)',
     			input: 'var(--input)',
     			ring: 'var(--ring)',

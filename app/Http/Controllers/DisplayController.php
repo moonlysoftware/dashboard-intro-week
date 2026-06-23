@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AgendaEvent;
 use App\Models\Screen;
+use App\Models\Setting;
 use App\Services\GoogleCalendarService;
 use App\Services\TogglTimeTrackingService;
 use Illuminate\Http\JsonResponse;
@@ -16,6 +18,7 @@ class DisplayController extends Controller
     public function show(Screen $screen): Response
     {
         $screen->load('widgets');
+        $screen->screen_config = $this->enrichScreenConfig($screen, $screen->screen_config ?? []);
 
         return Inertia::render('Display/Show', [
             'screen' => $screen,
@@ -44,19 +47,138 @@ class DisplayController extends Controller
             'layout' => $screen->layout,
             'view_mode' => $screen->view_mode,
             'featured_widget_id' => $screen->featured_widget_id,
+            'screen_type' => $screen->screen_type ?? 'slideshow',
+            'screen_config' => $this->enrichScreenConfig($screen, $screen->screen_config ?? []),
         ]);
+    }
+
+    /**
+     * Resolve room availability for the AppBar from global overlay config.
+     */
+    private function enrichScreenConfig(Screen $screen, ?array $config): array
+    {
+        $config = $this->normalizeScreenConfig($config);
+        $type = $screen->screen_type ?? 'slideshow';
+
+        if (! in_array($type, ['slideshow', 'general'], true)) {
+            unset($config['rooms']);
+
+            return $config;
+        }
+
+        $rooms = Setting::get('overlay_rooms', []);
+        if (empty($rooms)) {
+            $rooms = $config['rooms'] ?? [];
+        }
+
+        if (empty($rooms)) {
+            return $config;
+        }
+
+        $service = new GoogleCalendarService();
+        $config['rooms'] = collect($rooms)
+            ->map(fn (array $room) => $this->resolveRoomForDisplay($room, $service))
+            ->values()
+            ->all();
+
+        return $config;
+    }
+
+    private function resolveRoomForDisplay(array $room, GoogleCalendarService $service): array
+    {
+        $id = $room['id'] ?? ('room-' . md5($room['name'] ?? uniqid()));
+        $name = $room['name'] ?? 'Onbekende ruimte';
+        $calendarId = $room['calendar_id'] ?? null;
+
+        if ($calendarId) {
+            $availability = $service->getRoomAvailability($calendarId, $name);
+            $status = $availability['status'] ?? 'unknown';
+
+            if ($status === 'unknown') {
+                return [
+                    'id'     => $id,
+                    'name'   => $name,
+                    'free'   => null,
+                    'until'  => null,
+                    'status' => 'unknown',
+                ];
+            }
+
+            $free = $status === 'available';
+            $until = $free
+                ? ($availability['next_booking'] ?? null)
+                : ($availability['available_at'] ?? null);
+
+            return [
+                'id'     => $id,
+                'name'   => $name,
+                'free'   => $free,
+                'until'  => $until,
+                'status' => $status,
+            ];
+        }
+
+        $free = array_key_exists('free', $room)
+            ? (bool) $room['free']
+            : !($room['busy'] ?? false);
+
+        $sub = $room['sub'] ?? $room['subtext'] ?? null;
+
+        return [
+            'id'    => $id,
+            'name'  => $name,
+            'free'  => $free,
+            'until' => null,
+            'sub'   => $sub ?: null,
+        ];
+    }
+
+    private function normalizeScreenConfig(?array $config): array
+    {
+        if (empty($config) || array_is_list($config)) {
+            return [];
+        }
+
+        return $config;
     }
 
     private function getWidgetData($widget): array
     {
         return match ($widget->widget_type) {
-            'birthday' => $this->getBirthdayData(),
+            'birthday', 'birthdays' => $this->getBirthdayData(),
             'room_availability' => $this->getRoomAvailabilityData($widget),
             'clock_weather' => $this->getClockWeatherData(),
-            'announcements' => $this->getAnnouncementsData($widget),
+            'announcements' => $this->getAnnouncementsBlockData($widget),
+            'announcement' => $this->getAnnouncementSlideData($widget),
             'toggl_time_tracking' => $this->getTogglTimeTrackingData(),
+            'agenda' => $this->getAgendaData($widget),
+            // Config-driven types — no external data needed
+            'appreciation', 'spotlight_event', 'moment_photo' => [],
             default => [],
         };
+    }
+
+    private function getAgendaData($widget): array
+    {
+        $config = $widget->config ?? [];
+        $selectedIds = $config['selected_ids'] ?? [];
+
+        if (! empty($selectedIds)) {
+            // Slideshow: return only selected events, in selection order
+            $events = AgendaEvent::whereIn('id', $selectedIds)->get()->keyBy('id');
+
+            return collect($selectedIds)
+                ->map(fn ($id) => $events->get($id))
+                ->filter()
+                ->values()
+                ->toArray();
+        }
+
+        // General screen: return all events sorted by date (nulls last), max 6
+        return AgendaEvent::orderByRaw('when_date IS NULL, when_date ASC')
+            ->limit(6)
+            ->get()
+            ->toArray();
     }
 
     private function getBirthdayData(): array
@@ -174,14 +296,37 @@ class DisplayController extends Controller
         };
     }
 
-    private function getAnnouncementsData($widget): array
+    private function getAnnouncementSlideData($widget): array
+    {
+        $id = $widget->config['announcement_id'] ?? null;
+        if (! $id) return [];
+
+        $record = \App\Models\Announcement::find($id);
+        return $record ? $record->toArray() : [];
+    }
+
+    private function getAnnouncementsBlockData($widget): array
     {
         $config = $widget->config ?? [];
-        $announcements = array_slice($config['announcements'] ?? [], 0, 5);
+        $selectedIds = $config['selected_announcement_ids'] ?? [];
 
-        return [
-            'announcements' => $announcements,
-        ];
+        if (! empty($selectedIds)) {
+            $records = \App\Models\Announcement::whereIn('id', $selectedIds)
+                ->get()
+                ->keyBy('id');
+
+            $ordered = collect($selectedIds)
+                ->map(fn ($id) => $records->get($id)?->toArray())
+                ->filter()
+                ->values()
+                ->toArray();
+
+            return ['slides' => $ordered];
+        }
+
+        // Fallback: show all announcements from the central library
+        $all = \App\Models\Announcement::latest()->get()->toArray();
+        return ['slides' => $all];
     }
 
     private function getTogglTimeTrackingData(): array
