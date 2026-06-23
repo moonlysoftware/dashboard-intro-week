@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Backdrop, TopBar, AppBar, Avatar } from "@/Components/Display/Shell";
 import { getUpcomingBirthdays } from "@/lib/birthdays";
+import { getUpcomingJubilea } from "@/lib/jubilea";
 import type { ScreenConfig } from "@/types";
 
 interface BlockWidget {
@@ -144,8 +145,9 @@ function AgendaBlock({ data }: { data: any }) {
     );
 }
 
-// ---- Compact birthdays ----
+// ---- Compact birthdays + jubilea ----
 function BirthdayMini({ b }: { b: any }) {
+    const isJubileum = b.kind === 'jubileum';
     return (
         <div
             className="flex items-center gap-5 rounded-[22px] px-5 py-4 flex-1 min-h-0"
@@ -160,12 +162,15 @@ function BirthdayMini({ b }: { b: any }) {
                     {b.name}
                 </div>
                 <div className="text-white/55 text-[16px] font-semibold mt-1.5 whitespace-nowrap">
-                    🎂 {b.turns || b.age}
+                    {isJubileum ? '🎉' : '🎂'} {b.turns || b.age}
                 </div>
             </div>
             <div className="text-right shrink-0">
                 {b.soon && (
-                    <div className="font-extrabold text-[#FF4490] text-[13px] uppercase tracking-wide whitespace-nowrap mb-1">
+                    <div
+                        className="font-extrabold text-[13px] uppercase tracking-wide whitespace-nowrap mb-1"
+                        style={{ color: isJubileum ? '#6C52FF' : '#FF4490' }}
+                    >
                         {b.soon}
                     </div>
                 )}
@@ -177,16 +182,35 @@ function BirthdayMini({ b }: { b: any }) {
     );
 }
 
+function getMilestones(limit = 3): any[] {
+    const birthdays = getUpcomingBirthdays(27).map((b) => ({ ...b, kind: 'birthday', days: 0 }));
+    const jubilea = getUpcomingJubilea(22);
+
+    // Re-attach days for sorting (birthdays.ts doesn't expose days, re-derive from `soon`)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const withDays = birthdays.map((b) => {
+        let days = 0;
+        const m = b.soon.match(/Over (\d+) dagen/);
+        if (m) days = parseInt(m[1], 10);
+        else if (b.soon === 'Morgen') days = 1;
+        return { ...b, days };
+    });
+
+    return [...withDays, ...jubilea]
+        .sort((a, b) => a.days - b.days)
+        .slice(0, limit);
+}
+
 function BirthdaysBlock({ data }: { data: any }) {
     const configList = data?.config?.list ?? [];
-    const list = (
-        configList.length ? configList : getUpcomingBirthdays(3)
-    ).slice(0, 3);
+    const list = configList.length ? configList.slice(0, 3) : getMilestones(3);
     return (
         <Block className="h-full p-8 flex flex-col">
             <BlockHead
-                title="Komende verjaardagen"
-                sub="De eerstvolgende 3"
+                title="Komende mijlpalen"
+                sub="Verjaardagen & jubilea"
                 accent="#FFC53D"
             />
             <div className="flex-1 flex flex-col justify-between gap-3 min-h-0">
