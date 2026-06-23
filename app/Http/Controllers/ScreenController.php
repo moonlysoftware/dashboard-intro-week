@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AgendaEvent;
+use App\Models\Announcement;
 use App\Models\Screen;
 use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
@@ -23,9 +24,12 @@ class ScreenController extends Controller
             ->orderBy('id')
             ->get();
 
+        $announcements = Announcement::latest()->get();
+
         return Inertia::render('Dashboard/Management/Index', [
             'screens' => $screens,
             'agendaEvents' => $agendaEvents,
+            'announcements' => $announcements,
             'overlay' => [
                 'rooms' => Setting::get('overlay_rooms', []),
                 'legacy_rooms' => $this->findLegacyOverlayRooms($screens),

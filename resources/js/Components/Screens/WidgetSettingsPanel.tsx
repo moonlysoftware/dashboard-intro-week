@@ -7,6 +7,13 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover
 import axios from 'axios';
 import type { Widget } from './ScreenCanvas';
 
+interface AnnouncementSlide {
+    id: number;
+    title: string;
+    badge: string | null;
+    screen_name: string | null;
+}
+
 interface RoomConfig {
     name: string;
     calendar_id: string;
@@ -35,6 +42,13 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
             ? widget.config.announcements
             : [{ title: '', message: '' }]
     );
+    const [annMode, setAnnMode] = useState<'slides' | 'manual'>(
+        widget.config?.selected_slide_ids?.length ? 'slides' : 'manual'
+    );
+    const [availableSlides, setAvailableSlides] = useState<AnnouncementSlide[]>([]);
+    const [selectedSlideIds, setSelectedSlideIds] = useState<number[]>(
+        widget.config?.selected_slide_ids ?? []
+    );
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
 
@@ -57,6 +71,11 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
     useEffect(() => {
         if (widget.widget_type !== 'image_widget') return;
         axios.get(route('image-widget.index')).then((res) => setAllImages(res.data));
+    }, [widget.widget_type]);
+
+    useEffect(() => {
+        if (widget.widget_type !== 'announcements') return;
+        axios.get(route('announcement-slides.index')).then((res) => setAvailableSlides(res.data));
     }, [widget.widget_type]);
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,7 +133,11 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
             } else if (widget.widget_type === 'image_widget') {
                 finalConfig = { selected_images: selectedImages, transition_time: transitionTime, image_positions: imagePositions };
             } else if (widget.widget_type === 'announcements') {
-                finalConfig = { announcements: announcementConfigs.filter((a) => a.title || a.message) };
+                if (annMode === 'slides') {
+                    finalConfig = { selected_slide_ids: selectedSlideIds };
+                } else {
+                    finalConfig = { announcements: announcementConfigs.filter((a) => a.title || a.message) };
+                }
             } else {
                 finalConfig = widget.config ?? {};
             }
@@ -371,47 +394,104 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
 
             {widget.widget_type === 'announcements' && (
                 <div className="space-y-3">
-                    {announcementConfigs.map((announcement, index) => (
-                        <div key={index} className="space-y-2 p-3 rounded-lg border bg-muted/30">
-                            <div className="space-y-1">
-                                <Label className="text-xs">Title</Label>
-                                <Input
-                                    placeholder="e.g. Team Lunch"
-                                    value={announcement.title}
-                                    onChange={(e) => handleAnnouncementChange(index, 'title', e.target.value)}
-                                    className="h-8 text-sm"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <Label className="text-xs">Message</Label>
-                                <Input
-                                    placeholder="e.g. Don't forget the team lunch at 12:30!"
-                                    value={announcement.message}
-                                    onChange={(e) => handleAnnouncementChange(index, 'message', e.target.value)}
-                                    className="h-8 text-sm"
-                                />
-                            </div>
-                            {announcementConfigs.length > 1 && (
+                    {/* Mode tabs */}
+                    <div className="flex rounded-md border overflow-hidden text-xs">
+                        <button
+                            className={`flex-1 py-1.5 font-medium transition-colors ${annMode === 'slides' ? 'bg-primary text-primary-foreground' : 'bg-muted/40 text-muted-foreground hover:bg-muted'}`}
+                            onClick={() => setAnnMode('slides')}
+                        >
+                            Kies slides
+                        </button>
+                        <button
+                            className={`flex-1 py-1.5 font-medium transition-colors ${annMode === 'manual' ? 'bg-primary text-primary-foreground' : 'bg-muted/40 text-muted-foreground hover:bg-muted'}`}
+                            onClick={() => setAnnMode('manual')}
+                        >
+                            Handmatig
+                        </button>
+                    </div>
+
+                    {annMode === 'slides' && (
+                        <div className="space-y-2">
+                            {availableSlides.length === 0 ? (
+                                <p className="text-xs text-muted-foreground text-center py-4">
+                                    Geen announcement slides gevonden. Voeg eerst slides toe aan een slideshow.
+                                </p>
+                            ) : (
+                                availableSlides.map((slide) => {
+                                    const checked = selectedSlideIds.includes(slide.id);
+                                    return (
+                                        <label
+                                            key={slide.id}
+                                            className={`flex items-start gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-colors ${checked ? 'border-primary bg-primary/5' : 'border-border bg-muted/20 hover:bg-muted/40'}`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                className="mt-0.5 accent-primary"
+                                                checked={checked}
+                                                onChange={() =>
+                                                    setSelectedSlideIds((prev) =>
+                                                        checked ? prev.filter((id) => id !== slide.id) : [...prev, slide.id]
+                                                    )
+                                                }
+                                            />
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-medium leading-tight truncate">{slide.title || 'Naamloos'}</p>
+                                                {slide.screen_name && (
+                                                    <p className="text-[10px] text-muted-foreground truncate">{slide.screen_name}</p>
+                                                )}
+                                            </div>
+                                        </label>
+                                    );
+                                })
+                            )}
+                        </div>
+                    )}
+
+                    {annMode === 'manual' && (
+                        <div className="space-y-3">
+                            {announcementConfigs.map((announcement, index) => (
+                                <div key={index} className="space-y-2 p-3 rounded-lg border bg-muted/30">
+                                    <div className="space-y-1">
+                                        <Label className="text-xs">Titel</Label>
+                                        <Input
+                                            placeholder="bijv. Teamlunch"
+                                            value={announcement.title}
+                                            onChange={(e) => handleAnnouncementChange(index, 'title', e.target.value)}
+                                            className="h-8 text-sm"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-xs">Bericht</Label>
+                                        <Input
+                                            placeholder="bijv. Vergeet de lunch om 12:30 niet!"
+                                            value={announcement.message}
+                                            onChange={(e) => handleAnnouncementChange(index, 'message', e.target.value)}
+                                            className="h-8 text-sm"
+                                        />
+                                    </div>
+                                    {announcementConfigs.length > 1 && (
+                                        <Button
+                                            variant="destructive"
+                                            size="sm"
+                                            className="w-full h-7 text-xs"
+                                            onClick={() => handleRemoveAnnouncement(index)}
+                                        >
+                                            Verwijder
+                                        </Button>
+                                    )}
+                                </div>
+                            ))}
+                            {announcementConfigs.length < 5 && (
                                 <Button
-                                    variant="destructive"
+                                    variant="outline"
                                     size="sm"
-                                    className="w-full h-7 text-xs"
-                                    onClick={() => handleRemoveAnnouncement(index)}
+                                    className="w-full h-8 text-xs"
+                                    onClick={handleAddAnnouncement}
                                 >
-                                    Remove announcement
+                                    + Toevoegen
                                 </Button>
                             )}
                         </div>
-                    ))}
-                    {announcementConfigs.length < 5 && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full h-8 text-xs"
-                            onClick={handleAddAnnouncement}
-                        >
-                            + Add announcement
-                        </Button>
                     )}
                 </div>
             )}

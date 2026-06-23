@@ -239,7 +239,7 @@ function RoomTile({ r }: { r: RoomConfig }) {
             className="relative flex-1 flex items-center overflow-hidden"
             style={{
                 height: 56,
-                paddingLeft: 28,
+                paddingLeft: 18,
                 paddingRight: 18,
                 gap: 12,
                 borderRadius: 16,
@@ -248,8 +248,8 @@ function RoomTile({ r }: { r: RoomConfig }) {
             }}
         >
             <span
-                className="absolute left-0 top-0 bottom-0"
-                style={{ width: 4, background: c, boxShadow: `0 0 16px ${c}` }}
+                className="shrink-0 rounded-full"
+                style={{ width: 10, height: 10, background: c, boxShadow: `0 0 10px ${c}` }}
             />
             <span
                 className="font-poster font-semibold text-white leading-none whitespace-nowrap"

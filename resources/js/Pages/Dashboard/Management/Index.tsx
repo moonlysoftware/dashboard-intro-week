@@ -5,6 +5,7 @@ import { GeneralEditor } from '@/Components/Management/GeneralEditor';
 import { TechnicalEditor } from '@/Components/Management/TechnicalEditor';
 import { OverlayEditor } from '@/Components/Management/OverlayEditor';
 import { AgendaManager, type AgendaEventRecord } from '@/Components/Management/AgendaManager';
+import { AnnouncementManager, type AnnouncementRecord } from '@/Components/Management/AnnouncementManager';
 import { Field, TextInput, SaveButton, Divider } from '@/Components/Management/Ui';
 import { CreateScreenDialog } from '@/Components/Screens/CreateScreenDialog';
 import axios from 'axios';
@@ -42,6 +43,7 @@ interface MgmtScreen {
 interface ManagementIndexProps {
     screens: MgmtScreen[];
     agendaEvents: AgendaEventRecord[];
+    announcements: AnnouncementRecord[];
     overlay: {
         rooms: RoomConfig[];
         legacy_rooms: RoomConfig[];
@@ -58,7 +60,7 @@ interface RoomConfig {
 }
 
 type Tab = 'content' | 'settings';
-type ViewMode = 'screen' | 'overlay' | 'agenda';
+type ViewMode = 'screen' | 'overlay' | 'agenda' | 'announcements';
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
@@ -81,6 +83,7 @@ function Sidebar({
     onSelect,
     onSelectOverlay,
     onSelectAgenda,
+    onSelectAnnouncements,
     onNewScreen,
 }: {
     screens: MgmtScreen[];
@@ -89,6 +92,7 @@ function Sidebar({
     onSelect: (id: number) => void;
     onSelectOverlay: () => void;
     onSelectAgenda: () => void;
+    onSelectAnnouncements: () => void;
     onNewScreen: () => void;
 }) {
     return (
@@ -157,6 +161,23 @@ function Sidebar({
                         <p className="text-sm font-semibold truncate">Evenementen</p>
                         <p className={`text-[11px] truncate ${viewMode === 'agenda' ? 'text-white/70' : 'text-[#8b84a8]'}`}>
                             Centrale agenda
+                        </p>
+                    </div>
+                </button>
+                <button
+                    type="button"
+                    onClick={onSelectAnnouncements}
+                    className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-all ${
+                        viewMode === 'announcements'
+                            ? 'bg-[#6C52FF] text-white'
+                            : 'text-[#1a1430] hover:bg-[#e6e2f4]'
+                    }`}
+                >
+                    <span className="text-base leading-none">📢</span>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold truncate">Mededelingen</p>
+                        <p className={`text-[11px] truncate ${viewMode === 'announcements' ? 'text-white/70' : 'text-[#8b84a8]'}`}>
+                            Centrale bibliotheek
                         </p>
                     </div>
                 </button>
@@ -341,9 +362,10 @@ function PreviewPanel({ screen }: { screen: MgmtScreen | null }) {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
-export default function Index({ screens: initialScreens, agendaEvents: initialAgendaEvents, overlay: initialOverlay }: ManagementIndexProps) {
+export default function Index({ screens: initialScreens, agendaEvents: initialAgendaEvents, announcements: initialAnnouncements, overlay: initialOverlay }: ManagementIndexProps) {
     const [screens, setScreens] = useState<MgmtScreen[]>(initialScreens);
     const [agendaEvents, setAgendaEvents] = useState<AgendaEventRecord[]>(initialAgendaEvents);
+    const [announcements, setAnnouncements] = useState<AnnouncementRecord[]>(initialAnnouncements);
     const [overlayRooms, setOverlayRooms] = useState<RoomConfig[]>(initialOverlay.rooms ?? []);
     const [createOpen, setCreateOpen] = useState(false);
     const [viewMode, setViewMode] = useState<ViewMode>('screen');
@@ -365,6 +387,7 @@ export default function Index({ screens: initialScreens, agendaEvents: initialAg
         const params = new URLSearchParams(window.location.search);
         if (params.get('view') === 'overlay') setViewMode('overlay');
         else if (params.get('view') === 'agenda') setViewMode('agenda');
+        else if (params.get('view') === 'announcements') setViewMode('announcements');
     }, []);
 
     // Keep screens in sync with Inertia page data
@@ -391,6 +414,11 @@ export default function Index({ screens: initialScreens, agendaEvents: initialAg
     const handleSelectAgenda = () => {
         setViewMode('agenda');
         window.history.replaceState(null, '', '?view=agenda');
+    };
+
+    const handleSelectAnnouncements = () => {
+        setViewMode('announcements');
+        window.history.replaceState(null, '', '?view=announcements');
     };
 
     const activeScreen = screens.find((s) => s.id === activeScreenId) ?? null;
@@ -429,11 +457,28 @@ export default function Index({ screens: initialScreens, agendaEvents: initialAg
                 onSelect={handleSelectScreen}
                 onSelectOverlay={handleSelectOverlay}
                 onSelectAgenda={handleSelectAgenda}
+                onSelectAnnouncements={handleSelectAnnouncements}
                 onNewScreen={() => setCreateOpen(true)}
             />
 
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {viewMode === 'agenda' ? (
+                {viewMode === 'announcements' ? (
+                    <>
+                        <div className="flex items-center gap-3 px-5 py-4 border-b border-[#e6e2f4] bg-white shrink-0">
+                            <span className="text-2xl leading-none">📢</span>
+                            <div>
+                                <h1 className="text-sm font-bold text-[#1a1430]">Mededelingen</h1>
+                                <p className="text-xs text-[#8b84a8]">Centrale bibliotheek — voeg toe aan slideshows en het algemene scherm</p>
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-5">
+                            <AnnouncementManager
+                                announcements={announcements}
+                                onAnnouncementsChange={setAnnouncements}
+                            />
+                        </div>
+                    </>
+                ) : viewMode === 'agenda' ? (
                     <>
                         <div className="flex items-center gap-3 px-5 py-4 border-b border-[#e6e2f4] bg-white shrink-0">
                             <span className="text-2xl leading-none">📅</span>
@@ -486,6 +531,9 @@ export default function Index({ screens: initialScreens, agendaEvents: initialAg
                                     slides={slides}
                                     onSlidesChange={(updated) => updateSlides(activeScreen.id, updated)}
                                     agendaEvents={agendaEvents}
+                                    announcements={announcements}
+                                    onAgendaEventsChange={setAgendaEvents}
+                                    onAnnouncementsChange={setAnnouncements}
                                 />
                             )}
                             {activeTab === 'content' && activeScreen.screen_type === 'general' && (
@@ -495,6 +543,10 @@ export default function Index({ screens: initialScreens, agendaEvents: initialAg
                                     screenConfig={screenConfig}
                                     onWidgetsChange={(updated) => updateWidgets(activeScreen.id, updated)}
                                     onConfigChange={(cfg) => updateScreenConfig(activeScreen.id, cfg)}
+                                    agendaEvents={agendaEvents}
+                                    announcements={announcements}
+                                    onAgendaEventsChange={setAgendaEvents}
+                                    onAnnouncementsChange={setAnnouncements}
                                 />
                             )}
                             {activeTab === 'content' && activeScreen.screen_type === 'technical' && (

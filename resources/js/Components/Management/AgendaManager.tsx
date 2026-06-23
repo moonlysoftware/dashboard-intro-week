@@ -29,6 +29,8 @@ interface Props {
     onEventsChange: (events: AgendaEventRecord[]) => void;
 }
 
+export type EventFormValues = typeof EMPTY_FORM;
+
 const EMPTY_FORM = {
     title: '',
     when_label: '',
@@ -51,7 +53,7 @@ function formatDutchDateTime(dateStr: string, timeStr: string): string {
     return timeStr ? `${label} ${timeStr}` : label;
 }
 
-function EventForm({
+export function EventForm({
     initial,
     onSave,
     onBack,
@@ -195,7 +197,7 @@ function EventForm({
     );
 }
 
-// ─── Event card in the list ───────────────────────────────────────────────────
+// ─── Event card in the grid ───────────────────────────────────────────────────
 
 function EventCard({
     event,
@@ -209,47 +211,61 @@ function EventCard({
     const grad = event.grad || `linear-gradient(140deg,${event.accent},${event.accent}88)`;
 
     return (
-        <div className="rounded-2xl border border-[#e6e2f4] bg-white overflow-hidden flex">
-            {/* Color strip */}
-            <div className="w-1.5 shrink-0" style={{ background: grad }} />
-
-            <div className="flex-1 min-w-0 px-4 py-3 flex items-center gap-3">
+        <div className="rounded-2xl border border-[#e6e2f4] bg-white overflow-hidden flex flex-col">
+            {/* Thumbnail */}
+            <div
+                className="relative h-[88px] shrink-0"
+                style={{ background: event.photo ? "#0c0a18" : grad }}
+            >
                 {event.photo && (
                     <img
                         src={event.photo}
                         alt=""
-                        className="h-10 w-10 rounded-lg object-cover shrink-0"
+                        className="absolute inset-0 w-full h-full object-cover"
+                        style={{ objectPosition: event.pos || "center" }}
                     />
                 )}
-                <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-[#1a1430] truncate">{event.title}</p>
-                    <p className="text-xs text-[#8b84a8] truncate">
+                <div
+                    className="absolute inset-0"
+                    style={{ background: "linear-gradient(180deg,transparent 30%,rgba(0,0,0,.55) 100%)" }}
+                />
+                {event.when_label && (
+                    <div className="absolute bottom-2.5 left-3 text-[11px] font-bold text-white/80 leading-none">
                         {event.when_label}
-                        {event.location ? ` · ${event.location}` : ''}
-                    </p>
-                    {event.tagline && (
-                        <p className="text-xs text-[#b0abc8] mt-0.5 truncate">{event.tagline}</p>
-                    )}
-                </div>
-                <div className="flex items-center gap-0.5 shrink-0">
-                    <button
-                        type="button"
-                        onClick={onEdit}
-                        className="rounded-lg bg-[#f3f1fb] px-2.5 py-1 text-xs font-semibold text-[#6C52FF] hover:bg-[#6C52FF]/10 transition-colors"
-                    >
-                        Bewerk
-                    </button>
-                    <button
-                        type="button"
-                        onClick={onDelete}
-                        className="p-1.5 text-[#b0abc8] hover:text-[#DD2727] transition-colors"
-                        title="Verwijder"
-                    >
-                        <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                            <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                        </svg>
-                    </button>
-                </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Info */}
+            <div className="px-3 pt-2.5 pb-1 flex-1 min-w-0">
+                <p className="text-sm font-bold text-[#1a1430] leading-snug truncate">{event.title}</p>
+                {event.location && (
+                    <p className="text-xs text-[#8b84a8] mt-0.5 truncate">{event.location}</p>
+                )}
+                {event.tagline && (
+                    <p className="text-xs text-[#b0abc8] mt-0.5 truncate">{event.tagline}</p>
+                )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-0.5 px-3 pb-2.5 pt-1 border-t border-[#f0eefa] mt-1">
+                <button
+                    type="button"
+                    onClick={onEdit}
+                    className="rounded-lg bg-[#f3f1fb] px-2.5 py-1 text-xs font-semibold text-[#6C52FF] hover:bg-[#6C52FF]/10 transition-colors"
+                >
+                    Bewerk
+                </button>
+                <button
+                    type="button"
+                    onClick={onDelete}
+                    className="p-1.5 text-[#b0abc8] hover:text-[#DD2727] transition-colors"
+                    title="Verwijder"
+                >
+                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                        <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                </button>
             </div>
         </div>
     );
@@ -315,7 +331,7 @@ export function AgendaManager({ events, onEventsChange }: Props) {
                     Nog geen evenementen. Voeg er een toe!
                 </p>
             )}
-            <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-3">
                 {events.map((event) => (
                     <EventCard
                         key={event.id}

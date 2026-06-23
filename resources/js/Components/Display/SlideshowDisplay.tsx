@@ -39,8 +39,13 @@ function renderSlide(widget: SlideWidget) {
         case 'appreciation':
             return <AppreciationSlide content={content} />;
         case 'announcement':
-        case 'announcements':
-            return <AnnouncementSlide content={content} />;
+        case 'announcements': {
+            // Use resolved Announcement record from backend if present, otherwise fall back to raw config
+            const annContent = (widget.data && Object.keys(widget.data).length > 0)
+                ? widget.data
+                : content;
+            return <AnnouncementSlide content={annContent} />;
+        }
         default:
             return null;
     }
@@ -116,43 +121,6 @@ export default function SlideshowDisplay({ widgets, screenConfig }: SlideshowDis
                         </div>
                     ))}
 
-                    {/* Progress bar */}
-                    {slides.length > 1 && !paused && (
-                        <div className="absolute top-0 left-0 right-0 h-[3px] bg-white/8 z-20">
-                            <div
-                                key={`${idx}|${cycleMs}`}
-                                className="h-full"
-                                style={{
-                                    background: 'linear-gradient(90deg,#05BFDB,#6C52FF,#FF4490)',
-                                    animation: `growbar ${cycleMs}ms linear forwards`,
-                                }}
-                            />
-                        </div>
-                    )}
-
-                    {/* Dot navigation */}
-                    {slides.length > 1 && (
-                        <div
-                            className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 px-4 py-2 rounded-full"
-                            style={{ background: 'rgba(5,2,21,.5)', border: '1px solid rgba(255,255,255,.12)', backdropFilter: 'blur(8px)' }}
-                        >
-                            {slides.map((s, i) => (
-                                <button
-                                    key={s.id}
-                                    onClick={() => jump(i)}
-                                    aria-label={`Ga naar slide ${i + 1}`}
-                                    className="transition-all duration-300 rounded-full cursor-pointer border-0"
-                                    style={{
-                                        width: i === idx ? 36 : 10,
-                                        height: 10,
-                                        background: i === idx
-                                            ? 'linear-gradient(90deg,#6C52FF,#FF4490)'
-                                            : 'rgba(255,255,255,.28)',
-                                    }}
-                                />
-                            ))}
-                        </div>
-                    )}
                 </main>
 
                 <AppBar rooms={rooms} />

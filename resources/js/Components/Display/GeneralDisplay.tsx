@@ -99,16 +99,16 @@ function MiniEventCard({ ev }: { ev: any }) {
                         "linear-gradient(180deg,rgba(6,4,16,.08) 0%,rgba(6,4,16,.55) 60%,rgba(6,4,16,.92) 100%)",
                 }}
             />
-            <div className="relative h-full flex flex-col justify-end p-4">
+            <div className="relative h-full flex flex-col justify-end p-5">
                 {tag && (
-                    <span className="self-start text-[14px] font-bold bg-white/15 backdrop-blur-sm text-white rounded-full px-2.5 py-0.5 mb-1.5 truncate max-w-full leading-none">
+                    <span className="self-start text-[16px] font-bold bg-white/15 backdrop-blur-sm text-white rounded-full px-3 py-1 mb-2 truncate max-w-full leading-none">
                         {tag}
                     </span>
                 )}
-                <h3 className="font-display font-bold text-white text-[20px] leading-tight truncate">
+                <h3 className="font-display font-bold text-white text-[24px] leading-tight truncate">
                     {title}
                 </h3>
-                <div className="text-white/55 text-[16px] font-semibold mt-0.5 truncate">
+                <div className="text-white/55 text-[18px] font-semibold mt-1 truncate">
                     {when}
                 </div>
             </div>
@@ -120,22 +120,19 @@ function AgendaBlock({ data }: { data: any }) {
     const events = (Array.isArray(data?.data) ? data.data : []) as any[];
     const title = data?.config?.title || "Agenda";
     const subtitle = data?.config?.subtitle || "Aankomende evenementen";
-    const count = Math.min(events.length, 6);
-    const cols = count <= 2 ? 1 : 2;
-    const rows = count === 0 ? 1 : Math.ceil(count / cols);
 
     return (
-        <Block className="p-8 flex flex-col">
+        <Block className="h-full p-8 flex flex-col">
             <BlockHead title={title} sub={subtitle} accent="#6C52FF" />
             <div
                 className="flex-1 min-h-0 grid gap-4"
                 style={{
-                    gridTemplateColumns: `repeat(${cols}, 1fr)`,
-                    gridTemplateRows: `repeat(${rows}, 1fr)`,
+                    gridTemplateColumns: "repeat(2, 1fr)",
+                    gridTemplateRows: "repeat(3, 1fr)",
                 }}
             >
-                {count === 0 && (
-                    <div className="flex items-center justify-center text-white/20 text-[28px] font-medium">
+                {events.length === 0 && (
+                    <div className="col-span-2 flex items-center justify-center text-white/20 text-[22px] font-medium">
                         Geen evenementen gepland
                     </div>
                 )}
@@ -151,28 +148,28 @@ function AgendaBlock({ data }: { data: any }) {
 function BirthdayMini({ b }: { b: any }) {
     return (
         <div
-            className="flex items-center gap-4 rounded-[18px] px-4 py-3"
+            className="flex items-center gap-5 rounded-[22px] px-5 py-4 flex-1 min-h-0"
             style={{
                 background: "rgba(255,255,255,.04)",
                 border: "1px solid rgba(255,255,255,.08)",
             }}
         >
-            <Avatar name={b.name} size={48} />
+            <Avatar name={b.name} photo={b.photo} size={80} ring={false} />
             <div className="flex-1 min-w-0">
-                <div className="font-display font-bold text-white text-[20px] leading-none truncate">
+                <div className="font-display font-bold text-white text-[22px] leading-none truncate">
                     {b.name}
                 </div>
-                <div className="text-white/55 text-[15px] font-semibold mt-1 whitespace-nowrap">
+                <div className="text-white/55 text-[16px] font-semibold mt-1.5 whitespace-nowrap">
                     🎂 {b.turns || b.age}
                 </div>
             </div>
             <div className="text-right shrink-0">
                 {b.soon && (
-                    <div className="font-extrabold text-[#FF4490] text-[13px] uppercase tracking-wide whitespace-nowrap">
+                    <div className="font-extrabold text-[#FF4490] text-[13px] uppercase tracking-wide whitespace-nowrap mb-1">
                         {b.soon}
                     </div>
                 )}
-                <div className="text-white/75 text-[16px] font-bold whitespace-nowrap">
+                <div className="text-white/75 text-[18px] font-bold whitespace-nowrap">
                     {b.date}
                 </div>
             </div>
@@ -186,7 +183,7 @@ function BirthdaysBlock({ data }: { data: any }) {
         configList.length ? configList : getUpcomingBirthdays(3)
     ).slice(0, 3);
     return (
-        <Block className="p-8 flex flex-col">
+        <Block className="h-full p-8 flex flex-col">
             <BlockHead
                 title="Komende verjaardagen"
                 sub="De eerstvolgende 3"
@@ -202,47 +199,137 @@ function BirthdaysBlock({ data }: { data: any }) {
 }
 
 // ---- Announcements mini-block ----
+const ANN_SPLIT_BLEND =
+    "linear-gradient(90deg, #08060f 0%, #08060f 6%, rgba(8,6,15,.8) 18%, rgba(8,6,15,.4) 34%, rgba(8,6,15,.1) 50%, transparent 64%)";
+
+const ANN_OVERLAY_BLEND =
+    "linear-gradient(180deg, rgba(8,6,15,.05) 0%, rgba(8,6,15,.55) 55%, rgba(8,6,15,.95) 100%)";
+
+function AnnMiniSplit({ ann }: { ann: any }) {
+    const body = typeof ann.body === "string" ? ann.body.split(/\n{2,}/)[0] : "";
+    return (
+        <div className="h-full flex overflow-hidden" style={{ background: "#08060f" }}>
+            <div className="relative z-10 flex h-full w-[42%] shrink-0 flex-col justify-center px-8 py-7 gap-3">
+                {ann.badge && (
+                    <span className="self-start text-[15px] font-bold bg-white/15 backdrop-blur-sm text-white rounded-full px-4 py-1.5 leading-none">
+                        {ann.badge}
+                    </span>
+                )}
+                {ann.title && (
+                    <h3 className="font-display font-bold text-white text-[28px] leading-tight">
+                        {ann.title}
+                    </h3>
+                )}
+                {body && (
+                    <p className="text-white/55 text-[17px] font-semibold leading-snug line-clamp-3">
+                        {body}
+                    </p>
+                )}
+            </div>
+            <div className="relative h-full w-[58%]">
+                {ann.photo ? (
+                    <img
+                        src={ann.photo}
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover"
+                        style={{ objectPosition: ann.pos || "center" }}
+                    />
+                ) : (
+                    <div className="absolute inset-0 imgslot opacity-60" />
+                )}
+                <div
+                    className="pointer-events-none absolute inset-0"
+                    style={{ background: ANN_SPLIT_BLEND }}
+                />
+            </div>
+        </div>
+    );
+}
+
+function AnnMiniOverlay({ ann }: { ann: any }) {
+    const body = typeof ann.body === "string" ? ann.body.split(/\n{2,}/)[0] : "";
+    return (
+        <div className="h-full relative overflow-hidden">
+            {ann.photo ? (
+                <img
+                    src={ann.photo}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover"
+                    style={{ objectPosition: ann.pos || "center" }}
+                />
+            ) : (
+                <div
+                    className="absolute inset-0"
+                    style={{ background: "linear-gradient(150deg,#6C52FF,#FF4490)" }}
+                />
+            )}
+            <div
+                className="absolute inset-0"
+                style={{ background: ANN_OVERLAY_BLEND }}
+            />
+            <div className="relative h-full flex flex-col justify-end px-8 py-7 gap-2">
+                {ann.badge && (
+                    <span className="self-start text-[15px] font-bold bg-white/15 backdrop-blur-sm text-white rounded-full px-4 py-1.5 leading-none">
+                        {ann.badge}
+                    </span>
+                )}
+                {ann.title && (
+                    <h3 className="font-display font-bold text-white text-[28px] leading-tight">
+                        {ann.title}
+                    </h3>
+                )}
+                {body && (
+                    <p className="text-white/55 text-[17px] font-semibold leading-snug line-clamp-2">
+                        {body}
+                    </p>
+                )}
+            </div>
+        </div>
+    );
+}
+
 function AnnouncementsBlock({ data }: { data: any }) {
-    const items = (data?.config?.announcements ?? []) as { title: string; message: string }[];
+    const slides = (data?.data?.slides ?? []) as any[];
     const [idx, setIdx] = useState(0);
 
     useEffect(() => {
-        if (items.length <= 1) return;
-        const timer = setInterval(() => setIdx((i) => (i + 1) % items.length), 6000);
+        if (slides.length <= 1) return;
+        const timer = setInterval(() => setIdx((i) => (i + 1) % slides.length), 6000);
         return () => clearInterval(timer);
-    }, [items.length]);
+    }, [slides.length]);
 
-    const current = items[idx] ?? null;
+    const current = slides[idx] ?? null;
 
-    return (
-        <Block className="p-8 flex flex-col">
-            <BlockHead title="Mededelingen" accent="#FF4490" />
-            {items.length === 0 ? (
+    if (slides.length === 0) {
+        return (
+            <Block className="h-full p-8 flex flex-col">
+                <BlockHead title="Mededelingen" accent="#FF4490" />
                 <div className="flex-1 flex items-center justify-center text-white/20 text-[20px] font-semibold">
                     Geen mededelingen
                 </div>
+            </Block>
+        );
+    }
+
+    return (
+        <Block className="h-full relative">
+            {current?.style === "overlay" ? (
+                <AnnMiniOverlay ann={current} />
             ) : (
-                <div className="flex-1 flex flex-col justify-center min-h-0 gap-3">
-                    <h3 className="font-display font-bold text-white text-[24px] leading-tight">
-                        {current.title}
-                    </h3>
-                    <p className="text-white/65 text-[18px] leading-snug font-semibold">
-                        {current.message}
-                    </p>
-                    {items.length > 1 && (
-                        <div className="flex gap-2 mt-2">
-                            {items.map((_, i) => (
-                                <div
-                                    key={i}
-                                    className="h-1.5 rounded-full transition-all duration-500"
-                                    style={{
-                                        width: i === idx ? 22 : 6,
-                                        background: i === idx ? "#FF4490" : "rgba(255,255,255,.2)",
-                                    }}
-                                />
-                            ))}
-                        </div>
-                    )}
+                <AnnMiniSplit ann={current} />
+            )}
+            {slides.length > 1 && (
+                <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                    {slides.map((_, i) => (
+                        <div
+                            key={i}
+                            className="h-1.5 rounded-full transition-all duration-500"
+                            style={{
+                                width: i === idx ? 22 : 6,
+                                background: i === idx ? "#FF4490" : "rgba(255,255,255,.25)",
+                            }}
+                        />
+                    ))}
                 </div>
             )}
         </Block>
@@ -277,15 +364,15 @@ export default function GeneralDisplay({
                         }}
                     >
                         {/* Agenda spans both rows on the left */}
-                        <div className="row-span-2 min-h-0">
+                        <div className="row-span-2 h-full min-h-0">
                             <AgendaBlock data={agenda || {}} />
                         </div>
                         {/* Top-right: birthdays */}
-                        <div className="min-h-0">
+                        <div className="h-full min-h-0">
                             <BirthdaysBlock data={birthday || {}} />
                         </div>
                         {/* Bottom-right: announcements */}
-                        <div className="min-h-0">
+                        <div className="h-full min-h-0">
                             <AnnouncementsBlock data={announcements || {}} />
                         </div>
                     </div>

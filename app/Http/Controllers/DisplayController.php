@@ -148,7 +148,8 @@ class DisplayController extends Controller
             'birthday', 'birthdays' => $this->getBirthdayData(),
             'room_availability' => $this->getRoomAvailabilityData($widget),
             'clock_weather' => $this->getClockWeatherData(),
-            'announcements', 'announcement' => $this->getAnnouncementsData($widget),
+            'announcements' => $this->getAnnouncementsBlockData($widget),
+            'announcement' => $this->getAnnouncementSlideData($widget),
             'toggl_time_tracking' => $this->getTogglTimeTrackingData(),
             'agenda' => $this->getAgendaData($widget),
             // Config-driven types — no external data needed
@@ -295,14 +296,37 @@ class DisplayController extends Controller
         };
     }
 
-    private function getAnnouncementsData($widget): array
+    private function getAnnouncementSlideData($widget): array
+    {
+        $id = $widget->config['announcement_id'] ?? null;
+        if (! $id) return [];
+
+        $record = \App\Models\Announcement::find($id);
+        return $record ? $record->toArray() : [];
+    }
+
+    private function getAnnouncementsBlockData($widget): array
     {
         $config = $widget->config ?? [];
-        $announcements = array_slice($config['announcements'] ?? [], 0, 5);
+        $selectedIds = $config['selected_announcement_ids'] ?? [];
 
-        return [
-            'announcements' => $announcements,
-        ];
+        if (! empty($selectedIds)) {
+            $records = \App\Models\Announcement::whereIn('id', $selectedIds)
+                ->get()
+                ->keyBy('id');
+
+            $ordered = collect($selectedIds)
+                ->map(fn ($id) => $records->get($id)?->toArray())
+                ->filter()
+                ->values()
+                ->toArray();
+
+            return ['slides' => $ordered];
+        }
+
+        // Fallback: show all announcements from the central library
+        $all = \App\Models\Announcement::latest()->get()->toArray();
+        return ['slides' => $all];
     }
 
     private function getTogglTimeTrackingData(): array

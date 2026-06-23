@@ -2,6 +2,9 @@ import { useState } from "react";
 import axios from "axios";
 import { notifyDisplayRefresh } from "@/lib/displayRefresh";
 import type { AgendaEventRecord } from "./AgendaManager";
+import { EventForm } from "./AgendaManager";
+import type { AnnouncementRecord } from "./AnnouncementManager";
+import { AnnouncementForm } from "./AnnouncementManager";
 import {
     Field,
     TextInput,
@@ -30,6 +33,9 @@ interface Props {
     slides: SlideWidget[];
     onSlidesChange: (slides: SlideWidget[]) => void;
     agendaEvents?: AgendaEventRecord[];
+    announcements?: AnnouncementRecord[];
+    onAgendaEventsChange?: (events: AgendaEventRecord[]) => void;
+    onAnnouncementsChange?: (announcements: AnnouncementRecord[]) => void;
 }
 
 const SLIDE_META: Record<
@@ -108,11 +114,15 @@ function AgendaEditor({
     cfg,
     onChange,
     agendaEvents = [],
+    onAgendaEventsChange,
 }: {
     cfg: Record<string, any>;
     onChange: (c: Record<string, any>) => void;
     agendaEvents?: AgendaEventRecord[];
+    onAgendaEventsChange?: (events: AgendaEventRecord[]) => void;
 }) {
+    const [inlineEdit, setInlineEdit] = useState<AgendaEventRecord | 'new' | null>(null);
+    const [inlineSaving, setInlineSaving] = useState(false);
     const selectedIds: number[] = cfg.selected_ids ?? [];
 
     const toggle = (id: number) => {
@@ -121,6 +131,45 @@ function AgendaEditor({
             : [...selectedIds, id];
         onChange({ ...cfg, selected_ids: next });
     };
+
+    const handleInlineSave = async (form: any) => {
+        setInlineSaving(true);
+        try {
+            if (inlineEdit === 'new') {
+                const res = await axios.post(route('agenda-events.store'), form);
+                onAgendaEventsChange?.([...agendaEvents, res.data]);
+                onChange({ ...cfg, selected_ids: [...selectedIds, res.data.id] });
+            } else if (inlineEdit) {
+                const res = await axios.patch(route('agenda-events.update', inlineEdit.id), form);
+                onAgendaEventsChange?.(agendaEvents.map((e) => e.id === (inlineEdit as AgendaEventRecord).id ? res.data : e));
+            }
+            setInlineEdit(null);
+        } finally {
+            setInlineSaving(false);
+        }
+    };
+
+    if (inlineEdit !== null) {
+        const initial = inlineEdit === 'new' ? {} : {
+            title: inlineEdit.title,
+            when_label: inlineEdit.when_label,
+            when_date: inlineEdit.when_date ?? '',
+            location: inlineEdit.location ?? '',
+            tagline: inlineEdit.tagline ?? '',
+            accent: inlineEdit.accent,
+            grad: inlineEdit.grad ?? '',
+            photo: inlineEdit.photo ?? '',
+            pos: inlineEdit.pos ?? '',
+        };
+        return (
+            <EventForm
+                initial={initial}
+                onSave={handleInlineSave}
+                onBack={() => setInlineEdit(null)}
+                saving={inlineSaving}
+            />
+        );
+    }
 
     return (
         <div className="space-y-4">
@@ -136,12 +185,20 @@ function AgendaEditor({
                 />
             </Field>
             <Divider />
-            <SectionTitle>Evenementen selecteren</SectionTitle>
+            <div className="flex items-center justify-between">
+                <SectionTitle>Evenementen selecteren</SectionTitle>
+                <button
+                    type="button"
+                    onClick={() => setInlineEdit('new')}
+                    className="text-xs font-semibold text-[#6C52FF] hover:underline"
+                >
+                    + Nieuw evenement
+                </button>
+            </div>
             {agendaEvents.length === 0 ? (
                 <div className="rounded-xl border border-[#e6e2f4] bg-[#f8f7fd] p-4">
                     <p className="text-sm text-[#6b6490]">
-                        Geen evenementen in de centrale agenda. Voeg ze toe via{" "}
-                        <strong>Beheer → Evenementen</strong>.
+                        Nog geen evenementen. Klik op <strong>+ Nieuw evenement</strong> om er een toe te voegen.
                     </p>
                 </div>
             ) : (
@@ -150,38 +207,46 @@ function AgendaEditor({
                         const selected = selectedIds.includes(ev.id);
                         const grad = ev.grad || `linear-gradient(140deg,${ev.accent},${ev.accent}88)`;
                         return (
-                            <button
-                                key={ev.id}
-                                type="button"
-                                onClick={() => toggle(ev.id)}
-                                className={`w-full flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-all ${
-                                    selected
-                                        ? "border-[#6C52FF] bg-[#6C52FF]/5"
-                                        : "border-[#e6e2f4] bg-white hover:border-[#6C52FF]/40"
-                                }`}
-                            >
-                                <div className="h-10 w-1.5 rounded-full shrink-0" style={{ background: grad }} />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-[#1a1430] truncate">{ev.title}</p>
-                                    <p className="text-xs text-[#8b84a8] truncate">
-                                        {ev.when_label}
-                                        {ev.location ? ` · ${ev.location}` : ""}
-                                    </p>
-                                </div>
-                                <div
-                                    className={`h-4 w-4 rounded shrink-0 border-2 flex items-center justify-center transition-all ${
+                            <div key={ev.id} className="flex items-center gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => toggle(ev.id)}
+                                    className={`flex-1 flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-all ${
                                         selected
-                                            ? "border-[#6C52FF] bg-[#6C52FF]"
-                                            : "border-[#d0cce8] bg-white"
+                                            ? "border-[#6C52FF] bg-[#6C52FF]/5"
+                                            : "border-[#e6e2f4] bg-white hover:border-[#6C52FF]/40"
                                     }`}
                                 >
-                                    {selected && (
-                                        <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                                            <path d="M1 4l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                    )}
-                                </div>
-                            </button>
+                                    <div className="h-10 w-1.5 rounded-full shrink-0" style={{ background: grad }} />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold text-[#1a1430] truncate">{ev.title}</p>
+                                        <p className="text-xs text-[#8b84a8] truncate">
+                                            {ev.when_label}{ev.location ? ` · ${ev.location}` : ""}
+                                        </p>
+                                    </div>
+                                    <div
+                                        className={`h-4 w-4 rounded shrink-0 border-2 flex items-center justify-center transition-all ${
+                                            selected ? "border-[#6C52FF] bg-[#6C52FF]" : "border-[#d0cce8] bg-white"
+                                        }`}
+                                    >
+                                        {selected && (
+                                            <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
+                                                <path d="M1 4l2 2 4-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                            </svg>
+                                        )}
+                                    </div>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setInlineEdit(ev)}
+                                    className="p-2 text-[#b0abc8] hover:text-[#6C52FF] transition-colors shrink-0"
+                                    title="Bewerk"
+                                >
+                                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                                        <path d="M9.5 1.5l3 3-8 8H1.5v-3l8-8z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                </button>
+                            </div>
                         );
                     })}
                 </div>
@@ -358,152 +423,119 @@ function AppreciationEditor({
 function AnnouncementEditor({
     cfg,
     onChange,
-    agendaEvents = [],
+    announcements = [],
+    onAnnouncementsChange,
 }: {
     cfg: Record<string, any>;
     onChange: (c: Record<string, any>) => void;
-    agendaEvents?: Record<string, any>[];
+    announcements?: AnnouncementRecord[];
+    onAnnouncementsChange?: (announcements: AnnouncementRecord[]) => void;
 }) {
-    const isSplit = (cfg.style ?? "split") === "split";
+    const [inlineEdit, setInlineEdit] = useState<AnnouncementRecord | 'new' | null>(null);
+    const [inlineSaving, setInlineSaving] = useState(false);
+    const selectedId = cfg.announcement_id ?? null;
 
-    const setDetails = (patch: Record<string, string>) =>
-        onChange({ ...cfg, ...patch });
-
-    const importEvent = (ev: typeof agendaEvents[0]) => {
-        onChange({
-            ...cfg,
-            title: ev.title || ev.name || '',
-            badge: ev.tag || ev.where || 'Evenement',
-            date: ev.when || '',
-            time: '',
-            location: ev.where || ev.tag || '',
-            body: ev.tagline || '',
-            photo: ev.photo || '',
-        });
+    const handleInlineSave = async (form: any) => {
+        setInlineSaving(true);
+        try {
+            if (inlineEdit === 'new') {
+                const res = await axios.post(route('announcements.store'), form);
+                onAnnouncementsChange?.([res.data, ...announcements]);
+                onChange({ ...cfg, announcement_id: res.data.id });
+            } else if (inlineEdit) {
+                const res = await axios.patch(route('announcements.update', (inlineEdit as AnnouncementRecord).id), form);
+                onAnnouncementsChange?.(announcements.map((a) => a.id === (inlineEdit as AnnouncementRecord).id ? res.data : a));
+            }
+            setInlineEdit(null);
+        } finally {
+            setInlineSaving(false);
+        }
     };
 
+    if (inlineEdit !== null) {
+        const initial = inlineEdit === 'new' ? {} : {
+            style: inlineEdit.style,
+            badge: inlineEdit.badge ?? '',
+            title: inlineEdit.title ?? '',
+            photo: inlineEdit.photo ?? '',
+            pos: inlineEdit.pos ?? '',
+            date: inlineEdit.date ?? '',
+            time: inlineEdit.time ?? '',
+            location: inlineEdit.location ?? '',
+            body: inlineEdit.body ?? '',
+        };
+        return (
+            <AnnouncementForm
+                initial={initial}
+                onSave={handleInlineSave}
+                onBack={() => setInlineEdit(null)}
+                saving={inlineSaving}
+            />
+        );
+    }
+
     return (
-        <>
-        {agendaEvents.length > 0 && (
-            <div className="space-y-2 pb-4 border-b border-[#e6e2f4]">
-                <p className="text-xs font-bold text-[#5b5478] uppercase tracking-wide">Importeer uit agenda</p>
-                <div className="flex flex-col gap-2">
-                    {agendaEvents.map((ev, i) => {
-                        const grad = ev.grad || (ev.accent
-                            ? `linear-gradient(140deg,${ev.accent},${ev.accent})`
-                            : 'linear-gradient(140deg,#6C52FF,#FF4490)');
-                        return (
-                            <button
-                                key={i}
-                                type="button"
-                                onClick={() => importEvent(ev)}
-                                className="flex items-center gap-3 rounded-xl border border-[#e6e2f4] bg-white p-3 text-left hover:border-[#6C52FF] hover:bg-[#6C52FF]/5 transition-all"
-                            >
-                                <div className="h-10 w-1.5 rounded-full shrink-0" style={{ background: grad }} />
-                                <div className="min-w-0">
-                                    <p className="text-sm font-semibold text-[#1a1430] truncate">{ev.title || ev.name}</p>
-                                    <p className="text-xs text-[#8b84a8]">{ev.when}{ev.tag || ev.where ? ` · ${ev.tag || ev.where}` : ''}</p>
-                                </div>
-                                <span className="ml-auto text-xs text-[#6C52FF] font-medium shrink-0">Importeer →</span>
-                            </button>
-                        );
-                    })}
-                </div>
+        <div className="space-y-3">
+            <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#5b5478] uppercase tracking-wide">Mededeling kiezen</span>
+                <button
+                    type="button"
+                    onClick={() => setInlineEdit('new')}
+                    className="text-xs font-semibold text-[#6C52FF] hover:underline"
+                >
+                    + Nieuwe mededeling
+                </button>
             </div>
-        )}
-        <FormWithImagePreview
-            imageUrl={cfg.photo ?? ""}
-            onImageChange={(url) => onChange({ ...cfg, photo: url })}
-            imageHint={
-                isSplit
-                    ? "Wordt rechts getoond met gradient-overgang."
-                    : "Volledige achtergrond van de slide."
-            }
-        >
-            <Field label="Variant">
-                <Segmented
-                    options={[
-                        { value: "split", label: "Tekst + foto" },
-                        { value: "overlay", label: "Foto overlay" },
-                    ]}
-                    value={cfg.style ?? "split"}
-                    onChange={(v) => onChange({ ...cfg, style: v })}
-                />
-            </Field>
-            <p className="text-xs text-[#8b84a8]">
-                {isSplit
-                    ? "Tekst links, foto rechts — met titel en details (datum, tijd, locatie)."
-                    : "Volledige achtergrondfoto met badge en tekst linksonder."}
-            </p>
-            <Divider />
-            <Field label="Badge">
-                <TextInput
-                    value={cfg.badge ?? ""}
-                    onChange={(e) =>
-                        onChange({ ...cfg, badge: e.target.value })
-                    }
-                    placeholder={isSplit ? "Moonly Alert" : "Pieter Pot & Andy"}
-                />
-            </Field>
-            {isSplit && (
-                <Field label="Titel">
-                    <TextInput
-                        value={cfg.title ?? ""}
-                        onChange={(e) =>
-                            onChange({ ...cfg, title: e.target.value })
-                        }
-                        placeholder="Moonly BBQ"
-                    />
-                </Field>
-            )}
-            {isSplit && (
-                <div className="grid grid-cols-1 gap-3">
-                    <Field label="Datum">
-                        <TextInput
-                            value={cfg.date ?? ""}
-                            onChange={(e) =>
-                                setDetails({ date: e.target.value })
-                            }
-                            placeholder="18 juli 2026"
-                        />
-                    </Field>
-                    <Field label="Tijd">
-                        <TextInput
-                            value={cfg.time ?? ""}
-                            onChange={(e) =>
-                                setDetails({ time: e.target.value })
-                            }
-                            placeholder="17:00 – 21:00"
-                        />
-                    </Field>
-                    <Field label="Locatie">
-                        <TextInput
-                            value={cfg.location ?? ""}
-                            onChange={(e) =>
-                                setDetails({ location: e.target.value })
-                            }
-                            placeholder="Theehuis 't Stroomdal"
-                        />
-                    </Field>
+            {announcements.length === 0 ? (
+                <div className="rounded-xl border border-[#e6e2f4] bg-[#f8f7fd] p-4 text-center space-y-1">
+                    <p className="text-sm font-semibold text-[#5b5478]">Nog geen mededelingen</p>
+                    <p className="text-xs text-[#8b84a8]">Klik op <strong>+ Nieuwe mededeling</strong> om er een aan te maken.</p>
                 </div>
+            ) : (
+                announcements.map((ann) => {
+                    const selected = selectedId === ann.id;
+                    return (
+                        <div key={ann.id} className="flex items-center gap-1">
+                            <button
+                                type="button"
+                                onClick={() => onChange({ ...cfg, announcement_id: ann.id })}
+                                className={`flex-1 flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
+                                    selected
+                                        ? 'border-[#6C52FF] bg-[#6C52FF]/5'
+                                        : 'border-[#e6e2f4] bg-white hover:border-[#6C52FF]/50 hover:bg-[#f8f6fd]'
+                                }`}
+                            >
+                                {ann.photo ? (
+                                    <img src={ann.photo} alt="" className="h-10 w-10 rounded-lg object-cover shrink-0" />
+                                ) : (
+                                    <div className="h-10 w-1.5 rounded-full shrink-0 bg-gradient-to-b from-[#6C52FF] to-[#FF4490]" />
+                                )}
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-semibold text-[#1a1430] truncate">
+                                        {ann.title || ann.badge || 'Naamloos'}
+                                    </p>
+                                    <p className="text-xs text-[#8b84a8] truncate">
+                                        {[ann.badge, ann.date, ann.location].filter(Boolean).join(' · ') ||
+                                            (ann.style === 'split' ? 'Tekst + foto' : 'Foto overlay')}
+                                    </p>
+                                </div>
+                                {selected && <span className="text-[#6C52FF] font-bold text-sm shrink-0">✓</span>}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setInlineEdit(ann)}
+                                className="p-2 text-[#b0abc8] hover:text-[#6C52FF] transition-colors shrink-0"
+                                title="Bewerk"
+                            >
+                                <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                                    <path d="M9.5 1.5l3 3-8 8H1.5v-3l8-8z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    );
+                })
             )}
-            <Field
-                label="Tekst"
-                hint="Gebruik een lege regel voor meerdere alinea's (overlay-variant)."
-            >
-                <TextArea
-                    value={cfg.body ?? ""}
-                    onChange={(e) => onChange({ ...cfg, body: e.target.value })}
-                    rows={isSplit ? 4 : 6}
-                    placeholder={
-                        isSplit
-                            ? "Aanvullende omschrijving…"
-                            : "Eerste alinea…\n\nTweede alinea…"
-                    }
-                />
-            </Field>
-        </FormWithImagePreview>
-        </>
+        </div>
     );
 }
 
@@ -513,12 +545,18 @@ function SlideEditor({
     onSave,
     onBack,
     agendaEvents = [],
+    announcements = [],
+    onAgendaEventsChange,
+    onAnnouncementsChange,
 }: {
     slide: SlideWidget;
     screenId: number;
     onSave: (slide: SlideWidget) => void;
     onBack: () => void;
     agendaEvents?: AgendaEventRecord[];
+    announcements?: AnnouncementRecord[];
+    onAgendaEventsChange?: (events: AgendaEventRecord[]) => void;
+    onAnnouncementsChange?: (announcements: AnnouncementRecord[]) => void;
 }) {
     const [cfg, setCfg] = useState<Record<string, any>>(
         slide.config ?? SLIDE_META[slide.widget_type]?.defaultConfig ?? {},
@@ -568,6 +606,14 @@ function SlideEditor({
                 </span>
             </div>
 
+            <Field label="Naam" hint="Interne naam — zichtbaar in het slideoverzicht">
+                <TextInput
+                    value={cfg._name ?? ""}
+                    onChange={(e) => setCfg({ ...cfg, _name: e.target.value })}
+                    placeholder={meta?.label ?? ""}
+                />
+            </Field>
+
             <Field
                 label="Beschikbaar tot (optioneel)"
                 hint="De slide wordt automatisch uitgeschakeld na deze datum."
@@ -586,9 +632,9 @@ function SlideEditor({
             <Divider />
 
             {slide.widget_type === "agenda" ? (
-                <AgendaEditor cfg={cfg} onChange={setCfg} agendaEvents={agendaEvents} />
+                <AgendaEditor cfg={cfg} onChange={setCfg} agendaEvents={agendaEvents} onAgendaEventsChange={onAgendaEventsChange} />
             ) : slide.widget_type === "announcement" ? (
-                <AnnouncementEditor cfg={cfg} onChange={setCfg} agendaEvents={agendaEvents} />
+                <AnnouncementEditor cfg={cfg} onChange={setCfg} announcements={announcements} onAnnouncementsChange={onAnnouncementsChange} />
             ) : (
                 <EditorComponent cfg={cfg} onChange={setCfg} />
             )}
@@ -606,7 +652,7 @@ function SlideEditor({
 
 // ─── Slide card list ──────────────────────────────────────────────────────────
 
-export function SlideshowEditor({ screenId, slides, onSlidesChange, agendaEvents = [] }: Props) {
+export function SlideshowEditor({ screenId, slides, onSlidesChange, agendaEvents = [], announcements = [], onAgendaEventsChange, onAnnouncementsChange }: Props) {
     const [editingSlide, setEditingSlide] = useState<SlideWidget | null>(null);
     const [adding, setAdding] = useState(false);
 
@@ -695,6 +741,9 @@ export function SlideshowEditor({ screenId, slides, onSlidesChange, agendaEvents
                 }}
                 onBack={() => setEditingSlide(null)}
                 agendaEvents={agendaEvents}
+                announcements={announcements}
+                onAgendaEventsChange={onAgendaEventsChange}
+                onAnnouncementsChange={onAnnouncementsChange}
             />
         );
     }
@@ -744,41 +793,69 @@ export function SlideshowEditor({ screenId, slides, onSlidesChange, agendaEvents
                 {slides.map((slide, idx) => {
                     const meta = SLIDE_META[slide.widget_type];
                     const enabled = slide.config?._enabled ?? true;
-                    const title = getSlideTitle(slide);
+                    const name = slide.config?._name || getSlideTitle(slide);
                     const subtitle = getSlideSubtitle(slide);
                     const until = slide.config?._availableUntil;
+                    const photo = slide.widget_type === "announcement" ? (slide.config?.photo ?? null) : null;
+                    const THUMB_GRAD: Record<string, string> = {
+                        announcement: "linear-gradient(135deg,#3a1f6e,#6C1F8E)",
+                        agenda:       "linear-gradient(135deg,#1e1660,#6C52FF)",
+                        birthdays:    "linear-gradient(135deg,#6b1040,#FF4490)",
+                        appreciation: "linear-gradient(135deg,#5a3800,#FFB020)",
+                    };
+                    const thumbGrad = THUMB_GRAD[slide.widget_type] ?? "linear-gradient(135deg,#2a1f44,#6C52FF)";
                     return (
                         <div
                             key={slide.id}
-                            className={`rounded-2xl border bg-white p-4 flex flex-col gap-2 transition-all ${enabled ? "border-[#e6e2f4]" : "border-[#e6e2f4] opacity-50"}`}
+                            className={`rounded-2xl border bg-white flex flex-col overflow-hidden transition-all ${enabled ? "border-[#e6e2f4]" : "border-[#e6e2f4] opacity-50"}`}
                         >
-                            <div>
-                                <span className="text-2xl">{meta?.icon}</span>
-                                <p className="text-[10px] font-bold uppercase tracking-wide text-[#8b84a8] mt-1">
-                                    {meta?.label}
-                                </p>
-                                <p className="text-sm font-bold text-[#1a1430] mt-0.5 leading-snug truncate">
-                                    {title}
+                            {/* Thumbnail */}
+                            <div
+                                className="relative h-[88px] shrink-0"
+                                style={{ background: photo ? "#08060f" : thumbGrad }}
+                            >
+                                {photo && (
+                                    <img
+                                        src={photo}
+                                        alt=""
+                                        className="absolute inset-0 w-full h-full object-cover"
+                                        style={{ objectPosition: slide.config?.pos || "center" }}
+                                    />
+                                )}
+                                <div
+                                    className="absolute inset-0"
+                                    style={{ background: "linear-gradient(180deg,transparent 30%,rgba(0,0,0,.55) 100%)" }}
+                                />
+                                <div className="absolute bottom-2.5 left-3 flex items-center gap-1.5">
+                                    <span className="text-base leading-none">{meta?.icon}</span>
+                                    <span className="text-[11px] font-bold text-white/70 uppercase tracking-wide">
+                                        {meta?.label}
+                                    </span>
+                                </div>
+                                {!enabled && (
+                                    <div className="absolute top-2 right-2 bg-black/40 backdrop-blur-sm rounded-full px-2 py-0.5 text-[10px] font-bold text-white/60 uppercase tracking-wide">
+                                        Uit
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Info */}
+                            <div className="px-3 pt-2.5 pb-1 flex-1 min-w-0">
+                                <p className="text-sm font-bold text-[#1a1430] leading-snug truncate">
+                                    {name}
                                 </p>
                                 {subtitle && (
-                                    <p className="text-xs text-[#b0abc8] mt-0.5">
-                                        {subtitle}
-                                    </p>
+                                    <p className="text-xs text-[#b0abc8] mt-0.5 truncate">{subtitle}</p>
                                 )}
                                 {until && (
                                     <p className="text-xs text-[#FFB020] font-medium mt-1">
-                                        t/m{" "}
-                                        {new Date(
-                                            until + "T12:00:00",
-                                        ).toLocaleDateString("nl-NL", {
-                                            day: "numeric",
-                                            month: "short",
-                                            year: "numeric",
-                                        })}
+                                        t/m {new Date(until + "T12:00:00").toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" })}
                                     </p>
                                 )}
                             </div>
-                            <div className="mt-auto flex items-center justify-between pt-2 border-t border-[#f0eefa]">
+
+                            {/* Actions */}
+                            <div className="flex items-center justify-between px-3 pb-2.5 pt-1 border-t border-[#f0eefa] mt-1">
                                 <Toggle
                                     checked={enabled}
                                     onChange={() => handleToggle(slide)}
@@ -791,19 +868,8 @@ export function SlideshowEditor({ screenId, slides, onSlidesChange, agendaEvents
                                         className="p-1.5 text-[#b0abc8] hover:text-[#6C52FF] disabled:opacity-30 transition-colors"
                                         title="Omhoog"
                                     >
-                                        <svg
-                                            width="10"
-                                            height="10"
-                                            viewBox="0 0 12 12"
-                                            fill="none"
-                                        >
-                                            <path
-                                                d="M6 10V2M2 6l4-4 4 4"
-                                                stroke="currentColor"
-                                                strokeWidth="1.5"
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                            />
+                                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                            <path d="M6 10V2M2 6l4-4 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                                         </svg>
                                     </button>
                                     <button
@@ -813,19 +879,8 @@ export function SlideshowEditor({ screenId, slides, onSlidesChange, agendaEvents
                                         className="p-1.5 text-[#b0abc8] hover:text-[#6C52FF] disabled:opacity-30 transition-colors"
                                         title="Omlaag"
                                     >
-                                        <svg
-                                            width="10"
-                                            height="10"
-                                            viewBox="0 0 12 12"
-                                            fill="none"
-                                        >
-                                            <path
-                                                d="M6 2v8M10 6l-4 4-4-4"
-                                                stroke="currentColor"
-                                                strokeWidth="1.5"
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                            />
+                                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                                            <path d="M6 2v8M10 6l-4 4-4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                                         </svg>
                                     </button>
                                     <button
@@ -841,18 +896,8 @@ export function SlideshowEditor({ screenId, slides, onSlidesChange, agendaEvents
                                         className="p-1.5 text-[#b0abc8] hover:text-[#DD2727] transition-colors"
                                         title="Verwijder"
                                     >
-                                        <svg
-                                            width="12"
-                                            height="12"
-                                            viewBox="0 0 14 14"
-                                            fill="none"
-                                        >
-                                            <path
-                                                d="M1 1l12 12M13 1L1 13"
-                                                stroke="currentColor"
-                                                strokeWidth="2"
-                                                strokeLinecap="round"
-                                            />
+                                        <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                                            <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                                         </svg>
                                     </button>
                                 </div>

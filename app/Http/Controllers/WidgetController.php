@@ -64,4 +64,19 @@ class WidgetController extends Controller
 
         return response()->json(['message' => 'Widget deleted successfully.']);
     }
+
+    public function announcementSlides(): JsonResponse
+    {
+        $slides = Widget::where('widget_type', 'announcement')
+            ->with('screen:id,name')
+            ->get()
+            ->map(fn ($w) => [
+                'id'          => $w->id,
+                'title'       => $w->config['title'] ?? 'Naamloos',
+                'badge'       => $w->config['badge'] ?? null,
+                'screen_name' => $w->screen?->name,
+            ]);
+
+        return response()->json($slides);
+    }
 }

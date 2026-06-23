@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AgendaEventController;
+use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\DisplayController;
 use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\OverlayController;
@@ -37,6 +38,7 @@ Route::middleware('auth')->group(function () {
     Route::post('screens/{screen}/widgets', [WidgetController::class, 'store'])->name('widgets.store');
     Route::patch('widgets/{widget}', [WidgetController::class, 'update'])->name('widgets.update');
     Route::delete('widgets/{widget}', [WidgetController::class, 'destroy'])->name('widgets.destroy');
+    Route::get('announcement-slides', [WidgetController::class, 'announcementSlides'])->name('announcement-slides.index');
 
     // Overlay (global meeting room bar for slideshow & general displays)
     Route::patch('overlay', [OverlayController::class, 'update'])->name('overlay.update');
@@ -55,6 +57,12 @@ Route::middleware('auth')->group(function () {
     Route::post('agenda-events', [AgendaEventController::class, 'store'])->name('agenda-events.store');
     Route::patch('agenda-events/{agendaEvent}', [AgendaEventController::class, 'update'])->name('agenda-events.update');
     Route::delete('agenda-events/{agendaEvent}', [AgendaEventController::class, 'destroy'])->name('agenda-events.destroy');
+
+    // Announcements (central announcement library)
+    Route::get('announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
+    Route::post('announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
+    Route::patch('announcements/{announcement}', [AnnouncementController::class, 'update'])->name('announcements.update');
+    Route::delete('announcements/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
 });
 
 // Public Display Routes (no authentication)

@@ -2,14 +2,16 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { notifyDisplayRefresh } from '@/lib/displayRefresh';
 import { TEAM_BIRTHDAY_COUNT } from '@/lib/birthdays';
+import type { AgendaEventRecord } from './AgendaManager';
+import { EventForm } from './AgendaManager';
+import type { AnnouncementRecord } from './AnnouncementManager';
+import { AnnouncementForm } from './AnnouncementManager';
 import {
     Field,
     TextInput,
-    TextArea,
     SaveButton,
     SectionTitle,
     Divider,
-    FormWithImagePreview,
 } from './Ui';
 
 interface MgmtWidget {
@@ -19,34 +21,22 @@ interface MgmtWidget {
     config: Record<string, any> | null;
 }
 
-interface SpotlightConfig {
-    badge?: string;
-    emoji?: string;
-    title?: string;
-    when?: string;
-    text?: string;
-    grad?: string;
-}
-
-interface MomentConfig {
-    title?: string;
-    caption?: string;
-    photo?: string;
-}
-
 interface Props {
     screenId: number;
     widgets: MgmtWidget[];
     screenConfig: Record<string, any>;
     onWidgetsChange: (widgets: MgmtWidget[]) => void;
     onConfigChange: (cfg: Record<string, any>) => void;
+    agendaEvents?: AgendaEventRecord[];
+    announcements?: AnnouncementRecord[];
+    onAgendaEventsChange?: (events: AgendaEventRecord[]) => void;
+    onAnnouncementsChange?: (announcements: AnnouncementRecord[]) => void;
 }
 
 const GENERAL_WIDGETS = [
     { type: 'agenda', order: 0 },
     { type: 'birthday', order: 1 },
-    { type: 'spotlight_event', order: 2 },
-    { type: 'moment_photo', order: 3 },
+    { type: 'announcements', order: 2 },
 ] as const;
 
 const DEFAULT_CONFIGS: Record<string, Record<string, any>> = {
@@ -56,18 +46,8 @@ const DEFAULT_CONFIGS: Record<string, Record<string, any>> = {
         events: [],
     },
     birthday: {},
-    spotlight_event: {
-        badge: 'Evenement',
-        emoji: '🎉',
-        title: 'Moonly BBQ',
-        when: 'Vrijdag 17:00',
-        text: 'Kom gezellig meedoen!',
-        grad: 'linear-gradient(150deg,#6C52FF,#FF4490)',
-    },
-    moment_photo: {
-        title: 'Moonly Moment',
-        caption: 'Wat een geweldige dag met het team!',
-        photo: '',
+    announcements: {
+        selected_announcement_ids: [],
     },
 };
 
@@ -84,32 +64,19 @@ function widgetConfig(widget: MgmtWidget | undefined, type: string): Record<stri
     return { ...DEFAULT_CONFIGS[type] };
 }
 
-function migrateBentoConfig(
-    bento: Record<string, any>,
-    type: string,
-    cfg: Record<string, any>,
-): Record<string, any> {
-    if (type === 'spotlight_event' && bento.spotlight) {
-        return { ...cfg, ...bento.spotlight };
-    }
-    if (type === 'moment_photo' && bento.moment) {
-        return { ...cfg, ...bento.moment };
-    }
-    return cfg;
-}
-
 export function GeneralEditor({
     screenId,
     widgets,
     screenConfig,
     onWidgetsChange,
     onConfigChange,
+    agendaEvents = [],
+    announcements = [],
+    onAgendaEventsChange,
+    onAnnouncementsChange,
 }: Props) {
-    const bento = screenConfig.bento ?? {};
-
     const agendaWidget = findWidget(widgets, 'agenda');
-    const spotlightWidget = findWidget(widgets, 'spotlight_event');
-    const momentWidget = findWidget(widgets, 'moment_photo');
+    const announcementsWidget = findWidget(widgets, 'announcements');
 
     const [agendaCfg, setAgendaCfg] = useState<{ title: string; subtitle: string }>(() => {
         const cfg = widgetConfig(agendaWidget, 'agenda');
@@ -118,18 +85,59 @@ export function GeneralEditor({
             subtitle: cfg.subtitle ?? 'Aankomende evenementen',
         };
     });
-    const [spotlight, setSpotlight] = useState<SpotlightConfig>(() =>
-        migrateBentoConfig(bento, 'spotlight_event', widgetConfig(spotlightWidget, 'spotlight_event')),
-    );
-    const [moment, setMoment] = useState<MomentConfig>(() =>
-        migrateBentoConfig(bento, 'moment_photo', widgetConfig(momentWidget, 'moment_photo')),
-    );
+
+    const [selectedIds, setSelectedIds] = useState<number[]>(() => {
+        const cfg = widgetConfig(announcementsWidget, 'announcements');
+        return cfg.selected_announcement_ids ?? [];
+    });
 
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
     const [bootstrapping, setBootstrapping] = useState(false);
 
-    // Ensure the four general widgets exist
+    // Inline create/edit for agenda events
+    const [editingEvent, setEditingEvent] = useState<AgendaEventRecord | 'new' | null>(null);
+    const [eventSaving, setEventSaving] = useState(false);
+
+    const handleEventSave = async (form: any) => {
+        setEventSaving(true);
+        try {
+            if (editingEvent === 'new') {
+                const res = await axios.post(route('agenda-events.store'), form);
+                onAgendaEventsChange?.([...agendaEvents, res.data]);
+            } else if (editingEvent) {
+                const res = await axios.patch(route('agenda-events.update', (editingEvent as AgendaEventRecord).id), form);
+                onAgendaEventsChange?.(agendaEvents.map((e) => e.id === (editingEvent as AgendaEventRecord).id ? res.data : e));
+            }
+            setEditingEvent(null);
+        } finally {
+            setEventSaving(false);
+        }
+    };
+
+    // Inline create/edit for announcements
+    const [editingAnn, setEditingAnn] = useState<AnnouncementRecord | 'new' | null>(null);
+    const [annSaving, setAnnSaving] = useState(false);
+
+    const handleAnnSave = async (form: any) => {
+        setAnnSaving(true);
+        try {
+            if (editingAnn === 'new') {
+                const res = await axios.post(route('announcements.store'), form);
+                const updated = [res.data, ...announcements];
+                onAnnouncementsChange?.(updated);
+                setSelectedIds((prev) => [...prev, res.data.id]);
+            } else if (editingAnn) {
+                const res = await axios.patch(route('announcements.update', (editingAnn as AnnouncementRecord).id), form);
+                onAnnouncementsChange?.(announcements.map((a) => a.id === (editingAnn as AnnouncementRecord).id ? res.data : a));
+            }
+            setEditingAnn(null);
+        } finally {
+            setAnnSaving(false);
+        }
+    };
+
+    // Ensure required general widgets exist
     useEffect(() => {
         const missing = GENERAL_WIDGETS.filter((w) => !findWidget(widgets, w.type));
         if (missing.length === 0) return;
@@ -171,11 +179,10 @@ export function GeneralEditor({
         try {
             await Promise.all([
                 saveWidget(agendaWidget, agendaCfg),
-                saveWidget(spotlightWidget, spotlight),
-                saveWidget(momentWidget, moment),
+                saveWidget(announcementsWidget, { selected_announcement_ids: selectedIds }),
             ]);
 
-            // Drop legacy bento key from screen_config after migrating to widgets
+            // Drop legacy bento key from screen_config
             if (screenConfig.bento) {
                 const { bento: _removed, ...rest } = screenConfig;
                 const res = await axios.patch(route('screens.updateConfig', screenId), {
@@ -192,6 +199,12 @@ export function GeneralEditor({
         }
     };
 
+    const toggleAnnouncement = (id: number) => {
+        setSelectedIds((prev) =>
+            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+        );
+    };
+
     if (bootstrapping) {
         return (
             <p className="text-center text-sm text-[#8b84a8] py-8">
@@ -200,11 +213,66 @@ export function GeneralEditor({
         );
     }
 
+    // Show inline event form when editing
+    if (editingEvent !== null) {
+        const initial = editingEvent === 'new' ? {} : {
+            title: editingEvent.title,
+            when_label: editingEvent.when_label,
+            when_date: editingEvent.when_date ?? '',
+            location: editingEvent.location ?? '',
+            tagline: editingEvent.tagline ?? '',
+            accent: editingEvent.accent,
+            grad: editingEvent.grad ?? '',
+            photo: editingEvent.photo ?? '',
+            pos: editingEvent.pos ?? '',
+        };
+        return (
+            <EventForm
+                initial={initial}
+                onSave={handleEventSave}
+                onBack={() => setEditingEvent(null)}
+                saving={eventSaving}
+            />
+        );
+    }
+
+    // Show inline announcement form when editing
+    if (editingAnn !== null) {
+        const initial = editingAnn === 'new' ? {} : {
+            style: editingAnn.style,
+            badge: editingAnn.badge ?? '',
+            title: editingAnn.title ?? '',
+            photo: editingAnn.photo ?? '',
+            pos: editingAnn.pos ?? '',
+            date: editingAnn.date ?? '',
+            time: editingAnn.time ?? '',
+            location: editingAnn.location ?? '',
+            body: editingAnn.body ?? '',
+        };
+        return (
+            <AnnouncementForm
+                initial={initial}
+                onSave={handleAnnSave}
+                onBack={() => setEditingAnn(null)}
+                saving={annSaving}
+            />
+        );
+    }
+
     return (
         <div className="space-y-6">
             {/* Agenda */}
             <section className="space-y-4">
-                <SectionTitle>Agenda</SectionTitle>
+                <div className="flex items-center justify-between">
+                    <SectionTitle>Agenda</SectionTitle>
+                    <button
+                        type="button"
+                        onClick={() => setEditingEvent('new')}
+                        className="text-xs font-semibold text-[#6C52FF] hover:underline"
+                    >
+                        + Nieuw evenement
+                    </button>
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                     <Field label="Titel">
                         <TextInput
@@ -221,15 +289,40 @@ export function GeneralEditor({
                         />
                     </Field>
                 </div>
-                <div className="rounded-xl border border-[#e6e2f4] bg-[#f8f7fd] p-4 space-y-1.5">
-                    <p className="text-xs font-bold text-[#5b5478] uppercase tracking-wide">Centrale agenda</p>
-                    <p className="text-sm text-[#6b6490]">
-                        De eerstvolgende 6 evenementen worden automatisch geladen uit de centrale agenda.
-                    </p>
-                    <p className="text-xs text-[#8b84a8]">
-                        📅 Beheer evenementen via <strong>Beheer → Evenementen</strong>
-                    </p>
-                </div>
+                {agendaEvents.length === 0 ? (
+                    <div className="rounded-xl border border-[#e6e2f4] bg-[#f8f7fd] p-4 space-y-1.5">
+                        <p className="text-xs font-bold text-[#5b5478] uppercase tracking-wide">Centrale agenda</p>
+                        <p className="text-sm text-[#6b6490]">
+                            De eerstvolgende 6 evenementen worden automatisch getoond. Klik op <strong>+ Nieuw evenement</strong> om er een toe te voegen.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="space-y-2">
+                        {agendaEvents.map((ev) => {
+                            const grad = ev.grad || `linear-gradient(140deg,${ev.accent},${ev.accent}88)`;
+                            return (
+                                <div key={ev.id} className="flex items-center gap-1 rounded-xl border border-[#e6e2f4] bg-white px-3 py-2.5">
+                                    <div className="h-8 w-1.5 rounded-full shrink-0" style={{ background: grad }} />
+                                    <div className="flex-1 min-w-0 ml-2">
+                                        <p className="text-sm font-semibold text-[#1a1430] truncate">{ev.title}</p>
+                                        <p className="text-xs text-[#8b84a8] truncate">{ev.when_label}{ev.location ? ` · ${ev.location}` : ''}</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditingEvent(ev)}
+                                        className="p-2 text-[#b0abc8] hover:text-[#6C52FF] transition-colors shrink-0"
+                                        title="Bewerk"
+                                    >
+                                        <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                                            <path d="M9.5 1.5l3 3-8 8H1.5v-3l8-8z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            );
+                        })}
+                        <p className="text-xs text-[#8b84a8]">De eerstvolgende 6 worden automatisch getoond op het scherm.</p>
+                    </div>
+                )}
             </section>
 
             <Divider />
@@ -250,76 +343,77 @@ export function GeneralEditor({
 
             <Divider />
 
-            {/* Spotlight Event */}
+            {/* Announcements */}
             <section className="space-y-4">
-                <SectionTitle>Uitgelicht evenement</SectionTitle>
-                <div className="grid grid-cols-2 gap-3">
-                    <Field label="Badge">
-                        <TextInput
-                            value={spotlight.badge ?? ''}
-                            onChange={(e) => setSpotlight({ ...spotlight, badge: e.target.value })}
-                            placeholder="Evenement"
-                        />
-                    </Field>
-                    <Field label="Emoji">
-                        <TextInput
-                            value={spotlight.emoji ?? ''}
-                            onChange={(e) => setSpotlight({ ...spotlight, emoji: e.target.value })}
-                            placeholder="🎉"
-                        />
-                    </Field>
+                <div className="flex items-center justify-between">
+                    <SectionTitle>Mededelingen</SectionTitle>
+                    <button
+                        type="button"
+                        onClick={() => setEditingAnn('new')}
+                        className="text-xs font-semibold text-[#6C52FF] hover:underline"
+                    >
+                        + Nieuwe mededeling
+                    </button>
                 </div>
-                <Field label="Titel">
-                    <TextInput
-                        value={spotlight.title ?? ''}
-                        onChange={(e) => setSpotlight({ ...spotlight, title: e.target.value })}
-                        placeholder="Moonly BBQ"
-                    />
-                </Field>
-                <Field label="Wanneer">
-                    <TextInput
-                        value={spotlight.when ?? ''}
-                        onChange={(e) => setSpotlight({ ...spotlight, when: e.target.value })}
-                        placeholder="Vrijdag 17:00"
-                    />
-                </Field>
-                <Field label="Tekst">
-                    <TextArea
-                        value={spotlight.text ?? ''}
-                        onChange={(e) => setSpotlight({ ...spotlight, text: e.target.value })}
-                        rows={3}
-                        placeholder="Kom gezellig meedoen!"
-                    />
-                </Field>
-            </section>
 
-            <Divider />
-
-            {/* Moonly Moment */}
-            <section>
-                <SectionTitle>Moonly Moment</SectionTitle>
-                <FormWithImagePreview
-                    imageUrl={moment.photo ?? ''}
-                    onImageChange={(url) => setMoment({ ...moment, photo: url })}
-                    imageLabel="Foto"
-                    imageHint="Wordt als achtergrond getoond met titel en bijschrift onderaan."
-                >
-                    <Field label="Titel">
-                        <TextInput
-                            value={moment.title ?? ''}
-                            onChange={(e) => setMoment({ ...moment, title: e.target.value })}
-                            placeholder="Moonly Moment"
-                        />
-                    </Field>
-                    <Field label="Bijschrift">
-                        <TextArea
-                            value={moment.caption ?? ''}
-                            onChange={(e) => setMoment({ ...moment, caption: e.target.value })}
-                            rows={2}
-                            placeholder="Wat een geweldige dag met het team!"
-                        />
-                    </Field>
-                </FormWithImagePreview>
+                {announcements.length === 0 ? (
+                    <div className="rounded-xl border border-[#e6e2f4] bg-[#f8f7fd] p-4 text-center space-y-1">
+                        <p className="text-sm font-semibold text-[#5b5478]">Nog geen mededelingen</p>
+                        <p className="text-xs text-[#8b84a8]">
+                            Klik op <strong>+ Nieuwe mededeling</strong> om er een aan te maken.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="space-y-2">
+                        {announcements.map((ann) => {
+                            const selected = selectedIds.includes(ann.id);
+                            return (
+                                <div key={ann.id} className="flex items-center gap-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleAnnouncement(ann.id)}
+                                        className={`flex-1 flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
+                                            selected
+                                                ? 'border-[#6C52FF] bg-[#6C52FF]/5'
+                                                : 'border-[#e6e2f4] bg-white hover:border-[#6C52FF]/50 hover:bg-[#f8f6fd]'
+                                        }`}
+                                    >
+                                        {ann.photo ? (
+                                            <img src={ann.photo} alt="" className="h-10 w-10 rounded-lg object-cover shrink-0" />
+                                        ) : (
+                                            <div className="h-10 w-1.5 rounded-full shrink-0 bg-gradient-to-b from-[#6C52FF] to-[#FF4490]" />
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-semibold text-[#1a1430] truncate">
+                                                {ann.title || ann.badge || 'Naamloos'}
+                                            </p>
+                                            <p className="text-xs text-[#8b84a8] truncate">
+                                                {[ann.badge, ann.date, ann.location].filter(Boolean).join(' · ') ||
+                                                    (ann.style === 'split' ? 'Tekst + foto' : 'Foto overlay')}
+                                            </p>
+                                        </div>
+                                        {selected && <span className="text-[#6C52FF] font-bold text-sm shrink-0">✓</span>}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setEditingAnn(ann)}
+                                        className="p-2 text-[#b0abc8] hover:text-[#6C52FF] transition-colors shrink-0"
+                                        title="Bewerk"
+                                    >
+                                        <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                                            <path d="M9.5 1.5l3 3-8 8H1.5v-3l8-8z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            );
+                        })}
+                        {selectedIds.length > 0 && (
+                            <p className="text-xs text-[#8b84a8] pt-1">
+                                {selectedIds.length} mededeling{selectedIds.length !== 1 ? 'en' : ''} geselecteerd · worden om de 6 seconden gewisseld
+                            </p>
+                        )}
+                    </div>
+                )}
             </section>
 
             <div className="pt-2">
