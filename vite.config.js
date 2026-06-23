@@ -13,8 +13,6 @@ export default defineConfig({
     server: {
         // Required when using Laravel Sail — run `./vendor/bin/sail npm run dev`
         host: '0.0.0.0',
-        port: 5173,
-        strictPort: true,
         hmr: {
             host: 'localhost',
         },

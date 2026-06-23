@@ -169,7 +169,11 @@ export function TopBar({ weather }: TopBarProps) {
     });
     return (
         <header className="relative flex items-center justify-between px-14 h-[104px] shrink-0">
-            <img src="/images/MoonlyLogo_Wit.svg" alt="Moonly" className="h-7" />
+            <img
+                src="/images/MoonlyLogo_Wit.svg"
+                alt="Moonly"
+                className="h-6"
+            />
             <div className="flex items-baseline gap-4 text-white font-poster">
                 <span className="text-white/70 text-[34px] font-medium">
                     {weather || ""}
@@ -188,9 +192,16 @@ export function TopBar({ weather }: TopBarProps) {
     );
 }
 
-type RoomLike = RoomConfig & { busy?: boolean; subtext?: string; until?: string | null; free?: boolean | null };
+type RoomLike = RoomConfig & {
+    busy?: boolean;
+    subtext?: string;
+    until?: string | null;
+    free?: boolean | null;
+};
 
-function normalizeRoom(r: RoomLike): RoomConfig & { until: string | null; status?: string } {
+function normalizeRoom(
+    r: RoomLike,
+): RoomConfig & { until: string | null; status?: string } {
     let until = r.until ?? null;
     if (!until && r.sub) {
         const match = String(r.sub).match(/(\d{1,2}:\d{2})/);
@@ -200,7 +211,13 @@ function normalizeRoom(r: RoomLike): RoomConfig & { until: string | null; status
     return {
         id: r.id || r.name,
         name: r.name,
-        free: r.free ?? (r.status === 'occupied' ? false : r.status === 'available' ? true : !(r.busy ?? false)),
+        free:
+            r.free ??
+            (r.status === "occupied"
+                ? false
+                : r.status === "available"
+                  ? true
+                  : !(r.busy ?? false)),
         until,
         status: r.status,
         sub: r.sub ?? r.subtext,
@@ -210,10 +227,13 @@ function normalizeRoom(r: RoomLike): RoomConfig & { until: string | null; status
 // ---- Room tile ----
 function RoomTile({ r }: { r: RoomConfig }) {
     const room = normalizeRoom(r);
-    const unknown = room.status === 'unknown' || room.free === null || room.free === undefined;
+    const unknown =
+        room.status === "unknown" ||
+        room.free === null ||
+        room.free === undefined;
     const free = !unknown && room.free;
-    const c = unknown ? '#8b84a8' : free ? '#27DD36' : '#DD2727';
-    const label = unknown ? 'Geen data' : free ? 'Beschikbaar' : 'Bezet';
+    const c = unknown ? "#8b84a8" : free ? "#27DD36" : "#DD2727";
+    const label = unknown ? "Geen data" : free ? "Beschikbaar" : "Bezet";
     return (
         <div
             className="relative flex-1 flex items-center overflow-hidden"
@@ -238,7 +258,10 @@ function RoomTile({ r }: { r: RoomConfig }) {
                 {room.name}
             </span>
             <span className="flex-1" />
-            <div className="flex items-center whitespace-nowrap" style={{ gap: 10 }}>
+            <div
+                className="flex items-center whitespace-nowrap"
+                style={{ gap: 10 }}
+            >
                 <span
                     className="rounded-full font-poster font-semibold leading-none"
                     style={{

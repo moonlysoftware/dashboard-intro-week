@@ -17,13 +17,14 @@ export default {
 				sans: [
 					'Archia',
 					'CeraPro',
-					'Roboto',
 					...defaultTheme.fontFamily.sans
 				],
 				archia: ['Archia', 'sans-serif'],
-				display: ['"Space Grotesk"', 'sans-serif'],
-				poster: ['Poppins', 'sans-serif'],
-				manrope: ['Manrope', 'sans-serif'],
+				kumbh: ['"Kumbh Sans"', 'sans-serif'],
+				'open-sans': ['"Open Sans"', 'sans-serif'],
+				display: ['Archia', 'sans-serif'],
+				poster: ['Archia', 'sans-serif'],
+				manrope: ['"Open Sans"', 'sans-serif'],
 			},
     		colors: {
 				/* Moonly display palette */
