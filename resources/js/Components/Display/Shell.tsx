@@ -155,7 +155,7 @@ export function Backdrop() {
 
 // ---- Top bar ----
 interface TopBarProps {
-    weather?: string;
+    weather?: import("@/types").WeatherData;
 }
 
 export function TopBar({ weather }: TopBarProps) {
@@ -174,17 +174,16 @@ export function TopBar({ weather }: TopBarProps) {
                 alt="Moonly"
                 className="h-6"
             />
-            <div className="flex items-baseline gap-4 text-white font-poster">
-                <span className="text-white/70 text-[34px] font-medium">
-                    {weather || ""}
-                </span>
+            <div className="flex items-baseline gap-5 text-white font-poster">
                 {weather && (
-                    <span className="text-white/30 text-[34px]">·</span>
+                    <span className="text-white/40 text-[26px] font-medium tracking-wide">
+                        {weather.temperature}°C
+                    </span>
                 )}
                 <span className="text-white text-[34px] font-medium">
                     {date}
                 </span>
-                <span className="ml-3 text-white text-[34px] font-semibold tabular-nums">
+                <span className="ml-1 text-white text-[34px] font-semibold tabular-nums">
                     {hh}:{mm}
                 </span>
             </div>
@@ -249,7 +248,12 @@ function RoomTile({ r }: { r: RoomConfig }) {
         >
             <span
                 className="shrink-0 rounded-full"
-                style={{ width: 10, height: 10, background: c, boxShadow: `0 0 10px ${c}` }}
+                style={{
+                    width: 10,
+                    height: 10,
+                    background: c,
+                    boxShadow: `0 0 10px ${c}`,
+                }}
             />
             <span
                 className="font-poster font-semibold text-white leading-none whitespace-nowrap"

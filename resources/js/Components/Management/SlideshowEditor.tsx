@@ -748,6 +748,8 @@ export function SlideshowEditor({ screenId, slides, onSlidesChange, agendaEvents
         );
     }
 
+    const birthdayExists = slides.some((s) => s.widget_type === 'birthdays');
+
     if (adding) {
         return (
             <div className="space-y-4">
@@ -762,21 +764,26 @@ export function SlideshowEditor({ screenId, slides, onSlidesChange, agendaEvents
                     Slide type kiezen
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
-                    {Object.entries(SLIDE_META).map(([type, meta]) => (
-                        <button
-                            key={type}
-                            type="button"
-                            onClick={() =>
-                                handleAdd(type as keyof typeof SLIDE_META)
-                            }
-                            className="flex items-center gap-3 rounded-xl border border-[#e6e2f4] bg-white p-4 text-left hover:border-[#6C52FF] hover:bg-[#6C52FF]/5 transition-all"
-                        >
-                            <span className="text-2xl">{meta.icon}</span>
-                            <span className="text-sm font-semibold text-[#1a1430]">
-                                {meta.label}
-                            </span>
-                        </button>
-                    ))}
+                    {Object.entries(SLIDE_META).map(([type, meta]) => {
+                        const disabled = type === 'birthdays' && birthdayExists;
+                        return (
+                            <button
+                                key={type}
+                                type="button"
+                                disabled={disabled}
+                                onClick={() =>
+                                    !disabled && handleAdd(type as keyof typeof SLIDE_META)
+                                }
+                                className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-all ${disabled ? 'border-[#e6e2f4] bg-[#f8f7fc] opacity-40 cursor-not-allowed' : 'border-[#e6e2f4] bg-white hover:border-[#6C52FF] hover:bg-[#6C52FF]/5'}`}
+                            >
+                                <span className="text-2xl">{meta.icon}</span>
+                                <span className="text-sm font-semibold text-[#1a1430]">
+                                    {meta.label}
+                                    {disabled && <span className="block text-xs font-normal text-[#8b84a8]">Al toegevoegd</span>}
+                                </span>
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
         );

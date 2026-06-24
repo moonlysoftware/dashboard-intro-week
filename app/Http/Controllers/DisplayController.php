@@ -60,6 +60,8 @@ class DisplayController extends Controller
         $config = $this->normalizeScreenConfig($config);
         $type = $screen->screen_type ?? 'slideshow';
 
+        $config['weather'] = $this->fetchWeather();
+
         if (! in_array($type, ['slideshow', 'general'], true)) {
             unset($config['rooms']);
 
@@ -230,9 +232,9 @@ class DisplayController extends Controller
         return ['rooms' => $roomData];
     }
 
-    private function getClockWeatherData(): array
+    private function fetchWeather(): array
     {
-        $weather = Cache::remember('weather_best_nl', 600, function () {
+        return Cache::remember('weather_best_nl', 600, function () {
             $response = Http::get('https://api.open-meteo.com/v1/forecast?latitude=51.5075&longitude=5.3903&hourly=temperature_2m', [
                 'latitude' => 51.51,
                 'longitude' => 5.39,
@@ -252,16 +254,19 @@ class DisplayController extends Controller
                 'condition' => $this->weatherCondition($code),
                 'icon' => $this->weatherIcon($code),
             ];
-        });
+        }) ?? [
+            'temperature' => 0,
+            'condition' => 'Niet beschikbaar',
+            'icon' => '❓',
+        ];
+    }
 
+    private function getClockWeatherData(): array
+    {
         return [
             'time' => now()->format('H:i:s'),
             'date' => now()->format('l, j F Y'),
-            'weather' => $weather ?? [
-                'temperature' => 0,
-                'condition' => 'Niet beschikbaar',
-                'icon' => '❓',
-            ],
+            'weather' => $this->fetchWeather(),
         ];
     }
 

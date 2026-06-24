@@ -14,7 +14,7 @@ export interface RoomConfig {
     free: boolean;
     /** HH:MM — when the current status ends (free until next booking, or busy until available) */
     until?: string | null;
-    status?: 'available' | 'occupied' | 'unknown';
+    status?: "available" | "occupied" | "unknown";
     sub?: string;
     /** @deprecated editor-only manual fallback */
     busy?: boolean;
@@ -22,9 +22,14 @@ export interface RoomConfig {
     subtext?: string;
 }
 
+export interface WeatherData {
+    temperature: number;
+    condition: string;
+}
+
 export interface ScreenConfig {
     rooms?: RoomConfig[];
-    weather?: string;
+    weather?: WeatherData;
     cycleSeconds?: number;
     // Technical screen
     services?: ServiceConfig[];
