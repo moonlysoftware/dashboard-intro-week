@@ -40,7 +40,7 @@ export function normalizeAnnouncementContent(
         const first = content.announcements[0];
         return {
             style: "overlay",
-            badge: "Nieuws",
+            badge: content.badge ?? "",
             title: first.title ?? "",
             body: first.message ? [first.message] : [],
         };
@@ -172,6 +172,8 @@ function AnnOverlay({
     photo,
     pos,
     badge,
+    title,
+    details = [],
     body = [],
     sub,
 }: AnnouncementContent) {
@@ -207,6 +209,19 @@ function AnnOverlay({
                         <Pill>{badge}</Pill>
                     </div>
                 )}
+                {title && <h2 className="slide-title mb-7">{title}</h2>}
+                {details.length > 0 && (
+                    <div className="flex flex-col gap-2.5 mb-7">
+                        {details.map((d, i) => (
+                            <div key={i} className="leading-tight">
+                                <span className="slide-label">{d.label}: </span>
+                                <span className="slide-date font-normal">
+                                    {d.value}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                )}
                 {lines.length > 0 && (
                     <div className="flex flex-col gap-5 max-w-[1180px]">
                         {lines.map((p, i) => (
@@ -232,14 +247,8 @@ export default function AnnouncementSlide({
     const c = normalizeAnnouncementContent(content || {});
 
     if (c.style === "overlay") {
-        return <AnnOverlay {...c} badge={c.badge || "Moonly Alert"} />;
+        return <AnnOverlay {...c} />;
     }
 
-    return (
-        <AnnSplit
-            {...c}
-            badge={c.badge || "Moonly Alert"}
-            title={c.title || ""}
-        />
-    );
+    return <AnnSplit {...c} title={c.title || ""} />;
 }

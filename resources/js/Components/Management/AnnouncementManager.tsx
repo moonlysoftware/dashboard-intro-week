@@ -79,8 +79,6 @@ export function AnnouncementForm({
         onSave({ ...form, time: combined });
     };
 
-    const isSplit = form.style === 'split';
-
     return (
         <div className="space-y-5">
             <div className="flex items-center gap-3">
@@ -92,7 +90,7 @@ export function AnnouncementForm({
             <FormWithImagePreview
                 imageUrl={form.photo ?? ''}
                 onImageChange={(url) => set('photo', url)}
-                imageHint={isSplit ? 'Wordt rechts getoond met gradient-overgang.' : 'Volledige achtergrond van de slide.'}
+                imageHint={form.style === 'split' ? 'Wordt rechts getoond met gradient-overgang.' : 'Volledige achtergrond van de slide.'}
             >
                 <Field label="Variant">
                     <Segmented
@@ -109,58 +107,52 @@ export function AnnouncementForm({
                     <TextInput
                         value={form.badge}
                         onChange={(e) => set('badge', e.target.value)}
-                        placeholder={isSplit ? 'Moonly Alert' : 'Pieter & Andy'}
+                        placeholder="Moonly Alert"
                     />
                 </Field>
-                {isSplit && (
-                    <Field label="Titel">
+                <Field label="Titel">
+                    <TextInput
+                        value={form.title}
+                        onChange={(e) => set('title', e.target.value)}
+                        placeholder="Moonly BBQ"
+                    />
+                </Field>
+                <Field label="Datum">
+                    <TextInput
+                        type="date"
+                        value={form.date}
+                        onChange={(e) => set('date', e.target.value)}
+                    />
+                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                    <Field label="Tijd van">
                         <TextInput
-                            value={form.title}
-                            onChange={(e) => set('title', e.target.value)}
-                            placeholder="Moonly BBQ"
+                            type="time"
+                            value={timeFrom}
+                            onChange={(e) => setTimeFrom(e.target.value)}
                         />
                     </Field>
-                )}
-                {isSplit && (
-                    <>
-                        <Field label="Datum">
-                            <TextInput
-                                type="date"
-                                value={form.date}
-                                onChange={(e) => set('date', e.target.value)}
-                            />
-                        </Field>
-                        <div className="grid grid-cols-2 gap-3">
-                            <Field label="Tijd van">
-                                <TextInput
-                                    type="time"
-                                    value={timeFrom}
-                                    onChange={(e) => setTimeFrom(e.target.value)}
-                                />
-                            </Field>
-                            <Field label="Tijd tot">
-                                <TextInput
-                                    type="time"
-                                    value={timeTo}
-                                    onChange={(e) => setTimeTo(e.target.value)}
-                                />
-                            </Field>
-                        </div>
-                        <Field label="Locatie">
-                            <TextInput
-                                value={form.location}
-                                onChange={(e) => set('location', e.target.value)}
-                                placeholder="Theehuis 't Stroomdal"
-                            />
-                        </Field>
-                    </>
-                )}
-                <Field label="Tekst" hint={!isSplit ? 'Gebruik een lege regel voor meerdere alinea\'s.' : undefined}>
+                    <Field label="Tijd tot">
+                        <TextInput
+                            type="time"
+                            value={timeTo}
+                            onChange={(e) => setTimeTo(e.target.value)}
+                        />
+                    </Field>
+                </div>
+                <Field label="Locatie">
+                    <TextInput
+                        value={form.location}
+                        onChange={(e) => set('location', e.target.value)}
+                        placeholder="Theehuis 't Stroomdal"
+                    />
+                </Field>
+                <Field label="Tekst" hint="Gebruik een lege regel voor meerdere alinea's.">
                     <TextArea
                         value={form.body}
                         onChange={(e) => set('body', e.target.value)}
-                        rows={isSplit ? 4 : 6}
-                        placeholder={isSplit ? 'Aanvullende omschrijving…' : "Eerste alinea…\n\nTweede alinea…"}
+                        rows={4}
+                        placeholder="Aanvullende omschrijving…"
                     />
                 </Field>
             </FormWithImagePreview>

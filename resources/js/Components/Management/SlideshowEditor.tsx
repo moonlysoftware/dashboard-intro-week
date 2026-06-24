@@ -803,7 +803,13 @@ export function SlideshowEditor({ screenId, slides, onSlidesChange, agendaEvents
                     const name = slide.config?._name || getSlideTitle(slide);
                     const subtitle = getSlideSubtitle(slide);
                     const until = slide.config?._availableUntil;
-                    const photo = slide.widget_type === "announcement" ? (slide.config?.photo ?? null) : null;
+                    const annRecord = slide.widget_type === "announcement"
+                        ? announcements.find((a) => a.id === slide.config?.announcement_id) ?? null
+                        : null;
+                    const photo = slide.widget_type === "announcement"
+                        ? (annRecord?.photo ?? slide.config?.photo ?? null)
+                        : null;
+                    const photoPos = annRecord?.pos ?? slide.config?.pos ?? "center";
                     const THUMB_GRAD: Record<string, string> = {
                         announcement: "linear-gradient(135deg,#3a1f6e,#6C1F8E)",
                         agenda:       "linear-gradient(135deg,#1e1660,#6C52FF)",
@@ -826,7 +832,7 @@ export function SlideshowEditor({ screenId, slides, onSlidesChange, agendaEvents
                                         src={photo}
                                         alt=""
                                         className="absolute inset-0 w-full h-full object-cover"
-                                        style={{ objectPosition: slide.config?.pos || "center" }}
+                                        style={{ objectPosition: photoPos }}
                                     />
                                 )}
                                 <div

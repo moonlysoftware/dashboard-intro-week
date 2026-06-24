@@ -17,6 +17,11 @@ cmd = '/assets/start.sh'
 "start.sh" = '''
 #!/bin/bash
 
+# Write Google credentials from env var to file if provided
+if [ -n "$GOOGLE_CREDENTIALS_JSON" ]; then
+    echo "$GOOGLE_CREDENTIALS_JSON" > /app/googlecloud-account.json
+fi
+
 # Transform the nginx configuration
 node /assets/scripts/prestart.mjs /assets/nginx.template.conf /etc/nginx.conf
 
