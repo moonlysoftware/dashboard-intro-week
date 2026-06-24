@@ -42,6 +42,7 @@ return [
 
     'google_calendar' => [
         'credentials' => base_path(env('GOOGLE_APPLICATION_CREDENTIALS', 'googlecloud-account.json')),
+        'credentials_json' => env('GOOGLE_CREDENTIALS_JSON'),
     ],
 
 ];

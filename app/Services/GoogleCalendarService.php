@@ -15,7 +15,7 @@ class GoogleCalendarService
 
     public static function isConfigured(): bool
     {
-        if (env('GOOGLE_CREDENTIALS_JSON')) {
+        if (config('services.google_calendar.credentials_json')) {
             return true;
         }
 
@@ -33,7 +33,7 @@ class GoogleCalendarService
         try {
             $client = new Client();
 
-            $credentialsJson = env('GOOGLE_CREDENTIALS_JSON');
+            $credentialsJson = config('services.google_calendar.credentials_json');
             if ($credentialsJson) {
                 $client->setAuthConfig(json_decode($credentialsJson, true));
             } else {
