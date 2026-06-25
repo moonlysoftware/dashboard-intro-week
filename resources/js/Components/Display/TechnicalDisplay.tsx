@@ -654,7 +654,7 @@ export default function TechnicalDisplay({
                                             boxShadow: `0 0 22px ${overall.c}`,
                                         }}
                                     />
-                                    <span className="uppercase tracking-[.34em] text-[#B5A9FF]/80 font-bold text-[26px] whitespace-nowrap">
+                                    <span className="text-[#B5A9FF]/80 font-bold text-[26px] whitespace-nowrap">
                                         Systeemstatus
                                     </span>
                                 </div>
