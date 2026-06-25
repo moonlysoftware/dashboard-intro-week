@@ -7,6 +7,7 @@ use App\Models\Screen;
 use App\Models\Setting;
 use App\Services\GoogleCalendarService;
 use App\Services\TogglTimeTrackingService;
+use App\Support\SlideAvailability;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -18,6 +19,10 @@ class DisplayController extends Controller
     public function show(Screen $screen): Response
     {
         $screen->load('widgets');
+        $screen->setRelation(
+            'widgets',
+            SlideAvailability::filterWidgetsForDisplay($screen->widgets),
+        );
         $screen->screen_config = $this->enrichScreenConfig($screen, $screen->screen_config ?? []);
 
         return Inertia::render('Display/Show', [
@@ -27,7 +32,7 @@ class DisplayController extends Controller
 
     public function data(Screen $screen): JsonResponse
     {
-        $widgets = $screen->widgets()->get();
+        $widgets = SlideAvailability::filterWidgetsForDisplay($screen->widgets()->get());
 
         $widgetsWithData = $widgets->map(function ($widget) {
             return [

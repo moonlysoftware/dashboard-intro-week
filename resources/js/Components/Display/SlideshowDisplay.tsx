@@ -4,6 +4,7 @@ import AgendaSlide from '@/Components/Display/slides/AgendaSlide';
 import BirthdaysSlide from '@/Components/Display/slides/BirthdaysSlide';
 import AppreciationSlide from '@/Components/Display/slides/AppreciationSlide';
 import AnnouncementSlide from '@/Components/Display/slides/AnnouncementSlide';
+import { isWithinAvailableUntil } from '@/lib/utils';
 import type { RoomConfig, ScreenConfig } from '@/types';
 
 interface SlideWidget {
@@ -52,14 +53,10 @@ function renderSlide(widget: SlideWidget) {
 }
 
 export default function SlideshowDisplay({ widgets, screenConfig }: SlideshowDisplayProps) {
-    const todayStr = new Date().toISOString().slice(0, 10);
     const slides = [...widgets]
         .filter((w) => SLIDE_TYPES.has(w.widget_type))
         .filter((w) => w.config?._enabled !== false)
-        .filter((w) => {
-            const until = w.config?._availableUntil;
-            return !until || todayStr <= until;
-        })
+        .filter((w) => isWithinAvailableUntil(w.config?._availableUntil))
         .sort((a, b) => a.grid_order - b.grid_order);
     const cycleMs = Math.max(10, (screenConfig?.cycleSeconds ?? 60)) * 1000;
     const rooms = screenConfig?.rooms ?? [];

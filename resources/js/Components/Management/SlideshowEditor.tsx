@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { notifyDisplayRefresh } from "@/lib/displayRefresh";
+import { isAvailableUntilExpired } from "@/lib/utils";
 import type { AgendaEventRecord } from "./AgendaManager";
 import { EventForm } from "./AgendaManager";
 import type { AnnouncementRecord } from "./AnnouncementManager";
@@ -803,6 +804,8 @@ export function SlideshowEditor({ screenId, slides, onSlidesChange, agendaEvents
                     const name = slide.config?._name || getSlideTitle(slide);
                     const subtitle = getSlideSubtitle(slide);
                     const until = slide.config?._availableUntil;
+                    const expired = isAvailableUntilExpired(until);
+                    const visibleOnDisplay = enabled && !expired;
                     const annRecord = slide.widget_type === "announcement"
                         ? announcements.find((a) => a.id === slide.config?.announcement_id) ?? null
                         : null;
@@ -820,7 +823,7 @@ export function SlideshowEditor({ screenId, slides, onSlidesChange, agendaEvents
                     return (
                         <div
                             key={slide.id}
-                            className={`rounded-2xl border bg-white flex flex-col overflow-hidden transition-all ${enabled ? "border-[#e6e2f4]" : "border-[#e6e2f4] opacity-50"}`}
+                            className={`rounded-2xl border bg-white flex flex-col overflow-hidden transition-all ${visibleOnDisplay ? "border-[#e6e2f4]" : "border-[#e6e2f4] opacity-50"}`}
                         >
                             {/* Thumbnail */}
                             <div
@@ -850,6 +853,11 @@ export function SlideshowEditor({ screenId, slides, onSlidesChange, agendaEvents
                                         Uit
                                     </div>
                                 )}
+                                {enabled && expired && (
+                                    <div className="absolute top-2 right-2 bg-black/40 backdrop-blur-sm rounded-full px-2 py-0.5 text-[10px] font-bold text-white/60 uppercase tracking-wide">
+                                        Verlopen
+                                    </div>
+                                )}
                             </div>
 
                             {/* Info */}
@@ -861,8 +869,9 @@ export function SlideshowEditor({ screenId, slides, onSlidesChange, agendaEvents
                                     <p className="text-xs text-[#b0abc8] mt-0.5 truncate">{subtitle}</p>
                                 )}
                                 {until && (
-                                    <p className="text-xs text-[#FFB020] font-medium mt-1">
-                                        t/m {new Date(until + "T12:00:00").toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" })}
+                                    <p className={`text-xs font-medium mt-1 ${expired ? "text-[#DD2727]" : "text-[#FFB020]"}`}>
+                                        {expired ? "Verlopen op" : "t/m"}{" "}
+                                        {new Date(until + "T12:00:00").toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" })}
                                     </p>
                                 )}
                             </div>

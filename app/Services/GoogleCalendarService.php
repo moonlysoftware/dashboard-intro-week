@@ -102,32 +102,16 @@ class GoogleCalendarService
                 ];
             }
 
-            $currentEvent = null;
-            $nextEvent = null;
-
-            foreach ($parsedEvents as $event) {
-                if ($event['start']->lte($now) && $event['end']->gt($now)) {
-                    $currentEvent = $event;
-                } elseif ($event['start']->gt($now) && $nextEvent === null) {
-                    $nextEvent = $event;
-                }
-            }
+            $currentEvent = RoomScheduleHelper::findCurrentEvent($now, $parsedEvents);
+            $nextEvent = RoomScheduleHelper::findNextEvent($now, $parsedEvents);
 
             if ($currentEvent !== null) {
-                $freeAt = $currentEvent['end'];
                 $blockStart = $currentEvent['start'];
-
-                foreach ($parsedEvents as $event) {
-                    $timeDiff = $event['start']->diffInMinutes($freeAt, false);
-
-                    if ($timeDiff >= -5 && $timeDiff <= 5 && $event['start']->gte($freeAt)) {
-                        $freeAt = $event['end'];
-                    }
-                }
+                $freeAt = RoomScheduleHelper::extendBusyUntil($currentEvent['end'], $parsedEvents);
 
                 $nextBookingAfterFree = null;
                 foreach ($parsedEvents as $event) {
-                    if ($event['start']->gt($freeAt)) {
+                    if ($event['start']->gte($freeAt)) {
                         $nextBookingAfterFree = $event;
                         break;
                     }
@@ -148,16 +132,8 @@ class GoogleCalendarService
             }
 
             if ($nextEvent !== null) {
-                $busyUntil = $nextEvent['end'];
                 $blockStart = $nextEvent['start'];
-
-                foreach ($parsedEvents as $event) {
-                    $timeDiff = $event['start']->diffInMinutes($busyUntil, false);
-
-                    if ($timeDiff >= -5 && $timeDiff <= 5 && $event['start']->gte($busyUntil)) {
-                        $busyUntil = $event['end'];
-                    }
-                }
+                $busyUntil = RoomScheduleHelper::extendBusyUntil($nextEvent['end'], $parsedEvents);
 
                 return [
                     'name'                     => $roomName,
