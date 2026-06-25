@@ -165,10 +165,6 @@ http {
            }
         )
      
-        location /storage/ {
-            alias /app/storage/app/public/;
-        }
-
         location = /favicon.ico { access_log off; log_not_found off; }
         location = /robots.txt  { access_log off; log_not_found off; }
      
