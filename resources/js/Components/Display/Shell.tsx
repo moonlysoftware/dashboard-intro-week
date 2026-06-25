@@ -242,8 +242,8 @@ function RoomTile({ r }: { r: RoomConfig }) {
                 paddingRight: 18,
                 gap: 12,
                 borderRadius: 16,
-                background: "rgba(255,255,255,.035)",
-                border: "1px solid rgba(255,255,255,.07)",
+                background: "rgba(255,255,255,.10)",
+                border: "1px solid rgba(255,255,255,.20)",
             }}
         >
             <span
