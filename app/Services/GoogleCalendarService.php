@@ -15,10 +15,6 @@ class GoogleCalendarService
 
     public static function isConfigured(): bool
     {
-        if (config('services.google_calendar.credentials_json')) {
-            return true;
-        }
-
         $path = config('services.google_calendar.credentials');
 
         return $path && file_exists($path);
@@ -30,25 +26,19 @@ class GoogleCalendarService
             return $this->calendarService;
         }
 
+        $credentialsPath = config('services.google_calendar.credentials');
+
+        if (! $credentialsPath || ! file_exists($credentialsPath)) {
+            Log::warning('Google Calendar: credentials file not found at ' . $credentialsPath);
+
+            return null;
+        }
+
         try {
             $client = new Client();
-
-            $credentialsJson = config('services.google_calendar.credentials_json');
-            if ($credentialsJson) {
-                $client->setAuthConfig(json_decode($credentialsJson, true));
-            } else {
-                $credentialsPath = config('services.google_calendar.credentials');
-
-                if (! $credentialsPath || ! file_exists($credentialsPath)) {
-                    Log::warning('Google Calendar: credentials file not found at ' . $credentialsPath);
-
-                    return null;
-                }
-
-                $client->setAuthConfig($credentialsPath);
-            }
-
+            $client->setAuthConfig($credentialsPath);
             $client->setScopes([Calendar::CALENDAR_READONLY]);
+
             $this->calendarService = new Calendar($client);
 
             return $this->calendarService;
