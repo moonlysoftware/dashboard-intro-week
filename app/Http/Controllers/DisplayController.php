@@ -62,6 +62,20 @@ class DisplayController extends Controller
 
         $config['weather'] = $this->fetchWeather();
 
+        if ($type === 'technical') {
+            unset($config['rooms']);
+            $config['argocd_apps'] = $this->fetchArgoCDApps();
+            $football = $this->fetchFootballMatches();
+            $config['live'] = $football['live'];
+            $config['fixtures'] = $football['fixtures'];
+            $f1 = $this->fetchF1Data();
+            $config['f1_next_race'] = $f1['next_race'];
+            $config['f1_results'] = $f1['results'];
+            $config['f1_results_label'] = $f1['results_label'];
+
+            return $config;
+        }
+
         if (! in_array($type, ['slideshow', 'general'], true)) {
             unset($config['rooms']);
 
@@ -230,6 +244,268 @@ class DisplayController extends Controller
         })->values()->toArray();
 
         return ['rooms' => $roomData];
+    }
+
+    private function fetchArgoCDApps(): array
+    {
+        $token = config('services.argocd.token');
+        $url   = rtrim(config('services.argocd.url', ''), '/');
+
+        if (! $token || ! $url) {
+            return [];
+        }
+
+        return Cache::remember('argocd_apps', 60, function () use ($token, $url) {
+            $response = Http::withToken($token)
+                ->withoutVerifying()
+                ->timeout(10)
+                ->get("{$url}/api/v1/applications");
+
+            if ($response->failed()) {
+                return [];
+            }
+
+            $items = $response->json('items') ?? [];
+
+            return collect($items)->map(fn (array $app) => [
+                'name'      => $app['metadata']['name'] ?? 'unknown',
+                'project'   => $app['spec']['project'] ?? 'default',
+                'health'    => $app['status']['health']['status'] ?? 'Unknown',
+                'sync'      => $app['status']['sync']['status'] ?? 'Unknown',
+                'operation' => $app['status']['operationState']['phase'] ?? null,
+            ])->values()->toArray();
+        }) ?? [];
+    }
+
+    private function circuitCoords(string $location): ?array
+    {
+        $map = [
+            'spielberg'         => 'at-1969',
+            'abu dhabi'         => 'ae-2009',
+            'yas marina'        => 'ae-2009',
+            'melbourne'         => 'au-1953',
+            'baku'              => 'az-2016',
+            'spa-francorchamps' => 'be-1925',
+            'spa francorchamps' => 'be-1925',
+            'sakhir'            => 'bh-2002',
+            'sao paulo'         => 'br-1940',
+            'são paulo'         => 'br-1940',
+            'montreal'          => 'ca-1978',
+            'shanghai'          => 'cn-2004',
+            'barcelona'         => 'es-1991',
+            'madrid'            => 'es-2026',
+            'silverstone'       => 'gb-1948',
+            'budapest'          => 'hu-1986',
+            'monza'             => 'it-1922',
+            'imola'             => 'it-1953',
+            'suzuka'            => 'jp-1962',
+            'monte carlo'       => 'mc-1929',
+            'monaco'            => 'mc-1929',
+            'mexico city'       => 'mx-1962',
+            'zandvoort'         => 'nl-1948',
+            'lusail'            => 'qa-2004',
+            'losail'            => 'qa-2004',
+            'jeddah'            => 'sa-2021',
+            'singapore'         => 'sg-2008',
+            'marina bay'        => 'sg-2008',
+            'austin'            => 'us-2012',
+            'miami'             => 'us-2022',
+            'las vegas'         => 'us-2023',
+        ];
+
+        $key  = $map[strtolower(trim($location))] ?? null;
+        if (! $key) {
+            return null;
+        }
+
+        $path = storage_path("app/public/circuits/{$key}.geojson");
+        if (! file_exists($path)) {
+            return null;
+        }
+
+        $geo = json_decode(file_get_contents($path), true);
+
+        return $geo['features'][0]['geometry']['coordinates'] ?? null;
+    }
+
+    private function fetchF1Data(): array
+    {
+        $empty = ['next_race' => null, 'results' => [], 'results_label' => null];
+
+        // Return cached data if it has useful content
+        $cached = Cache::get('f1_openf1_data');
+        if ($cached !== null && ($cached['next_race'] !== null || ! empty($cached['results']))) {
+            return $cached;
+        }
+
+        $data = (function () use ($empty) {
+            $base = 'https://api.openf1.org/v1';
+            $year = now()->year;
+
+            $sessionsRes = Http::timeout(10)->get("{$base}/sessions", [
+                'session_type' => 'Race',
+                'year'         => $year,
+            ]);
+
+            if ($sessionsRes->failed()) {
+                return $empty;
+            }
+
+            $sessions = collect($sessionsRes->json() ?? [])->sortBy('date_start')->values();
+            $now      = now();
+
+            $nextSession = $sessions->first(
+                fn (array $s) => \Carbon\Carbon::parse($s['date_start'])->gt($now)
+            );
+
+            $lastSession = $sessions->last(
+                fn (array $s) => \Carbon\Carbon::parse($s['date_end'] ?? $s['date_start'])->lt($now)
+            );
+
+            // ── Next race ──────────────────────────────────────────────────────
+            $nextRace = null;
+            if ($nextSession) {
+                $meetingRes = Http::timeout(10)->get("{$base}/meetings", [
+                    'meeting_key' => $nextSession['meeting_key'],
+                ]);
+                $meeting = ($meetingRes->json() ?? [])[0] ?? [];
+
+                $d = \Carbon\Carbon::parse($nextSession['date_start']);
+
+                $circuitLocation = $nextSession['location'] ?? '';
+                $nextRace = [
+                    'competition' => [
+                        'name'     => $meeting['meeting_name']
+                                   ?? (($nextSession['country_name'] ?? 'Grand Prix') . ' Grand Prix'),
+                        'location' => ['country' => $nextSession['country_name'] ?? null],
+                    ],
+                    'circuit'        => ['name' => $nextSession['circuit_short_name'] ?? null],
+                    'date'           => $d->format('Y-m-d'),
+                    'time'           => $d->format('H:i:s'),
+                    'circuit_coords' => $this->circuitCoords($circuitLocation),
+                ];
+            }
+
+            // ── Last race results (top 5) ─────────────────────────────────────
+            $results      = [];
+            $resultsLabel = null;
+            if ($lastSession) {
+                $sessionKey = $lastSession['session_key'];
+
+                $posRes    = Http::timeout(15)->get("{$base}/position", ['session_key' => $sessionKey]);
+                $driverRes = Http::timeout(10)->get("{$base}/drivers",  ['session_key' => $sessionKey]);
+
+                if ($posRes->ok()) {
+                    $positions = collect($posRes->json() ?? [])
+                        ->sortBy('date')
+                        ->groupBy('driver_number')
+                        ->map(fn ($entries) => $entries->last())
+                        ->sortBy('position')
+                        ->take(5);
+
+                    $drivers = collect($driverRes->ok() ? $driverRes->json() : [])
+                        ->keyBy(fn (array $d) => (string) ($d['driver_number'] ?? ''));
+
+                    $results = $positions->map(function (array $pos) use ($drivers): array {
+                        $driver = $drivers->get((string) $pos['driver_number'], []);
+
+                        return [
+                            'position' => (int) $pos['position'],
+                            'driver'   => [
+                                'name' => $driver['full_name']
+                                       ?? $driver['broadcast_name']
+                                       ?? "#{$pos['driver_number']}",
+                                'abbr' => $driver['name_acronym'] ?? null,
+                            ],
+                            'team' => isset($driver['team_name']) ? [
+                                'name'   => $driver['team_name'],
+                                'colour' => $driver['team_colour'] ?? null,
+                            ] : null,
+                        ];
+                    })->values()->toArray();
+
+                    // Meeting name for the label
+                    $meetingRes2  = Http::timeout(10)->get("{$base}/meetings", ['meeting_key' => $lastSession['meeting_key']]);
+                    $lastMeeting  = ($meetingRes2->json() ?? [])[0] ?? [];
+                    $resultsLabel = $lastMeeting['meeting_name'] ?? null;
+                }
+            }
+
+            return ['next_race' => $nextRace, 'results' => $results, 'results_label' => $resultsLabel];
+        })();
+
+        // Only cache if we got meaningful data; otherwise retry on next request
+        if ($data['next_race'] !== null || ! empty($data['results'])) {
+            Cache::put('f1_openf1_data', $data, 300);
+        }
+
+        return $data;
+    }
+
+    private function fetchFootballMatches(): array
+    {
+        $apiKey = config('services.football_data.api_key');
+        $empty  = ['live' => [], 'fixtures' => []];
+
+        if (! $apiKey) {
+            return $empty;
+        }
+
+        return Cache::remember('football_matches', 60, function () use ($apiKey) {
+            // Use the WC competition endpoint so we always get upcoming matches
+            // even after today's games go live. Competition 2000 = FIFA World Cup.
+            $response = Http::withHeaders(['X-Auth-Token' => $apiKey])
+                ->timeout(10)
+                ->get('https://api.football-data.org/v4/competitions/2000/matches', [
+                    'dateFrom' => now()->format('Y-m-d'),
+                    'dateTo'   => now()->addDays(3)->format('Y-m-d'),
+                ]);
+
+            if ($response->failed()) {
+                return ['live' => [], 'fixtures' => []];
+            }
+
+            $matches = $response->json('matches') ?? [];
+
+            $live = collect($matches)
+                ->filter(fn (array $m) => in_array($m['status'], ['IN_PLAY', 'PAUSED'], true))
+                ->map(fn (array $m): array => [
+                    'id'   => (string) $m['id'],
+                    'comp' => $m['competition']['name'] ?? $m['competition']['code'] ?? '?',
+                    'home' => $m['homeTeam']['shortName'] ?? $m['homeTeam']['name'] ?? '?',
+                    'away' => $m['awayTeam']['shortName'] ?? $m['awayTeam']['name'] ?? '?',
+                    'hs'   => $m['score']['fullTime']['home'] ?? 0,
+                    'as'   => $m['score']['fullTime']['away'] ?? 0,
+                    'min'  => isset($m['minute']) && $m['minute'] !== null
+                        ? $m['minute'] . "'"
+                        : '',
+                ])
+                ->values()
+                ->toArray();
+
+            $fixtures = collect($matches)
+                ->filter(fn (array $m) => in_array($m['status'], ['TIMED', 'SCHEDULED'], true))
+                ->sortBy('utcDate')
+                ->take(4)
+                ->map(function (array $m): array {
+                    $d = \Carbon\Carbon::parse($m['utcDate'])
+                        ->setTimezone('Europe/Amsterdam')
+                        ->locale('nl');
+
+                    return [
+                        'id'    => (string) $m['id'],
+                        'comp'  => $m['competition']['name'] ?? $m['competition']['code'] ?? '?',
+                        'label' => ($m['homeTeam']['shortName'] ?? $m['homeTeam']['name'] ?? '?')
+                                 . ' – '
+                                 . ($m['awayTeam']['shortName'] ?? $m['awayTeam']['name'] ?? '?'),
+                        'when'  => $d->isoFormat('ddd D MMM') . ' ' . $d->format('H:i'),
+                    ];
+                })
+                ->values()
+                ->toArray();
+
+            return ['live' => $live, 'fixtures' => $fixtures];
+        }) ?? ['live' => [], 'fixtures' => []];
     }
 
     private function fetchWeather(): array

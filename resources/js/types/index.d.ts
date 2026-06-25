@@ -27,6 +27,28 @@ export interface WeatherData {
     condition: string;
 }
 
+export interface F1NextRace {
+    competition: { name: string; location?: { country?: string } };
+    circuit?: { name: string };
+    date: string;
+    time?: string;
+    circuit_coords?: [number, number][] | null;
+}
+
+export interface F1RaceResult {
+    position: number;
+    driver: { name: string; abbr?: string };
+    team?: { name: string; colour?: string };
+}
+
+export interface ArgoCDApp {
+    name: string;
+    project: string;
+    health: "Healthy" | "Degraded" | "Progressing" | "Suspended" | "Missing" | "Unknown";
+    sync: "Synced" | "OutOfSync" | "Unknown";
+    operation?: string | null;
+}
+
 export interface ScreenConfig {
     rooms?: RoomConfig[];
     weather?: WeatherData;
@@ -36,6 +58,10 @@ export interface ScreenConfig {
     sportTitle?: string;
     live?: LiveMatch[];
     fixtures?: Fixture[];
+    argocd_apps?: ArgoCDApp[];
+    f1_next_race?: F1NextRace | null;
+    f1_results?: F1RaceResult[];
+    f1_results_label?: string | null;
 }
 
 export interface ServiceConfig {

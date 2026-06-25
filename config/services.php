@@ -40,9 +40,18 @@ return [
         'workspace' => env('TOGGL_WORKSPACE'),
     ],
 
+    'argocd' => [
+        'token' => env('ARGOCD_TOKEN'),
+        'url' => env('ARGOCD_URL', 'https://argocd.moonly.xyz'),
+    ],
+
     'google_calendar' => [
         'credentials' => base_path(env('GOOGLE_APPLICATION_CREDENTIALS', 'googlecloud-account.json')),
         'credentials_json' => env('GOOGLE_CREDENTIALS_JSON'),
+    ],
+
+    'football_data' => [
+        'api_key' => env('FOOTBALL_DATA_API_KEY'),
     ],
 
 ];
