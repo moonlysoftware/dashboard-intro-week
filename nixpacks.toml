@@ -17,14 +17,9 @@ cmd = '/assets/start.sh'
 "start.sh" = '''
 #!/bin/bash
 
-# Ensure public storage is linked and upload dirs exist
-if [ -d /app ]; then
-    cd /app
-    rm -rf public/storage
-    php artisan storage:link --force 2>/dev/null || true
-    mkdir -p storage/app/public/image_widget
-    chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
-    chmod -R ug+rwx storage bootstrap/cache 2>/dev/null || true
+# Write Google credentials from env var to file if provided
+if [ -n "$GOOGLE_CREDENTIALS_JSON" ]; then
+    echo "$GOOGLE_CREDENTIALS_JSON" > /app/googlecloud-account.json
 fi
 
 # Transform the nginx configuration
