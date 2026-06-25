@@ -22,6 +22,7 @@ if [ -d /app ]; then
     cd /app
     php artisan storage:link --force >/dev/null 2>&1 || true
     mkdir -p storage/app/public/image_widget
+    chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
     chmod -R ug+rwx storage bootstrap/cache 2>/dev/null || true
 fi
 
