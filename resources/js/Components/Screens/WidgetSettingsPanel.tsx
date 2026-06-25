@@ -90,9 +90,11 @@ export function WidgetSettingsPanel({ widget, widgetTypes, onClose, onSaved }: W
             setAllImages((prev) => [...prev, res.data]);
         } catch (err: any) {
             const msg: string =
-                err.response?.data?.errors?.image?.[0] ??
-                err.response?.data?.message ??
-                'Upload failed.';
+                err.response?.status === 419
+                    ? 'Sessie verlopen. Vernieuw de pagina en probeer opnieuw.'
+                    : err.response?.data?.errors?.image?.[0] ??
+                      err.response?.data?.message ??
+                      'Upload mislukt.';
             setUploadError(msg);
         } finally {
             setUploading(false);

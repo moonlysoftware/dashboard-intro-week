@@ -3,8 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -26,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
 
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
+            config(['session.secure' => true]);
         }
 
         // Toggl API HTTP Macro
@@ -33,7 +34,7 @@ class AppServiceProvider extends ServiceProvider
             return Http::withHeaders([
                 'Content-Type' => 'application/json',
             ])->withBasicAuth(config('services.toggl.api_token'), 'api_token')
-              ->baseUrl('https://api.track.toggl.com');
+                ->baseUrl('https://api.track.toggl.com');
         });
     }
 }

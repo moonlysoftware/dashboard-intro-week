@@ -229,9 +229,11 @@ function useImageUpload(onChange: (url: string) => void) {
             onChange(res.data.url);
         } catch (err: any) {
             const msg: string =
-                err.response?.data?.errors?.image?.[0] ??
-                err.response?.data?.message ??
-                "Upload mislukt.";
+                err.response?.status === 419
+                    ? "Sessie verlopen. Vernieuw de pagina en probeer opnieuw."
+                    : err.response?.data?.errors?.image?.[0] ??
+                      err.response?.data?.message ??
+                      "Upload mislukt.";
             setError(msg);
         } finally {
             setUploading(false);
