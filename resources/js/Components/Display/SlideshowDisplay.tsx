@@ -36,7 +36,7 @@ function renderSlide(widget: SlideWidget) {
             return <AgendaSlide content={content} events={widget.data} />;
         case 'birthdays':
         case 'birthday':
-            return <BirthdaysSlide content={content} />;
+            return <BirthdaysSlide content={content} persons={widget.data?.list ?? []} />;
         case 'appreciation':
             return <AppreciationSlide content={content} />;
         case 'announcement':

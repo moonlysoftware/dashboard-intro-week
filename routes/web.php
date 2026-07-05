@@ -5,6 +5,7 @@ use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\DisplayController;
 use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\OverlayController;
+use App\Http\Controllers\PersonController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ScreenController;
 use App\Http\Controllers\SettingController;
@@ -63,6 +64,12 @@ Route::middleware('auth')->group(function () {
     Route::post('announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
     Route::patch('announcements/{announcement}', [AnnouncementController::class, 'update'])->name('announcements.update');
     Route::delete('announcements/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
+
+    // Birthday People
+    Route::get('birthday-people', [PersonController::class, 'index'])->name('birthday-people.index');
+    Route::post('birthday-people', [PersonController::class, 'store'])->name('birthday-people.store');
+    Route::post('birthday-people/{person}', [PersonController::class, 'update'])->name('birthday-people.update');
+    Route::delete('birthday-people/{person}', [PersonController::class, 'destroy'])->name('birthday-people.destroy');
 });
 
 // Public Display Routes (no authentication)

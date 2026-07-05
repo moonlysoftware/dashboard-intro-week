@@ -176,12 +176,16 @@ function BdayCard({ p }: { p: MilestonePerson }) {
 
 export default function BirthdaysSlide({
     content,
+    persons,
 }: {
     content?: BirthdaysContent;
+    persons?: MilestonePerson[];
 }) {
     const computedList = useMemo(() => getMilestones(), []);
 
-    const list = content?.list?.length ? content.list : computedList;
+    const list = (persons && persons.length > 0)
+        ? persons
+        : content?.list?.length ? content.list : computedList;
     const layout = content?.layout || "featured";
     const [first, ...rest] = list;
 

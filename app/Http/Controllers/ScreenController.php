@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AgendaEvent;
 use App\Models\Announcement;
+use App\Models\Person;
 use App\Models\Screen;
 use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
@@ -30,6 +31,7 @@ class ScreenController extends Controller
             'screens' => $screens,
             'agendaEvents' => $agendaEvents,
             'announcements' => $announcements,
+            'persons' => Person::orderBy('name')->get(),
             'overlay' => [
                 'rooms' => Setting::get('overlay_rooms', []),
                 'legacy_rooms' => $this->findLegacyOverlayRooms($screens),

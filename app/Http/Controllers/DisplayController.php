@@ -205,13 +205,76 @@ class DisplayController extends Controller
 
     private function getBirthdayData(): array
     {
-        return [
-            'birthdays' => [
-                ['name' => 'Jan Jansen', 'date' => now()->addDays(2)->format('Y-m-d'), 'age' => 32],
-                ['name' => 'Piet Pietersen', 'date' => now()->addDays(5)->format('Y-m-d'), 'age' => 45],
-                ['name' => 'Klaas de Vries', 'date' => now()->addDays(7)->format('Y-m-d'), 'age' => 28],
-            ],
+        $persons = \App\Models\Person::all();
+        $today = now()->startOfDay();
+        $milestones = [];
+
+        foreach ($persons as $person) {
+            $birth = $person->birth_date;
+            $nextBirthday = $this->nextOccurrence($birth, $today);
+            $days = (int) $today->diffInDays($nextBirthday);
+            $age = $nextBirthday->year - $birth->year;
+
+            $milestones[] = [
+                'kind'  => 'birthday',
+                'name'  => $person->name,
+                'photo' => $person->photo,
+                'days'  => $days,
+                'soon'  => $this->formatSoon($days),
+                'date'  => $birth->day . ' ' . $this->dutchMonth($birth->month),
+                'turns' => "Wordt {$age}",
+            ];
+
+            if ($person->jubileum_start_date) {
+                $start = $person->jubileum_start_date;
+                $nextAnniv = $this->nextOccurrence($start, $today);
+                $daysAnniv = (int) $today->diffInDays($nextAnniv);
+                $years = $nextAnniv->year - $start->year;
+
+                if ($years >= 1) {
+                    $milestones[] = [
+                        'kind'  => 'jubileum',
+                        'name'  => $person->name,
+                        'photo' => $person->photo,
+                        'days'  => $daysAnniv,
+                        'years' => $years,
+                        'soon'  => $this->formatSoon($daysAnniv),
+                        'date'  => $start->day . ' ' . $this->dutchMonth($start->month),
+                        'turns' => "{$years} jaar bij Moonly",
+                    ];
+                }
+            }
+        }
+
+        usort($milestones, fn ($a, $b) => $a['days'] - $b['days']);
+
+        return ['list' => $milestones];
+    }
+
+    private function nextOccurrence(\Carbon\Carbon $date, \Carbon\Carbon $today): \Carbon\Carbon
+    {
+        $thisYear = $today->copy()->setDate($today->year, $date->month, $date->day)->startOfDay();
+
+        return $thisYear->gte($today) ? $thisYear : $thisYear->addYear();
+    }
+
+    private function formatSoon(int $days): string
+    {
+        if ($days === 0) return 'Vandaag';
+        if ($days === 1) return 'Morgen';
+
+        return "Over {$days} dagen";
+    }
+
+    private function dutchMonth(int $month): string
+    {
+        $months = [
+            1 => 'januari', 2 => 'februari', 3 => 'maart', 4 => 'april',
+            5 => 'mei', 6 => 'juni', 7 => 'juli', 8 => 'augustus',
+            9 => 'september', 10 => 'oktober', 11 => 'november', 12 => 'december',
         ];
+
+        return $months[$month];
     }
 
     private function getRoomAvailabilityData($widget): array
