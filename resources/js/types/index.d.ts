@@ -44,7 +44,13 @@ export interface F1RaceResult {
 export interface ArgoCDApp {
     name: string;
     project: string;
-    health: "Healthy" | "Degraded" | "Progressing" | "Suspended" | "Missing" | "Unknown";
+    health:
+        | "Healthy"
+        | "Degraded"
+        | "Progressing"
+        | "Suspended"
+        | "Missing"
+        | "Unknown";
     sync: "Synced" | "OutOfSync" | "Unknown";
     operation?: string | null;
 }
@@ -62,6 +68,7 @@ export interface ScreenConfig {
     f1_next_race?: F1NextRace | null;
     f1_results?: F1RaceResult[];
     f1_results_label?: string | null;
+    f1_live?: boolean;
 }
 
 export interface ServiceConfig {

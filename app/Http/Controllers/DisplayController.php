@@ -77,6 +77,7 @@ class DisplayController extends Controller
             $config['f1_next_race'] = $f1['next_race'];
             $config['f1_results'] = $f1['results'];
             $config['f1_results_label'] = $f1['results_label'];
+            $config['f1_live'] = $f1['live'] ?? false;
 
             return $config;
         }
@@ -335,11 +336,11 @@ class DisplayController extends Controller
 
     private function fetchF1Data(): array
     {
-        $empty = ['next_race' => null, 'results' => [], 'results_label' => null];
+        $empty = ['next_race' => null, 'results' => [], 'results_label' => null, 'live' => false];
 
         // Return cached data if it has useful content
         $cached = Cache::get('f1_openf1_data');
-        if ($cached !== null && ($cached['next_race'] !== null || ! empty($cached['results']))) {
+        if ($cached !== null && ($cached['next_race'] !== null || ! empty($cached['results']) || ($cached['live'] ?? false))) {
             return $cached;
         }
 
@@ -351,6 +352,14 @@ class DisplayController extends Controller
                 'session_type' => 'Race',
                 'year'         => $year,
             ]);
+
+            if ($sessionsRes->status() === 403) {
+                $body = $sessionsRes->json() ?? [];
+                $detail = $body['detail'] ?? '';
+                if (str_contains($detail, 'Live F1 session in progress')) {
+                    return array_merge($empty, ['live' => true]);
+                }
+            }
 
             if ($sessionsRes->failed()) {
                 return $empty;
@@ -436,12 +445,14 @@ class DisplayController extends Controller
                 }
             }
 
-            return ['next_race' => $nextRace, 'results' => $results, 'results_label' => $resultsLabel];
+            return ['next_race' => $nextRace, 'results' => $results, 'results_label' => $resultsLabel, 'live' => false];
         })();
 
         // Only cache if we got meaningful data; otherwise retry on next request
-        if ($data['next_race'] !== null || ! empty($data['results'])) {
-            Cache::put('f1_openf1_data', $data, 300);
+        if ($data['next_race'] !== null || ! empty($data['results']) || ($data['live'] ?? false)) {
+            // Cache live state for only 60s so we retry quickly when session ends
+            $ttl = ($data['live'] ?? false) ? 60 : 300;
+            Cache::put('f1_openf1_data', $data, $ttl);
         }
 
         return $data;

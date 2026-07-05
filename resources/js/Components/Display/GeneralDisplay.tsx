@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Backdrop, TopBar, AppBar, Avatar } from "@/Components/Display/Shell";
 import { getUpcomingBirthdays } from "@/lib/birthdays";
 import { getUpcomingJubilea } from "@/lib/jubilea";
@@ -147,7 +147,7 @@ function AgendaBlock({ data }: { data: any }) {
 
 // ---- Compact birthdays + jubilea ----
 function BirthdayMini({ b }: { b: any }) {
-    const isJubileum = b.kind === 'jubileum';
+    const isJubileum = b.kind === "jubileum";
     return (
         <div
             className="flex items-center gap-5 rounded-[22px] px-5 py-4 flex-1 min-h-0"
@@ -156,20 +156,20 @@ function BirthdayMini({ b }: { b: any }) {
                 border: "1px solid rgba(255,255,255,.08)",
             }}
         >
-            <Avatar name={b.name} photo={b.photo} size={80} ring={false} />
+            <Avatar name={b.name} photo={b.photo} size={64} ring={false} />
             <div className="flex-1 min-w-0">
                 <div className="font-display font-bold text-white text-[22px] leading-none truncate">
                     {b.name}
                 </div>
                 <div className="text-white/55 text-[16px] font-semibold mt-1.5 whitespace-nowrap">
-                    {isJubileum ? '🎉' : '🎂'} {b.turns || b.age}
+                    {isJubileum ? "🎉" : "🎂"} {b.turns || b.age}
                 </div>
             </div>
             <div className="text-right shrink-0">
                 {b.soon && (
                     <div
                         className="font-extrabold text-[13px] uppercase tracking-wide whitespace-nowrap mb-1"
-                        style={{ color: isJubileum ? '#6C52FF' : '#FF4490' }}
+                        style={{ color: isJubileum ? "#6C52FF" : "#FF4490" }}
                     >
                         {b.soon}
                     </div>
@@ -183,7 +183,11 @@ function BirthdayMini({ b }: { b: any }) {
 }
 
 function getMilestones(limit = 3): any[] {
-    const birthdays = getUpcomingBirthdays(27).map((b) => ({ ...b, kind: 'birthday', days: 0 }));
+    const birthdays = getUpcomingBirthdays(27).map((b) => ({
+        ...b,
+        kind: "birthday",
+        days: 0,
+    }));
     const jubilea = getUpcomingJubilea(22);
 
     // Re-attach days for sorting (birthdays.ts doesn't expose days, re-derive from `soon`)
@@ -194,7 +198,7 @@ function getMilestones(limit = 3): any[] {
         let days = 0;
         const m = b.soon.match(/Over (\d+) dagen/);
         if (m) days = parseInt(m[1], 10);
-        else if (b.soon === 'Morgen') days = 1;
+        else if (b.soon === "Morgen") days = 1;
         return { ...b, days };
     });
 
@@ -230,9 +234,13 @@ const ANN_OVERLAY_BLEND =
     "linear-gradient(180deg, rgba(8,6,15,.05) 0%, rgba(8,6,15,.55) 55%, rgba(8,6,15,.95) 100%)";
 
 function AnnMiniSplit({ ann }: { ann: any }) {
-    const body = typeof ann.body === "string" ? ann.body.split(/\n{2,}/)[0] : "";
+    const body =
+        typeof ann.body === "string" ? ann.body.split(/\n{2,}/)[0] : "";
     return (
-        <div className="h-full w-full relative overflow-hidden" style={{ background: "#08060f" }}>
+        <div
+            className="h-full w-full relative overflow-hidden"
+            style={{ background: "#08060f" }}
+        >
             {ann.photo ? (
                 <img
                     src={ann.photo}
@@ -269,7 +277,8 @@ function AnnMiniSplit({ ann }: { ann: any }) {
 }
 
 function AnnMiniOverlay({ ann }: { ann: any }) {
-    const body = typeof ann.body === "string" ? ann.body.split(/\n{2,}/)[0] : "";
+    const body =
+        typeof ann.body === "string" ? ann.body.split(/\n{2,}/)[0] : "";
     return (
         <div className="h-full relative overflow-hidden">
             {ann.photo ? (
@@ -282,7 +291,9 @@ function AnnMiniOverlay({ ann }: { ann: any }) {
             ) : (
                 <div
                     className="absolute inset-0"
-                    style={{ background: "linear-gradient(150deg,#6C52FF,#FF4490)" }}
+                    style={{
+                        background: "linear-gradient(150deg,#6C52FF,#FF4490)",
+                    }}
                 />
             )}
             <div
@@ -313,12 +324,33 @@ function AnnMiniOverlay({ ann }: { ann: any }) {
 function AnnouncementsBlock({ data }: { data: any }) {
     const slides = (data?.data?.slides ?? []) as any[];
     const [idx, setIdx] = useState(0);
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    const go = (n: number) =>
+        setIdx(slides.length ? (n + slides.length) % slides.length : 0);
+
+    const restart = () => {
+        if (timerRef.current) clearInterval(timerRef.current);
+        if (slides.length <= 1) return;
+        timerRef.current = setInterval(
+            () => setIdx((i) => (i + 1) % slides.length),
+            300_000,
+        );
+    };
 
     useEffect(() => {
-        if (slides.length <= 1) return;
-        const timer = setInterval(() => setIdx((i) => (i + 1) % slides.length), 300_000);
-        return () => clearInterval(timer);
+        restart();
+        return () => { if (timerRef.current) clearInterval(timerRef.current); };
     }, [slides.length]);
+
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "ArrowRight") { go(idx + 1); restart(); }
+            if (e.key === "ArrowLeft") { go(idx - 1); restart(); }
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [idx, slides.length]);
 
     const current = slides[idx] ?? null;
 
@@ -335,11 +367,15 @@ function AnnouncementsBlock({ data }: { data: any }) {
 
     return (
         <Block className="h-full relative">
-            {current?.style === "overlay" ? (
-                <AnnMiniOverlay ann={current} />
-            ) : (
-                <AnnMiniSplit ann={current} />
-            )}
+            {slides.map((slide, i) => (
+                <div key={i} className={`moonly-slide${i === idx ? " is-active" : ""}`}>
+                    {slide?.style === "overlay" ? (
+                        <AnnMiniOverlay ann={slide} />
+                    ) : (
+                        <AnnMiniSplit ann={slide} />
+                    )}
+                </div>
+            ))}
             {slides.length > 1 && (
                 <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2 z-20">
                     {slides.map((_, i) => (
@@ -348,7 +384,10 @@ function AnnouncementsBlock({ data }: { data: any }) {
                             className="h-1.5 rounded-full transition-all duration-500"
                             style={{
                                 width: i === idx ? 22 : 6,
-                                background: i === idx ? "#FF4490" : "rgba(255,255,255,.25)",
+                                background:
+                                    i === idx
+                                        ? "#FF4490"
+                                        : "rgba(255,255,255,.25)",
                             }}
                         />
                     ))}
@@ -369,7 +408,9 @@ export default function GeneralDisplay({
     const birthday = widgets.find(
         (w) => w.widget_type === "birthday" || w.widget_type === "birthdays",
     );
-    const announcements = widgets.find((w) => w.widget_type === "announcements");
+    const announcements = widgets.find(
+        (w) => w.widget_type === "announcements",
+    );
 
     return (
         <div className="absolute inset-0 flex flex-col text-white">

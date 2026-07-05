@@ -4,7 +4,9 @@ import { SlideLayout } from "@/Components/Display/SlideLayout";
 import { getUpcomingBirthdays, type BirthdayPerson } from "@/lib/birthdays";
 import { getUpcomingJubilea, type JubileumPerson } from "@/lib/jubilea";
 
-type MilestonePerson = (BirthdayPerson & { kind?: 'birthday'; days?: number }) | JubileumPerson;
+type MilestonePerson =
+    | (BirthdayPerson & { kind?: "birthday"; days?: number })
+    | JubileumPerson;
 
 interface BirthdaysContent {
     layout?: "featured" | "grid";
@@ -16,15 +18,17 @@ function getMilestones(): MilestonePerson[] {
         let days = 0;
         const m = b.soon.match(/Over (\d+) dagen/);
         if (m) days = parseInt(m[1], 10);
-        else if (b.soon === 'Morgen') days = 1;
-        return { ...b, kind: 'birthday' as const, days };
+        else if (b.soon === "Morgen") days = 1;
+        return { ...b, kind: "birthday" as const, days };
     });
     const jubilea = getUpcomingJubilea(22);
-    return [...birthdays, ...jubilea].sort((a, b) => (a.days ?? 0) - (b.days ?? 0));
+    return [...birthdays, ...jubilea].sort(
+        (a, b) => (a.days ?? 0) - (b.days ?? 0),
+    );
 }
 
 function BdayFeatured({ p }: { p: MilestonePerson }) {
-    const isJubileum = p.kind === 'jubileum';
+    const isJubileum = p.kind === "jubileum";
     return (
         <div
             className="relative rounded-[30px] overflow-hidden h-full flex flex-col items-center justify-center text-center p-10"
@@ -47,13 +51,13 @@ function BdayFeatured({ p }: { p: MilestonePerson }) {
             <span className="slide-pill mt-9 mb-5 px-9 py-3">{p.soon}</span>
             <h2 className="slide-title mb-4">{p.name}</h2>
             <div className="slide-date mb-2">{p.date}</div>
-            <div className="slide-body-muted">{isJubileum ? '🎉 ' : '🎂 '}{p.turns}</div>
+            <div className="slide-body-muted">{p.turns}</div>
         </div>
     );
 }
 
 function BdayRow({ p }: { p: MilestonePerson }) {
-    const isJubileum = p.kind === 'jubileum';
+    const isJubileum = p.kind === "jubileum";
     return (
         <div
             className="flex items-center gap-8 rounded-[26px] px-9 flex-1 min-h-0"
@@ -65,11 +69,11 @@ function BdayRow({ p }: { p: MilestonePerson }) {
             <Avatar name={p.name} photo={p.photo} size={108} ring={false} />
             <div className="flex-1 min-w-0">
                 <h3 className="slide-title text-3xl mb-2">{p.name}</h3>
-                <div className="slide-body-muted">{isJubileum ? '🎉 ' : '🎂 '}{p.turns}</div>
+                <div className="slide-body-muted">{p.turns}</div>
             </div>
             <div className="text-right shrink-0">
                 <div
-                    className={`font-poster font-extralight text-3xl leading-none mb-2 whitespace-nowrap ${isJubileum ? 'text-[#6C52FF]' : 'text-pink-500'}`}
+                    className={`font-poster font-extralight text-3xl leading-none mb-2 whitespace-nowrap ${isJubileum ? "text-[#6C52FF]" : "text-pink-500"}`}
                 >
                     {p.soon}
                 </div>
@@ -82,7 +86,7 @@ function BdayRow({ p }: { p: MilestonePerson }) {
 }
 
 function BdayCard({ p }: { p: MilestonePerson }) {
-    const isJubileum = p.kind === 'jubileum';
+    const isJubileum = p.kind === "jubileum";
     return (
         <div
             className="flex flex-col items-center text-center justify-center gap-3.5 rounded-[28px] p-7 h-full"
@@ -95,7 +99,7 @@ function BdayCard({ p }: { p: MilestonePerson }) {
             <span className="slide-pill px-6 py-2">{p.soon}</span>
             <h3 className="slide-title leading-tight">{p.name}</h3>
             <div className="slide-date font-normal leading-none">{p.date}</div>
-            <div className="slide-body-muted">{isJubileum ? '🎉 ' : '🎂 '}{p.turns}</div>
+            <div className="slide-body-muted">{p.turns}</div>
         </div>
     );
 }

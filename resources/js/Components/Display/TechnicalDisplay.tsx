@@ -572,14 +572,23 @@ export default function TechnicalDisplay({
     const sportTitle = screenConfig?.sportTitle || "Sport";
     const argoCDApps: ArgoCDApp[] = screenConfig?.argocd_apps ?? [];
 
-    const sortedApps = [...argoCDApps].sort(
-        (a, b) => appSortKey(a) - appSortKey(b),
-    );
+    const sortedApps = [...argoCDApps]
+        .filter(
+            (a) =>
+                a.sync === "OutOfSync" ||
+                a.sync === "Unknown" ||
+                a.health !== "Healthy" ||
+                (a.operation != null &&
+                    a.operation !== "Succeeded" &&
+                    a.operation !== "Running"),
+        )
+        .sort((a, b) => appSortKey(a) - appSortKey(b));
 
     const f1NextRace: F1NextRace | null = screenConfig?.f1_next_race ?? null;
     const f1Results: F1RaceResult[] = screenConfig?.f1_results ?? [];
     const f1ResultsLabel: string | null =
         screenConfig?.f1_results_label ?? null;
+    const f1Live: boolean = screenConfig?.f1_live ?? false;
 
     const wcLive: LiveMatch[] = screenConfig?.live ?? [];
     const wcUpcoming: Fixture[] = screenConfig?.fixtures ?? [];
@@ -587,7 +596,7 @@ export default function TechnicalDisplay({
     const livesToShow = wcLive.slice(0, 2);
     const fixturesToShow = wcUpcoming.slice(
         0,
-        livesToShow.length > 0 ? Math.max(0, 4 - livesToShow.length) : 2,
+        livesToShow.length > 0 ? Math.max(0, 4 - livesToShow.length) : 4,
     );
 
     const counts = services.reduce<Record<string, number>>((a, s) => {
@@ -764,6 +773,34 @@ export default function TechnicalDisplay({
                                     </span>
                                     <span className="flex-1 h-px bg-white/10" />
                                 </div>
+                                {f1Live && !f1NextRace && (
+                                    <div
+                                        className="reveal rounded-[22px] px-5 py-4 flex items-center gap-4"
+                                        style={{
+                                            background: "rgba(255,255,255,.04)",
+                                            border: "1px solid rgba(255,80,80,.35)",
+                                        }}
+                                    >
+                                        <span
+                                            className="inline-block w-3 h-3 rounded-full shrink-0"
+                                            style={{
+                                                background: "#ff4444",
+                                                boxShadow: "0 0 8px #ff4444",
+                                                animation:
+                                                    "pulse 1.5s ease-in-out infinite",
+                                            }}
+                                        />
+                                        <div>
+                                            <div className="text-[#ff8080] font-bold text-[16px] uppercase tracking-wide">
+                                                Live sessie bezig
+                                            </div>
+                                            <div className="text-white/50 text-[14px]">
+                                                Race data tijdelijk niet
+                                                beschikbaar
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                                 {f1NextRace && (
                                     <F1NextRaceCard race={f1NextRace} />
                                 )}
