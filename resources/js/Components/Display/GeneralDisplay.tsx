@@ -208,8 +208,9 @@ function getMilestones(limit = 3): any[] {
 }
 
 function BirthdaysBlock({ data }: { data: any }) {
+    const dbList = data?.data?.list ?? [];
     const configList = data?.config?.list ?? [];
-    const list = configList.length ? configList.slice(0, 3) : getMilestones(3);
+    const list = dbList.length ? dbList.slice(0, 3) : configList.length ? configList.slice(0, 3) : getMilestones(3);
     return (
         <Block className="h-full p-8 flex flex-col">
             <BlockHead
