@@ -27,11 +27,69 @@ function getMilestones(): MilestonePerson[] {
     );
 }
 
+function PartyHat() {
+    return (
+        <svg
+            width="84"
+            height="92"
+            viewBox="0 0 80 88"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            style={{ filter: "drop-shadow(0 3px 12px rgba(0,0,0,.6))" }}
+        >
+            <defs>
+                <linearGradient
+                    id="hatGrad"
+                    x1="40"
+                    y1="2"
+                    x2="40"
+                    y2="84"
+                    gradientUnits="userSpaceOnUse"
+                >
+                    <stop offset="0%" stopColor="#f472b6" />
+                    <stop offset="100%" stopColor="#7c3aed" />
+                </linearGradient>
+            </defs>
+            <polygon points="40,2 0,82 80,82" fill="url(#hatGrad)" />
+            <line
+                x1="9"
+                y1="38"
+                x2="71"
+                y2="38"
+                stroke="white"
+                strokeWidth="2"
+                strokeOpacity="0.4"
+            />
+            <line
+                x1="4"
+                y1="58"
+                x2="76"
+                y2="58"
+                stroke="white"
+                strokeWidth="2"
+                strokeOpacity="0.4"
+            />
+            <ellipse
+                cx="40"
+                cy="82"
+                rx="40"
+                ry="7"
+                fill="#6d28d9"
+                opacity="0.9"
+            />
+            <circle cx="26" cy="52" r="2.5" fill="white" fillOpacity="0.55" />
+            <circle cx="54" cy="44" r="2" fill="white" fillOpacity="0.5" />
+            <circle cx="40" cy="30" r="3" fill="white" fillOpacity="0.6" />
+            <circle cx="40" cy="3" r="9" fill="#fde047" />
+        </svg>
+    );
+}
+
 function BdayFeatured({ p }: { p: MilestonePerson }) {
     const isJubileum = p.kind === "jubileum";
     return (
         <div
-            className="relative rounded-[30px] overflow-hidden h-full flex flex-col items-center justify-center text-center p-10"
+            className="relative rounded-[30px] h-full flex flex-col items-center justify-center text-center p-10"
             style={{
                 background: "rgba(255,255,255,.025)",
                 border: "1px solid rgba(255,255,255,.07)",
@@ -46,7 +104,19 @@ function BdayFeatured({ p }: { p: MilestonePerson }) {
                             : "radial-gradient(circle, rgba(124,70,255,.40), transparent 70%)",
                     }}
                 />
-                <Avatar name={p.name} photo={p.photo} size={300} />
+                <Avatar name={p.name} photo={p.photo} size={260} />
+                {!isJubileum && (
+                    <div
+                        className="absolute pointer-events-none"
+                        style={{
+                            top: "-75px",
+                            left: "35%",
+                            transform: "translateX(-50%) rotate(-16deg)",
+                        }}
+                    >
+                        <PartyHat />
+                    </div>
+                )}
             </div>
             <span className="slide-pill mt-9 mb-5 px-9 py-3">{p.soon}</span>
             <h2 className="slide-title mb-4">{p.name}</h2>
@@ -131,7 +201,7 @@ export default function BirthdaysSlide({
         );
     } else {
         body = (
-            <div className="h-full grid grid-cols-[0.92fr_1.08fr] gap-8">
+            <div className="h-full grid grid-cols-[0.82fr_1.18fr] gap-8">
                 {first && <BdayFeatured p={first} />}
                 <div className="flex flex-col gap-7 min-h-0">
                     {rest.slice(0, 3).map((p, i) => (
