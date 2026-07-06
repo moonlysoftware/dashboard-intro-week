@@ -31,56 +31,52 @@ function PartyHat() {
     return (
         <svg
             width="84"
-            height="92"
+            height="94"
             viewBox="0 0 80 88"
             fill="none"
+            overflow="visible"
             xmlns="http://www.w3.org/2000/svg"
-            style={{ filter: "drop-shadow(0 3px 12px rgba(0,0,0,.6))" }}
+            style={{ filter: "drop-shadow(0 4px 16px rgba(0,0,0,.65))" }}
         >
             <defs>
-                <linearGradient
-                    id="hatGrad"
-                    x1="40"
-                    y1="2"
-                    x2="40"
-                    y2="84"
-                    gradientUnits="userSpaceOnUse"
-                >
-                    <stop offset="0%" stopColor="#f472b6" />
-                    <stop offset="100%" stopColor="#7c3aed" />
+                <linearGradient id="hatGrad" x1="40" y1="4" x2="40" y2="82" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#818cf8" />
+                    <stop offset="100%" stopColor="#3730a3" />
                 </linearGradient>
+                <clipPath id="hatClip">
+                    <polygon points="40,4 1,82 79,82" />
+                </clipPath>
             </defs>
-            <polygon points="40,2 0,82 80,82" fill="url(#hatGrad)" />
-            <line
-                x1="9"
-                y1="38"
-                x2="71"
-                y2="38"
-                stroke="white"
-                strokeWidth="2"
-                strokeOpacity="0.4"
-            />
-            <line
-                x1="4"
-                y1="58"
-                x2="76"
-                y2="58"
-                stroke="white"
-                strokeWidth="2"
-                strokeOpacity="0.4"
-            />
-            <ellipse
-                cx="40"
-                cy="82"
-                rx="40"
-                ry="7"
-                fill="#6d28d9"
-                opacity="0.9"
-            />
-            <circle cx="26" cy="52" r="2.5" fill="white" fillOpacity="0.55" />
-            <circle cx="54" cy="44" r="2" fill="white" fillOpacity="0.5" />
-            <circle cx="40" cy="30" r="3" fill="white" fillOpacity="0.6" />
-            <circle cx="40" cy="3" r="9" fill="#fde047" />
+
+            {/* Cone */}
+            <polygon points="40,4 1,82 79,82" fill="url(#hatGrad)" />
+
+            {/* Diagonal stripes */}
+            <g clipPath="url(#hatClip)">
+                <line x1="-14" y1="94" x2="56" y2="-4" stroke="white" strokeWidth="9" strokeOpacity="0.17" />
+                <line x1="13"  y1="94" x2="83" y2="-4" stroke="white" strokeWidth="9" strokeOpacity="0.17" />
+                <line x1="40"  y1="94" x2="110" y2="-4" stroke="white" strokeWidth="9" strokeOpacity="0.17" />
+            </g>
+
+            {/* Subtle dots */}
+            <g clipPath="url(#hatClip)">
+                <circle cx="28" cy="36" r="3.5" fill="white" fillOpacity="0.18" />
+                <circle cx="55" cy="27" r="2.5" fill="white" fillOpacity="0.16" />
+                <circle cx="23" cy="61" r="4"   fill="white" fillOpacity="0.12" />
+                <circle cx="59" cy="54" r="3"   fill="white" fillOpacity="0.16" />
+                <circle cx="41" cy="71" r="2.5" fill="white" fillOpacity="0.14" />
+            </g>
+
+            {/* Gold band */}
+            <ellipse cx="40" cy="82" rx="39" ry="7"   fill="#78350f" />
+            <ellipse cx="40" cy="81" rx="39" ry="6"   fill="#d97706" />
+            <ellipse cx="40" cy="79.5" rx="37" ry="4" fill="#fbbf24" />
+            <ellipse cx="40" cy="78.5" rx="34" ry="2.5" fill="#fde68a" fillOpacity="0.55" />
+
+            {/* Pompom — clean single ball */}
+            <circle cx="40" cy="5" r="11" fill="#fbbf24" />
+            <circle cx="40" cy="5" r="8"  fill="#fde047" />
+            <circle cx="37" cy="2" r="3.5" fill="white" fillOpacity="0.5" />
         </svg>
     );
 }
