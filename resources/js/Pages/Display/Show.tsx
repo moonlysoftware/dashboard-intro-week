@@ -75,7 +75,7 @@ export default function Show({ screen: initialScreen }: DisplayShowProps) {
     }, [initialScreen.id, fetchData]);
 
     useEffect(() => {
-        const id = setInterval(fetchData, 60_000);
+        const id = setInterval(fetchData, 60 * 60_000);
         return () => clearInterval(id);
     }, [fetchData]);
 

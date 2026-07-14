@@ -63,15 +63,37 @@ export default function SlideshowDisplay({ widgets, screenConfig }: SlideshowDis
     const weather = screenConfig?.weather;
 
     const [idx, setIdx] = useState(0);
+    const [prevIdx, setPrevIdx] = useState<number | null>(null);
     const [paused] = useState(false);
     const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+    const exitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const go = (n: number) => setIdx(slides.length ? (n + slides.length) % slides.length : 0);
+    // Slide transition (.moonly-slide) is 0.85s; keep the outgoing slide mounted
+    // just long enough to finish its fade-out, then unmount it.
+    const scheduleExit = (outgoing: number) => {
+        setPrevIdx(outgoing);
+        if (exitTimer.current) clearTimeout(exitTimer.current);
+        exitTimer.current = setTimeout(() => setPrevIdx(null), 900);
+    };
+
+    const go = (n: number) => {
+        const nextIdx = slides.length ? (n + slides.length) % slides.length : 0;
+        setIdx((current) => {
+            if (current !== nextIdx) scheduleExit(current);
+            return nextIdx;
+        });
+    };
 
     const restart = () => {
         if (timer.current) clearInterval(timer.current);
         if (paused || slides.length <= 1) return;
-        timer.current = setInterval(() => setIdx((i) => (i + 1) % slides.length), cycleMs);
+        timer.current = setInterval(() => {
+            setIdx((current) => {
+                const next = (current + 1) % slides.length;
+                scheduleExit(current);
+                return next;
+            });
+        }, cycleMs);
     };
 
     useEffect(() => {
@@ -80,7 +102,13 @@ export default function SlideshowDisplay({ widgets, screenConfig }: SlideshowDis
     }, [paused, cycleMs, slides.length]);
 
     useEffect(() => {
+        return () => { if (exitTimer.current) clearTimeout(exitTimer.current); };
+    }, []);
+
+    useEffect(() => {
         if (idx >= slides.length) setIdx(0);
+        setPrevIdx(null);
+        if (exitTimer.current) clearTimeout(exitTimer.current);
     }, [slides.length]);
 
     useEffect(() => {
@@ -112,11 +140,14 @@ export default function SlideshowDisplay({ widgets, screenConfig }: SlideshowDis
                         </div>
                     )}
 
-                    {slides.map((s, i) => (
-                        <div key={s.id} className={`moonly-slide${i === idx ? ' is-active' : ''}`}>
-                            {renderSlide(s)}
-                        </div>
-                    ))}
+                    {slides.map((s, i) => {
+                        if (i !== idx && i !== prevIdx) return null;
+                        return (
+                            <div key={s.id} className={`moonly-slide${i === idx ? ' is-active' : ''}`}>
+                                {renderSlide(s)}
+                            </div>
+                        );
+                    })}
 
                 </main>
 

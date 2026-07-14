@@ -64,8 +64,18 @@ export function Avatar({ name, size = 96, ring = true, photo }: AvatarProps) {
 export function useClock() {
     const [now, setNow] = useState(new Date());
     useEffect(() => {
-        const t = setInterval(() => setNow(new Date()), 1000);
-        return () => clearInterval(t);
+        let interval: ReturnType<typeof setInterval> | undefined;
+        // Align the first tick to the next minute boundary so the
+        // displayed HH:MM never sits stale for up to 59s after it changes.
+        const msToNextMinute = 60_000 - (Date.now() % 60_000);
+        const timeout = setTimeout(() => {
+            setNow(new Date());
+            interval = setInterval(() => setNow(new Date()), 60_000);
+        }, msToNextMinute);
+        return () => {
+            clearTimeout(timeout);
+            if (interval) clearInterval(interval);
+        };
     }, []);
     return now;
 }
@@ -119,7 +129,7 @@ export function Backdrop() {
             <div
                 className="absolute rounded-full"
                 style={{
-                    filter: "blur(120px)",
+                    filter: "blur(64px)",
                     width: 1150,
                     height: 950,
                     right: -320,
@@ -130,7 +140,7 @@ export function Backdrop() {
             <div
                 className="absolute rounded-full"
                 style={{
-                    filter: "blur(120px)",
+                    filter: "blur(64px)",
                     width: 820,
                     height: 820,
                     right: -220,
@@ -141,7 +151,7 @@ export function Backdrop() {
             <div
                 className="absolute rounded-full"
                 style={{
-                    filter: "blur(120px)",
+                    filter: "blur(64px)",
                     width: 700,
                     height: 700,
                     left: -280,
