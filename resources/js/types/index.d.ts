@@ -62,8 +62,8 @@ export interface ScreenConfig {
     // Technical screen
     services?: ServiceConfig[];
     sportTitle?: string;
-    live?: LiveMatch[];
-    fixtures?: Fixture[];
+    tech_news?: NewsItem[];
+    sport_news?: NewsItem[];
     argocd_apps?: ArgoCDApp[];
     f1_next_race?: F1NextRace | null;
     f1_results?: F1RaceResult[];
@@ -79,20 +79,12 @@ export interface ServiceConfig {
     note: string;
 }
 
-export interface LiveMatch {
+export interface NewsItem {
     id: string;
-    comp: string;
-    home: string;
-    away: string;
-    hs: number;
-    as: number;
-    min: string;
-}
-
-export interface Fixture {
-    id: string;
-    comp: string;
-    label: string;
+    title: string;
+    body: string;
+    badge: string;
+    photo?: string | null;
     when: string;
 }
 

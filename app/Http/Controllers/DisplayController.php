@@ -70,9 +70,8 @@ class DisplayController extends Controller
         if ($type === 'technical') {
             unset($config['rooms']);
             $config['argocd_apps'] = $this->fetchArgoCDApps();
-            $football = $this->fetchFootballMatches();
-            $config['live'] = $football['live'];
-            $config['fixtures'] = $football['fixtures'];
+            $config['tech_news'] = $this->fetchTechNews();
+            $config['sport_news'] = $this->fetchSportNews();
             $f1 = $this->fetchF1Data();
             $config['f1_next_race'] = $f1['next_race'];
             $config['f1_results'] = $f1['results'];
@@ -521,70 +520,98 @@ class DisplayController extends Controller
         return $data;
     }
 
-    private function fetchFootballMatches(): array
+    private function fetchTechNews(): array
     {
-        $apiKey = config('services.football_data.api_key');
-        $empty  = ['live' => [], 'fixtures' => []];
+        return Cache::remember('tech_news_combined', 300, function () {
+            $items = $this->parseNewsFeed(config('services.actueel365.tech_xml_url'), fn () => 'Tech');
 
-        if (! $apiKey) {
-            return $empty;
+            return $this->mergeRecentNews($this->capRecentItems($items, 15));
+        }) ?? [];
+    }
+
+    private function fetchSportNews(): array
+    {
+        return Cache::remember('sport_news_combined', 300, function () {
+            $items = $this->parseNewsFeed(
+                config('services.actueel365.sport_xml_url'),
+                fn () => 'Sport',
+            );
+
+            return $this->mergeRecentNews($this->capRecentItems($items, 15));
+        }) ?? [];
+    }
+
+    /**
+     * Drop anything older than 7 days and keep only the newest $limit from this source.
+     */
+    private function capRecentItems(array $items, int $limit): array
+    {
+        $cutoff = now()->subDays(7);
+
+        return collect($items)
+            ->filter(fn (array $i) => $i['published_at']->greaterThanOrEqualTo($cutoff))
+            ->sortByDesc(fn (array $i) => $i['published_at'])
+            ->take($limit)
+            ->values()
+            ->toArray();
+    }
+
+    /**
+     * Parse an RSS feed into raw news items (with a Carbon `published_at` for sorting/filtering).
+     */
+    private function parseNewsFeed(?string $url, \Closure $badgeResolver): array
+    {
+        if (! $url) {
+            return [];
         }
 
-        return Cache::remember('football_matches', 60, function () use ($apiKey) {
-            // Use the WC competition endpoint so we always get upcoming matches
-            // even after today's games go live. Competition 2000 = FIFA World Cup.
-            $response = Http::withHeaders(['X-Auth-Token' => $apiKey])
-                ->timeout(10)
-                ->get('https://api.football-data.org/v4/competitions/2000/matches', [
-                    'dateFrom' => now()->format('Y-m-d'),
-                    'dateTo'   => now()->addDays(3)->format('Y-m-d'),
-                ]);
+        $response = Http::timeout(10)->get($url);
 
-            if ($response->failed()) {
-                return ['live' => [], 'fixtures' => []];
-            }
+        if ($response->failed()) {
+            return [];
+        }
 
-            $matches = $response->json('matches') ?? [];
+        $xml = @simplexml_load_string($response->body());
+        if ($xml === false || ! isset($xml->channel->item)) {
+            return [];
+        }
 
-            $live = collect($matches)
-                ->filter(fn (array $m) => in_array($m['status'], ['IN_PLAY', 'PAUSED'], true))
-                ->map(fn (array $m): array => [
-                    'id'   => (string) $m['id'],
-                    'comp' => $m['competition']['name'] ?? $m['competition']['code'] ?? '?',
-                    'home' => $m['homeTeam']['shortName'] ?? $m['homeTeam']['name'] ?? '?',
-                    'away' => $m['awayTeam']['shortName'] ?? $m['awayTeam']['name'] ?? '?',
-                    'hs'   => $m['score']['fullTime']['home'] ?? 0,
-                    'as'   => $m['score']['fullTime']['away'] ?? 0,
-                    'min'  => isset($m['minute']) && $m['minute'] !== null
-                        ? $m['minute'] . "'"
-                        : '',
-                ])
-                ->values()
-                ->toArray();
+        return collect(iterator_to_array($xml->channel->item, false))
+            ->map(function ($item) use ($badgeResolver): array {
+                $body = trim(html_entity_decode(strip_tags((string) $item->description), ENT_QUOTES | ENT_HTML5));
+                $photo = (string) ($item->enclosure['url'] ?? '');
 
-            $fixtures = collect($matches)
-                ->filter(fn (array $m) => in_array($m['status'], ['TIMED', 'SCHEDULED'], true))
-                ->sortBy('utcDate')
-                ->take(4)
-                ->map(function (array $m): array {
-                    $d = \Carbon\Carbon::parse($m['utcDate'])
-                        ->setTimezone('Europe/Amsterdam')
-                        ->locale('nl');
+                return [
+                    'id'           => (string) $item->guid,
+                    'title'        => trim((string) $item->title),
+                    'body'         => $body,
+                    'badge'        => $badgeResolver($item),
+                    'photo'        => $photo ?: null,
+                    'published_at' => \Carbon\Carbon::parse((string) $item->pubDate),
+                ];
+            })
+            ->values()
+            ->toArray();
+    }
 
-                    return [
-                        'id'    => (string) $m['id'],
-                        'comp'  => $m['competition']['name'] ?? $m['competition']['code'] ?? '?',
-                        'label' => ($m['homeTeam']['shortName'] ?? $m['homeTeam']['name'] ?? '?')
-                                 . ' – '
-                                 . ($m['awayTeam']['shortName'] ?? $m['awayTeam']['name'] ?? '?'),
-                        'when'  => $d->isoFormat('ddd D MMM') . ' ' . $d->format('H:i'),
-                    ];
-                })
-                ->values()
-                ->toArray();
-
-            return ['live' => $live, 'fixtures' => $fixtures];
-        }) ?? ['live' => [], 'fixtures' => []];
+    /**
+     * Merge already-capped per-source items into one publish-date-sorted list,
+     * stripping the raw Carbon instance down to a display-ready relative timestamp.
+     */
+    private function mergeRecentNews(array $items): array
+    {
+        return collect($items)
+            ->sortByDesc(fn (array $i) => $i['published_at'])
+            ->map(fn (array $i): array => [
+                'id'    => $i['id'],
+                'title' => $i['title'],
+                'body'  => $i['body'],
+                'badge' => $i['badge'],
+                'photo' => $i['photo'],
+                'when'  => $i['published_at']->locale('nl')->diffForHumans(),
+            ])
+            ->values()
+            ->toArray();
     }
 
     private function fetchWeather(): array

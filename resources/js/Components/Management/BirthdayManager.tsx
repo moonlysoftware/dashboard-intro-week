@@ -43,6 +43,11 @@ function formatDate(dateStr: string | null): string {
     return d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
+function toDateInputValue(dateStr: string | null | undefined): string {
+    if (!dateStr) return '';
+    return dateStr.slice(0, 10);
+}
+
 const EMPTY_FORM = {
     name: '',
     birth_date: '',
@@ -217,6 +222,11 @@ export function BirthdayManager({ persons, onPersonsChange }: Props) {
                 onPersonsChange(persons.map((p) => (p.id === editing.id ? res.data : p)));
             }
             setEditing(null);
+        } catch (err) {
+            const message = axios.isAxiosError(err)
+                ? err.response?.data?.message ?? 'Opslaan mislukt.'
+                : 'Opslaan mislukt.';
+            alert(message);
         } finally {
             setSaving(false);
         }
@@ -233,8 +243,8 @@ export function BirthdayManager({ persons, onPersonsChange }: Props) {
             ? {}
             : {
                 name: editing.name,
-                birth_date: editing.birth_date,
-                jubileum_start_date: editing.jubileum_start_date ?? '',
+                birth_date: toDateInputValue(editing.birth_date),
+                jubileum_start_date: toDateInputValue(editing.jubileum_start_date),
                 photo: editing.photo,
             };
 

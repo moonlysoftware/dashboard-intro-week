@@ -359,13 +359,12 @@
     background: #000;
 }
 #moonly-stage {
-    width: 1920px;
+    /* width is set inline by useStageScale() — 1920 by default, wider on displays beyond 16:9 */
     height: 1080px;
     position: relative;
     overflow: hidden;
     flex: none;
     flex-shrink: 0;
-    min-width: 1920px;
     min-height: 1080px;
     transform-origin: center center;
     background: #060410;

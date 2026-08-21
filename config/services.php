@@ -50,8 +50,9 @@ return [
         'credentials_json' => env('GOOGLE_CREDENTIALS_JSON'),
     ],
 
-    'football_data' => [
-        'api_key' => env('FOOTBALL_DATA_API_KEY'),
+    'actueel365' => [
+        'sport_xml_url' => env('ACTUEEL365_SPORT_XML_URL'),
+        'tech_xml_url' => env('ACTUEEL365_TECH_XML_URL'),
     ],
 
 ];

@@ -319,18 +319,31 @@ export function AppBar({ rooms }: AppBarProps) {
 }
 
 // ---- Stage scale hook ----
+// The stage is designed at a fixed 1080px logical height. We always scale to
+// fill the viewport height, then widen the canvas (beyond the 16:9 default of
+// 1920) to match whatever's left horizontally — so TVs wider than 16:9 fill
+// edge to edge instead of showing letterbox bars. Screens narrower than 16:9
+// fall back to the old width-constrained fit (letterboxed top/bottom).
 export function useStageScale() {
-    const [scale, setScale] = useState(1);
+    const [stage, setStage] = useState({ scale: 1, width: 1920 });
     useEffect(() => {
         const fit = () => {
             const w = window.innerWidth;
             const h = window.innerHeight;
             if (w <= 0 || h <= 0) return;
-            setScale(Math.min(w / 1920, h / 1080));
+
+            const heightScale = h / 1080;
+            const widthAtHeightScale = w / heightScale;
+
+            if (widthAtHeightScale >= 1920) {
+                setStage({ scale: heightScale, width: widthAtHeightScale });
+            } else {
+                setStage({ scale: w / 1920, width: 1920 });
+            }
         };
         fit();
         window.addEventListener("resize", fit);
         return () => window.removeEventListener("resize", fit);
     }, []);
-    return scale;
+    return stage;
 }

@@ -43,7 +43,7 @@ export default function Show({ screen: initialScreen }: DisplayShowProps) {
     const [screenConfig, setScreenConfig] = useState<ScreenConfig>(
         normalizeScreenConfig(initialScreen.screen_config),
     );
-    const scale = useStageScale();
+    const { scale, width: stageWidth } = useStageScale();
 
     const fetchData = useCallback(async () => {
         try {
@@ -88,7 +88,11 @@ export default function Show({ screen: initialScreen }: DisplayShowProps) {
             <div id="moonly-stage-wrap" className="overflow-hidden">
                 <div
                     id="moonly-stage"
-                    style={{ transform: `scale(${scale || 1})` }}
+                    style={{
+                        width: stageWidth,
+                        minWidth: stageWidth,
+                        transform: `scale(${scale || 1})`,
+                    }}
                 >
                     {screenType === 'general' ? (
                         <GeneralDisplay {...displayProps} />

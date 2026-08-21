@@ -11,7 +11,7 @@ class Person extends Model
     protected $fillable = ['name', 'photo', 'birth_date', 'jubileum_start_date'];
 
     protected $casts = [
-        'birth_date'           => 'date',
-        'jubileum_start_date'  => 'date',
+        'birth_date'           => 'date:Y-m-d',
+        'jubileum_start_date'  => 'date:Y-m-d',
     ];
 }

@@ -3,8 +3,7 @@ import { Backdrop, TopBar, AppBar, useClock } from "@/Components/Display/Shell";
 import type {
     ScreenConfig,
     ServiceConfig,
-    LiveMatch,
-    Fixture,
+    NewsItem,
     ArgoCDApp,
     F1NextRace,
     F1RaceResult,
@@ -70,65 +69,78 @@ function ServiceTile({ s }: { s: ServiceConfig }) {
     );
 }
 
-function LiveCard({ m }: { m: LiveMatch }) {
+function useTick(intervalMs: number): number {
+    const [tick, setTick] = useState(0);
+
+    useEffect(() => {
+        const t = setInterval(() => setTick((n) => n + 1), intervalMs);
+        return () => clearInterval(t);
+    }, [intervalMs]);
+
+    return tick;
+}
+
+const NEWS_OVERLAY_BLEND =
+    "linear-gradient(180deg, rgba(8,6,15,.05) 0%, rgba(8,6,15,.55) 55%, rgba(8,6,15,.95) 100%)";
+
+function NewsCard({ item }: { item: NewsItem }) {
+    const [photoFailed, setPhotoFailed] = useState(false);
+    const showPhoto = !!item.photo && !photoFailed;
+
     return (
         <div
-            className="reveal relative flex items-center gap-5 rounded-[22px] px-6 py-3 overflow-hidden"
-            style={{
-                background:
-                    "linear-gradient(150deg,rgba(221,39,39,.14),rgba(15,11,38,.35))",
-                border: "1px solid rgba(221,39,39,.35)",
-            }}
+            className={`reveal relative h-full rounded-[22px] overflow-hidden${showPhoto ? "" : " panel"}`}
         >
-            <div className="flex-1 min-w-0">
-                <div className="text-white/40 text-[13px] font-semibold truncate mb-0.5 tracking-wide">
-                    {m.comp}
-                </div>
-                <div className="font-display font-bold text-white/80 text-[21px] leading-tight truncate">
-                    {m.home} – {m.away}
-                </div>
-            </div>
-            <div className="shrink-0 flex items-center gap-3">
-                <span className="font-display font-bold text-white text-[21px] tabular-nums whitespace-nowrap">
-                    {m.hs} <span className="text-white/40">–</span> {m.as}
-                </span>
-                <span
-                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-white font-bold text-[13px] whitespace-nowrap"
-                    style={{ background: "#DD2727" }}
-                >
-                    <span
-                        className="h-1.5 w-1.5 rounded-full bg-white"
-                        style={{ animation: "blink 1s infinite" }}
+            {showPhoto && (
+                <>
+                    <img
+                        src={item.photo!}
+                        alt=""
+                        referrerPolicy="no-referrer"
+                        className="absolute inset-0 w-full h-full object-cover"
+                        onError={() => setPhotoFailed(true)}
                     />
-                    LIVE{m.min ? ` ${m.min}` : ""}
+                    <div
+                        className="absolute inset-0"
+                        style={{ background: NEWS_OVERLAY_BLEND }}
+                    />
+                </>
+            )}
+            <div className="relative h-full flex flex-col justify-between px-6 py-4 gap-1.5">
+                <span className="text-white text-[13px] font-semibold whitespace-nowrap ml-auto">
+                    {item.when}
                 </span>
+                <div>
+                    <h3 className="font-display font-bold text-white text-[19px] leading-loose line-clamp-2">
+                        {item.title}
+                    </h3>
+                    {item.body && (
+                        <p className="text-white/55 text-[14px] font-semibold leading-snug line-clamp-5">
+                            {item.body}
+                        </p>
+                    )}
+                </div>
             </div>
         </div>
     );
 }
 
-function FixtureRow({ f }: { f: Fixture }) {
-    return (
-        <div
-            className="reveal flex items-center gap-5 rounded-[22px] px-6 py-3"
-            style={{
-                background: "rgba(255,255,255,.04)",
-                border: "1px solid rgba(255,255,255,.08)",
-            }}
-        >
-            <div className="flex-1 min-w-0">
-                <div className="text-white/40 text-[13px] font-semibold truncate mb-0.5 tracking-wide">
-                    {f.comp}
-                </div>
-                <div className="font-display font-bold text-white/80 text-[21px] leading-tight truncate">
-                    {f.label}
-                </div>
+function NewsCarouselSection({
+    items,
+    tick,
+}: {
+    items: NewsItem[];
+    tick: number;
+}) {
+    if (items.length === 0) {
+        return (
+            <div className="panel h-full rounded-[22px] flex items-center justify-center text-white/30 text-[16px] font-semibold">
+                Geen nieuws gevonden
             </div>
-            <div className="shrink-0 font-display font-semibold text-[#05BFDB]/70 text-[18px] whitespace-nowrap">
-                {f.when}
-            </div>
-        </div>
-    );
+        );
+    }
+
+    return <NewsCard item={items[tick % items.length]} />;
 }
 
 function SummaryStat({ c, n, label }: { c: string; n: number; label: string }) {
@@ -590,14 +602,9 @@ export default function TechnicalDisplay({
         screenConfig?.f1_results_label ?? null;
     const f1Live: boolean = screenConfig?.f1_live ?? false;
 
-    const wcLive: LiveMatch[] = screenConfig?.live ?? [];
-    const wcUpcoming: Fixture[] = screenConfig?.fixtures ?? [];
-
-    const livesToShow = wcLive.slice(0, 2);
-    const fixturesToShow = wcUpcoming.slice(
-        0,
-        livesToShow.length > 0 ? Math.max(0, 4 - livesToShow.length) : 4,
-    );
+    const techNews: NewsItem[] = screenConfig?.tech_news ?? [];
+    const sportNews: NewsItem[] = screenConfig?.sport_news ?? [];
+    const newsTick = useTick(5 * 60_000);
 
     const counts = services.reduce<Record<string, number>>((a, s) => {
         a[s.status] = (a[s.status] || 0) + 1;
@@ -734,76 +741,43 @@ export default function TechnicalDisplay({
                                         }}
                                     />
                                     <span className="text-[#B5A9FF]/80 font-bold text-[26px] whitespace-nowrap">
-                                        Sport & events
+                                        Nieuws
                                     </span>
                                 </div>
                             </div>
                         </div>
 
                         <div className="flex-1 min-h-0 flex flex-col gap-5 overflow-hidden">
-                            {/* World Cup */}
-                            <div className="flex flex-col gap-3">
-                                <div className="flex items-center gap-3">
-                                    <span className="text-[22px]">⚽</span>
-                                    <span className="uppercase tracking-[.22em] text-[#B5A9FF]/70 font-bold text-[20px]">
-                                        FIFA Wereldkampioenschap
+                            {/* Tech nieuws */}
+                            <div className="flex-1 min-h-0 flex flex-col gap-3">
+                                <div className="flex items-center gap-3 shrink-0">
+                                    <span className="tracking-[.22em] text-[#B5A9FF]/70 font-bold text-[20px]">
+                                        Tech
                                     </span>
                                     <span className="flex-1 h-px bg-white/10" />
                                 </div>
-                                {livesToShow.map((m) => (
-                                    <LiveCard key={m.id} m={m} />
-                                ))}
-                                {fixturesToShow.map((f) => (
-                                    <FixtureRow key={f.id} f={f} />
-                                ))}
-                                {livesToShow.length === 0 &&
-                                    fixturesToShow.length === 0 && (
-                                        <div className="text-white/30 text-[24px] text-center py-2">
-                                            Geen wedstrijden gevonden
-                                        </div>
-                                    )}
+                                <div className="flex-1 min-h-0">
+                                    <NewsCarouselSection
+                                        items={techNews}
+                                        tick={newsTick}
+                                    />
+                                </div>
                             </div>
 
-                            {/* Formula 1 */}
-                            <div className="flex flex-col gap-3">
-                                <div className="flex items-center gap-3">
-                                    <span className="text-[22px]">🏎</span>
-                                    <span className="uppercase tracking-[.22em] text-[#B5A9FF]/70 font-bold text-[20px]">
-                                        Formule 1
+                            {/* Sport */}
+                            <div className="flex-1 min-h-0 flex flex-col gap-3">
+                                <div className="flex items-center gap-3 shrink-0">
+                                    <span className="tracking-[.22em] text-[#B5A9FF]/70 font-bold text-[20px]">
+                                        Sport
                                     </span>
                                     <span className="flex-1 h-px bg-white/10" />
                                 </div>
-                                {f1Live && !f1NextRace && (
-                                    <div
-                                        className="reveal rounded-[22px] px-5 py-4 flex items-center gap-4"
-                                        style={{
-                                            background: "rgba(255,255,255,.04)",
-                                            border: "1px solid rgba(255,80,80,.35)",
-                                        }}
-                                    >
-                                        <span
-                                            className="inline-block w-3 h-3 rounded-full shrink-0"
-                                            style={{
-                                                background: "#ff4444",
-                                                boxShadow: "0 0 8px #ff4444",
-                                                animation:
-                                                    "pulse 1.5s ease-in-out infinite",
-                                            }}
-                                        />
-                                        <div>
-                                            <div className="text-[#ff8080] font-bold text-[16px] uppercase tracking-wide">
-                                                Live sessie bezig
-                                            </div>
-                                            <div className="text-white/50 text-[14px]">
-                                                Race data tijdelijk niet
-                                                beschikbaar
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                                {f1NextRace && (
-                                    <F1NextRaceCard race={f1NextRace} />
-                                )}
+                                <div className="flex-1 min-h-0">
+                                    <NewsCarouselSection
+                                        items={sportNews}
+                                        tick={newsTick}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </section>
