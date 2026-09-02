@@ -3,162 +3,162 @@
     "id": 1,
     "name": "Bart",
     "birthdate": "1993-04-18",
-    "image": "bart_scheffer.webp"
+    "image": "bart_scheffer.jpg"
   },
   {
     "id": 2,
     "name": "Bram R",
     "birthdate": "1994-02-10",
-    "image": "bram_raaijmakers.webp"
+    "image": "bram_raaijmakers.jpg"
   },
   {
     "id": 3,
     "name": "Bjarne",
     "birthdate": "1998-03-19",
-    "image": "bjarne_van_gils.webp"
+    "image": "bjarne_van_gils.jpg"
   },
   {
     "id": 4,
     "name": "Bram G",
     "birthdate": "2002-03-08",
-    "image": "bram_van_de_grift.webp"
+    "image": "bram_van_de_grift.jpg"
   },
   {
     "id": 5,
     "name": "Bruno",
     "birthdate": "1995-02-13",
-    "image": "bruno_delsing.webp"
+    "image": "bruno_delsing.jpg"
   },
   {
     "id": 6,
     "name": "Calvin",
     "birthdate": "2002-03-29",
-    "image": "calvin_hong.webp"
+    "image": "calvin_hong.jpg"
   },
   {
     "id": 7,
     "name": "Gijs",
     "birthdate": "2002-09-28",
-    "image": "gijs_van_den_beuken.webp"
+    "image": "gijs_van_den_beuken.jpg"
   },
   {
     "id": 8,
     "name": "Kelly",
     "birthdate": "1993-09-14",
-    "image": "kelly_kuenen.webp"
+    "image": "kelly_kuenen.jpg"
   },
   {
     "id": 9,
     "name": "Kien",
     "birthdate": "2000-11-22",
-    "image": "kien_dang.webp"
+    "image": "kien_dang.jpg"
   },
   {
     "id": 10,
     "name": "Kimberly",
     "birthdate": "1998-07-08",
-    "image": "kimberly_huggers.webp"
+    "image": "kimberly_huggers.jpg"
   },
   {
     "id": 11,
     "name": "Lars",
     "birthdate": "1999-02-14",
-    "image": "lars_dekker.webp"
+    "image": "lars_dekker.jpg"
   },
   {
     "id": 12,
     "name": "Luc",
     "birthdate": "1996-11-21",
-    "image": "luc_swinkels.webp"
+    "image": "luc_swinkels.jpg"
   },
   {
     "id": 13,
     "name": "Mark",
     "birthdate": "2003-07-02",
-    "image": "mark_van_der_kort.webp"
+    "image": "mark_van_der_kort.jpg"
   },
   {
     "id": 14,
     "name": "Martijn",
     "birthdate": "1995-06-19",
-    "image": "martijn_van_gool.webp"
+    "image": "martijn_van_gool.jpg"
   },
   {
     "id": 15,
     "name": "Mynouk",
     "birthdate": "1995-01-11",
-    "image": "mynouk_van_de_ven.webp"
+    "image": "mynouk_van_de_ven.jpg"
   },
   {
     "id": 16,
     "name": "Rik",
     "birthdate": "1998-09-04",
-    "image": "rik_gommans.webp"
+    "image": "rik_gommans.jpg"
   },
   {
     "id": 17,
     "name": "Pjotr",
     "birthdate": "2000-11-24",
-    "image": "pjotr_worseling.webp"
+    "image": "pjotr_worseling.jpg"
   },
   {
     "id": 18,
     "name": "Qi",
     "birthdate": "2005-05-11",
-    "image": "qi_song.webp"
+    "image": "qi_song.jpg"
   },
   {
     "id": 19,
     "name": "Robin",
     "birthdate": "1999-05-25",
-    "image": "robin_galema.webp"
+    "image": "robin_galema.jpg"
   },
   {
     "id": 20,
     "name": "Roy",
     "birthdate": "1995-04-18",
-    "image": "roy_van_ringelenstein.webp"
+    "image": "roy_van_ringelenstein.jpg"
   },
   {
     "id": 21,
     "name": "Ryan",
     "birthdate": "1995-03-22",
-    "image": "ryan_smith.webp"
+    "image": "ryan_smith.jpg"
   },
   {
     "id": 22,
     "name": "Sanne",
     "birthdate": "2001-07-13",
-    "image": "sanne_biemans.webp"
+    "image": "sanne_biemans.jpg"
   },
   {
     "id": 23,
     "name": "Sem",
     "birthdate": "2003-06-12",
-    "image": "sem_van_der_heijden.webp"
+    "image": "sem_van_der_heijden.jpg"
   },
   {
     "id": 24,
     "name": "Sharon",
     "birthdate": "2001-06-02",
-    "image": "sharon_janssen.webp"
+    "image": "sharon_janssen.jpg"
   },
   {
     "id": 25,
     "name": "Thijs",
     "birthdate": "1993-09-15",
-    "image": "thijs_kuipers.webp"
+    "image": "thijs_kuipers.jpg"
   },
   {
     "id": 26,
     "name": "Tijn",
     "birthdate": "1996-03-22",
-    "image": "tijn_kanters.webp"
+    "image": "tijn_kanters.jpg"
   },
   {
     "id": 27,
     "name": "Tim",
     "birthdate": "1997-07-28",
-    "image": "tim_van_de_vondervoort.webp"
+    "image": "tim_van_de_vondervoort.jpg"
   }
 ]

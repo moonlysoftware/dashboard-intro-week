@@ -25,8 +25,7 @@ class PersonController extends Controller
 
         $photoPath = null;
         if ($request->hasFile('photo')) {
-            Storage::disk('public')->makeDirectory('birthdays');
-            $photoPath = '/storage/' . $request->file('photo')->store('birthdays', 'public');
+            $photoPath = '/storage/' . \App\Support\ImageTranscoder::storeAsJpeg($request->file('photo'), 'birthdays');
         }
 
         $person = Person::create([
@@ -53,8 +52,7 @@ class PersonController extends Controller
             if ($photoPath) {
                 Storage::disk('public')->delete(str_replace('/storage/', '', $photoPath));
             }
-            Storage::disk('public')->makeDirectory('birthdays');
-            $photoPath = '/storage/' . $request->file('photo')->store('birthdays', 'public');
+            $photoPath = '/storage/' . \App\Support\ImageTranscoder::storeAsJpeg($request->file('photo'), 'birthdays');
         }
 
         $person->update([

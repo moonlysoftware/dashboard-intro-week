@@ -45,10 +45,8 @@ class ImageUploadController extends Controller
             'image' => 'required|file|mimes:jpeg,jpg,png,gif,webp|max:20480',
         ]);
 
-        Storage::disk('public')->makeDirectory('image_widget');
-
         try {
-            $path = $validated['image']->store('image_widget', 'public');
+            $path = \App\Support\ImageTranscoder::storeAsJpeg($validated['image'], 'image_widget');
         } catch (\Throwable $e) {
             Log::error('Image upload storage failed', [
                 'error' => $e->getMessage(),
