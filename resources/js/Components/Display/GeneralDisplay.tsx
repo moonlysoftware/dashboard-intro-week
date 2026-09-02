@@ -35,15 +35,7 @@ function Block({
     );
 }
 
-function BlockHead({
-    title,
-    sub,
-    accent,
-}: {
-    title: string;
-    sub?: string;
-    accent?: string;
-}) {
+function BlockHead({ title, sub }: { title: string; sub?: string }) {
     return (
         <div className="flex items-center gap-4 mb-4">
             <div className="min-w-0">
@@ -56,15 +48,6 @@ function BlockHead({
                     </div>
                 )}
             </div>
-            {accent && (
-                <span
-                    className="ml-auto h-3 w-3 rounded-full shrink-0"
-                    style={{
-                        background: accent,
-                        boxShadow: `0 0 16px ${accent}`,
-                    }}
-                />
-            )}
         </div>
     );
 }
@@ -124,7 +107,7 @@ function AgendaBlock({ data }: { data: any }) {
 
     return (
         <Block className="h-full p-8 flex flex-col">
-            <BlockHead title={title} sub={subtitle} accent="#6C52FF" />
+            <BlockHead title={title} sub={subtitle} />
             <div
                 className="flex-1 min-h-0 grid gap-4"
                 style={{
@@ -210,14 +193,14 @@ function getMilestones(limit = 3): any[] {
 function BirthdaysBlock({ data }: { data: any }) {
     const dbList = data?.data?.list ?? [];
     const configList = data?.config?.list ?? [];
-    const list = dbList.length ? dbList.slice(0, 3) : configList.length ? configList.slice(0, 3) : getMilestones(3);
+    const list = dbList.length
+        ? dbList.slice(0, 3)
+        : configList.length
+          ? configList.slice(0, 3)
+          : getMilestones(3);
     return (
         <Block className="h-full p-8 flex flex-col">
-            <BlockHead
-                title="Komende mijlpalen"
-                sub="Verjaardagen & jubilea"
-                accent="#FFC53D"
-            />
+            <BlockHead title="Komende mijlpalen" sub="Verjaardagen & jubilea" />
             <div className="flex-1 flex flex-col justify-between gap-3 min-h-0">
                 {list.map((b: any, i: number) => (
                     <BirthdayMini key={i} b={b} />
@@ -341,13 +324,21 @@ function AnnouncementsBlock({ data }: { data: any }) {
 
     useEffect(() => {
         restart();
-        return () => { if (timerRef.current) clearInterval(timerRef.current); };
+        return () => {
+            if (timerRef.current) clearInterval(timerRef.current);
+        };
     }, [slides.length]);
 
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
-            if (e.key === "ArrowRight") { go(idx + 1); restart(); }
-            if (e.key === "ArrowLeft") { go(idx - 1); restart(); }
+            if (e.key === "ArrowRight") {
+                go(idx + 1);
+                restart();
+            }
+            if (e.key === "ArrowLeft") {
+                go(idx - 1);
+                restart();
+            }
         };
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
@@ -358,7 +349,7 @@ function AnnouncementsBlock({ data }: { data: any }) {
     if (slides.length === 0) {
         return (
             <Block className="h-full p-8 flex flex-col">
-                <BlockHead title="Mededelingen" accent="#FF4490" />
+                <BlockHead title="Mededelingen" />
                 <div className="flex-1 flex items-center justify-center text-white/20 text-[20px] font-semibold">
                     Geen mededelingen
                 </div>
@@ -369,7 +360,10 @@ function AnnouncementsBlock({ data }: { data: any }) {
     return (
         <Block className="h-full relative">
             {slides.map((slide, i) => (
-                <div key={i} className={`moonly-slide${i === idx ? " is-active" : ""}`}>
+                <div
+                    key={i}
+                    className={`moonly-slide${i === idx ? " is-active" : ""}`}
+                >
                     {slide?.style === "overlay" ? (
                         <AnnMiniOverlay ann={slide} />
                     ) : (

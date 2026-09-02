@@ -111,7 +111,7 @@ function NewsCard({ item }: { item: NewsItem }) {
                     {item.when}
                 </span>
                 <div>
-                    <h3 className="font-display font-bold text-white text-[19px] leading-loose line-clamp-2">
+                    <h3 className="font-display font-bold text-white text-[19px] leading-tight line-clamp-2 pb-2">
                         {item.title}
                     </h3>
                     {item.body && (
@@ -663,13 +663,6 @@ export default function TechnicalDisplay({
                         <div className="flex items-end justify-between mb-6">
                             <div className="reveal">
                                 <div className="flex items-center gap-4 mb-3">
-                                    <span
-                                        className="h-[14px] w-[14px] rounded-full"
-                                        style={{
-                                            background: overall.c,
-                                            boxShadow: `0 0 22px ${overall.c}`,
-                                        }}
-                                    />
                                     <span className="text-[#B5A9FF]/80 font-bold text-[26px] whitespace-nowrap">
                                         Systeemstatus
                                     </span>
@@ -734,12 +727,6 @@ export default function TechnicalDisplay({
                         <div className="flex items-end justify-between mb-5">
                             <div className="reveal">
                                 <div className="flex items-center gap-4 mb-3">
-                                    <span
-                                        className="h-[14px] w-[14px] rounded-full bg-[#FF4490]"
-                                        style={{
-                                            boxShadow: "0 0 22px #FF4490",
-                                        }}
-                                    />
                                     <span className="text-[#B5A9FF]/80 font-bold text-[26px] whitespace-nowrap">
                                         Nieuws
                                     </span>
